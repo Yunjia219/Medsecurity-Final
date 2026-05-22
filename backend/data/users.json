@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "username": "11",
+    "password": "1234",
+    "role": "patient",
+    "name": "王大明"
+  },
+  {
+    "id": 2,
+    "username": "22",
+    "password": "1234",
+    "role": "doctor",
+    "name": "李醫師"
+  },
+  {
+    "id": 3,
+    "username": "33",
+    "password": "1234",
+    "role": "admin",
+    "name": "系統管理員"
+  },
+  {
+    "id": 4,
+    "username": "44",
+    "password": "1234",
+    "role": "insurance",
+    "name": "國泰核保員"
+  }
+]

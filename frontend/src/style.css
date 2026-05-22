@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定義全域樣式 */
+:root {
+  --primary-blue: #2563eb;
+}
+
+body {
+  @apply antialiased text-gray-900;
+}
