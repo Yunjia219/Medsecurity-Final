@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsurTech 管理中心 | MedSafe-Chain</title>
+    <!-- CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#292E4C',
+                        turquoise: '#1DD3B0',
+                        golden: '#F5D001',
+                        bgMain: '#F5F4F5',
+                        cardBg: '#FFFFFF',
+                        title: '#1C2B24',
+                        content: '#4B5563',
+                        lightText: '#9CA3AF',
+                        success: '#22C55E',
+                        danger: '#EF4444',
+                    },
+                    borderRadius: {
+                        '2xl': '20px',
+                        '3xl': '30px',
+                    },
+                    boxShadow: {
+                        'premium': '0 10px 40px -10px rgba(41, 46, 76, 0.08)',
+                        'glow': '0 0 20px rgba(29, 211, 176, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; background-color: #F5F4F5; color: #292E4C; }
+        [v-cloak] { display: none; }
+        .hero-navy { background: linear-gradient(135deg, #292E4C 0%, #3D446A 100%); }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .sidebar-item { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 16px; margin-bottom: 4px; }
+        .sidebar-item.active { background: rgba(29, 211, 176, 0.15); color: #1DD3B0; }
+        .sidebar-item:not(.active):hover { background: rgba(255, 255, 255, 0.05); transform: translateX(5px); }
+        .kpi-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid white; }
+        .kpi-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(41, 46, 76, 0.12); }
+        .turquoise-gradient { background: linear-gradient(135deg, #1DD3B0 0%, #17A890 100%); }
+        .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+    <div id="app" v-cloak class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-72 fixed h-screen left-0 top-0 p-6 z-40 hidden lg:block bg-navy text-white">
+            <div class="h-full flex flex-col">
+                <div class="flex items-center gap-3 px-2 mb-12">
+                    <div class="w-10 h-10 turquoise-gradient rounded-xl flex items-center justify-center shadow-glow">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <span class="text-xl font-extrabold tracking-tight">MedSafe <span class="text-turquoise">Insurance</span></span>
+                </div>
+
+                <nav class="flex-1 space-y-1">
+                    <a v-for="item in menuItems" :key="item.name" href="#" 
+                       @click.prevent="switchMenu(item.name)"
+                       :class="['sidebar-item flex items-center gap-3 px-4 py-3.5 font-bold', activeMenu === item.name ? 'active' : 'text-white/60']">
+                        <component :is="item.icon" class="h-5 w-5"></component>
+                        {{ item.label }}
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-6 border-t border-white/10">
+                    <button @click="logout" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-danger hover:bg-red-50/10 w-full transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        安全登出
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-72 p-6 lg:p-8 space-y-8 min-w-0">
+            <!-- Topbar -->
+            <header class="glass rounded-2xl p-4 flex items-center justify-between shadow-premium sticky top-0 z-30">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="relative w-full max-w-md hidden md:block">
+                        <input type="text" placeholder="搜尋保單、理賠號碼、保戶..." 
+                               class="w-full bg-bgMain border-none rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-turquoise/20 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-lightText" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 sm:gap-6">
+                    <div class="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-turquoise bg-turquoise/5 px-3 py-1.5 rounded-full border border-turquoise/20">
+                        <span class="w-2 h-2 bg-turquoise rounded-full animate-pulse"></span>
+                        Blockchain Syncing
+                    </div>
+                    
+                    <div class="flex items-center gap-3 pl-4 border-l border-gray-100">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-sm font-bold text-navy leading-none mb-1">{{ user.name }}</div>
+                            <div class="text-[10px] font-bold uppercase text-turquoise tracking-widest">Premium Insurer</div>
+                        </div>
+                        <img src="https://ui-avatars.com/api/?name=Insurance&background=292E4C&color=fff" class="w-10 h-10 rounded-xl shadow-sm border-2 border-white" alt="Avatar">
+                    </div>
+                </div>
+            </header>
+
+            <transition name="fade" mode="out-in">
+                <!-- 總覽儀表板 -->
+                <div v-if="activeMenu === 'Dashboard'" key="dashboard" class="space-y-8">
+                    <!-- Hero Section -->
+                    <section class="hero-navy rounded-[32px] p-8 sm:p-12 text-white relative overflow-hidden shadow-premium animate-fade-in">
+                        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-turquoise/10 rounded-full -mr-40 -mt-40 blur-[100px]"></div>
+                        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                            <div>
+                                <div class="inline-flex items-center gap-2 bg-turquoise text-navy px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-6">Smart InsurTech AI</div>
+                                <h1 class="text-4xl sm:text-5xl font-black mb-8 leading-tight">智慧核保與<br><span class="text-turquoise">風險動態監控系統</span></h1>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                                    <div><div class="text-3xl font-black text-white mb-1">94.2%</div><div class="text-[10px] font-bold uppercase tracking-widest opacity-60">年度安全合規率</div></div>
+                                    <div><div class="text-3xl font-black text-golden mb-1">892</div><div class="text-[10px] font-bold uppercase tracking-widest opacity-60">今日處理理賠</div></div>
+                                    <div><div class="text-3xl font-black text-turquoise mb-1">$2.4M</div><div class="text-[10px] font-bold uppercase tracking-widest opacity-60">保費減免總額</div></div>
+                                </div>
+                            </div>
+                            <div class="hidden lg:block h-64 bg-white/5 rounded-[40px] border border-white/10 p-8 backdrop-blur-sm">
+                                <div class="flex justify-between items-center mb-6">
+                                    <span class="text-sm font-bold text-turquoise uppercase tracking-widest">AI 風險預測趨勢</span>
+                                </div>
+                                <canvas id="heroAreaChart" class="h-32 w-full"></canvas>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- KPI Grid -->
+                    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 animate-fade-in" style="animation-delay: 0.1s">
+                        <div v-for="(kpi, i) in kpis" :key="i" class="kpi-card bg-white p-8 rounded-[28px] shadow-premium group">
+                            <div class="flex justify-between items-start mb-6">
+                                <div :class="['w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg', kpi.bg]"><component :is="kpi.icon" class="h-7 w-7"></component></div>
+                                <div class="text-right"><span class="text-xs font-bold text-success bg-success/10 px-2.5 py-1 rounded-lg">+{{ kpi.trend }}%</span></div>
+                            </div>
+                            <div class="text-sm font-bold text-lightText mb-1 uppercase tracking-wider">{{ kpi.label }}</div>
+                            <div class="text-3xl font-black text-navy">{{ kpi.value }}</div>
+                            <div class="mt-6 flex items-center gap-2">
+                                <div class="flex-1 h-1.5 bg-bgMain rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-1000" :class="kpi.color" :style="{ width: kpi.progress + '%' }"></div></div>
+                                <span class="text-[10px] font-black text-navy">{{ kpi.progress }}%</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                        <div class="xl:col-span-2 bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in" style="animation-delay: 0.2s">
+                            <h3 class="text-2xl font-black text-navy mb-1 text-center">年度理賠趨勢</h3>
+                            <div class="h-[350px]"><canvas id="claimsTrendChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in" style="animation-delay: 0.3s">
+                            <h3 class="text-2xl font-black text-navy mb-8 text-center">保戶風險畫像</h3>
+                            <div class="h-[300px] flex items-center justify-center"><canvas id="riskRadarChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 保單大數據 -->
+                <div v-else-if="activeMenu === 'Policy'" key="policy" class="space-y-6 animate-fade-in">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h2 class="text-4xl font-black text-navy mb-2">保單大數據分析</h2>
+                            <p class="text-lightText">各險種分佈佔比與承保動態監控</p>
+                        </div>
+                        <button @click="showPolicyModal = true" class="turquoise-gradient text-white px-8 py-4 rounded-2xl font-black shadow-glow hover:scale-105 transition-all flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                            新增保單專案
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white p-8 rounded-[32px] shadow-premium">
+                            <h3 class="text-xl font-black text-navy mb-6">近期承保清單</h3>
+                            <table class="w-full text-left">
+                                <thead class="bg-bgMain/50">
+                                    <tr class="text-[10px] font-black uppercase text-lightText border-b border-gray-100">
+                                        <th class="px-6 py-4">保單編號</th>
+                                        <th class="px-6 py-4">險種</th>
+                                        <th class="px-6 py-4">保額</th>
+                                        <th class="px-6 py-4">區塊鏈存證</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr v-for="p in recentPolicies" :key="p.id" class="hover:bg-bgMain/30">
+                                        <td class="px-6 py-4 font-mono text-xs font-bold text-navy">{{ p.id }}</td>
+                                        <td class="px-6 py-4 text-sm font-bold text-navy">{{ p.name }}</td>
+                                        <td class="px-6 py-4 text-sm font-black text-turquoise">{{ p.amount }}</td>
+                                        <td class="px-6 py-4"><span class="text-[10px] bg-turquoise/10 text-turquoise px-2 py-1 rounded">{{ p.hash }}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="bg-white p-8 rounded-[32px] shadow-premium">
+                            <h3 class="text-xl font-black text-navy mb-6 text-center">險種分佈</h3>
+                            <div class="h-[250px] relative">
+                                <canvas id="policyDistChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 理賠自動化 -->
+                <div v-else-if="activeMenu === 'Claims'" key="claims" class="space-y-6 animate-fade-in">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h2 class="text-4xl font-black text-navy mb-2">理賠自動化中心</h2>
+                            <p class="text-lightText">AI 審核流與區塊鏈醫療存證驗證</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-[32px] shadow-premium border border-white overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-bgMain/50">
+                                <tr class="text-[10px] font-black uppercase tracking-widest text-lightText border-b border-gray-100">
+                                    <th class="px-8 py-4">Claim ID</th>
+                                    <th class="px-8 py-4">保戶姓名</th>
+                                    <th class="px-8 py-4">理賠金額</th>
+                                    <th class="px-8 py-4">狀態</th>
+                                    <th class="px-8 py-4">Blockchain</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr v-for="claim in claims" :key="claim.id" class="hover:bg-bgMain/30 transition-colors">
+                                    <td class="px-8 py-6 text-sm font-mono text-navy font-bold">{{ claim.id }}</td>
+                                    <td class="px-8 py-6 font-bold text-navy">{{ claim.customer }}</td>
+                                    <td class="px-8 py-6 font-black text-navy">{{ claim.amount }}</td>
+                                    <td class="px-8 py-6"><span :class="['px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest', claim.statusClass]">{{ claim.status }}</span></td>
+                                    <td class="px-8 py-6">
+                                        <div class="flex items-center gap-2 text-turquoise">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                            <span class="text-[10px] font-black uppercase">Verified</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 動態風險評估 -->
+                <div v-else-if="activeMenu === 'Risk'" key="risk" class="space-y-6 animate-fade-in">
+                    <h2 class="text-4xl font-black text-navy mb-2">動態風險評估</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-8 rounded-[32px] shadow-premium">
+                            <h3 class="text-xl font-black text-navy mb-6">高風險保戶預警名單</h3>
+                            <div class="space-y-4">
+                                <div v-for="n in 3" :key="n" class="flex items-center justify-between p-4 bg-red-50 rounded-2xl">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-danger font-black">!</div>
+                                        <div>
+                                            <div class="font-bold text-navy">保戶 ID: P-00{{ n }}</div>
+                                            <div class="text-xs font-bold text-danger">嚴重藥物衝突頻次過高</div>
+                                        </div>
+                                    </div>
+                                    <button class="text-xs font-black text-navy underline">查看詳情</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-[32px] shadow-premium">
+                            <h3 class="text-xl font-black text-navy mb-6 text-center">Portfolio 風險熱圖</h3>
+                            <div class="h-[250px] bg-bgMain rounded-3xl flex items-center justify-center text-lightText font-bold italic">Heatmap Rendering...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI 核保建議 -->
+                <div v-else-if="activeMenu === 'AI'" key="ai" class="space-y-6 animate-fade-in">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h2 class="text-4xl font-black text-navy mb-2">AI 核保與保障缺口分析</h2>
+                            <p class="text-lightText">基於大數據主動偵測潛在投保需求與風險優化建議</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        <div v-for="gap in coverageGaps" :key="gap.type" class="bg-white p-8 rounded-[32px] shadow-premium border-t-4 border-golden hover:border-turquoise transition-all group">
+                            <div class="flex justify-between items-start mb-6">
+                                <span :class="['text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest', gap.riskLevel === 'Critical' ? 'bg-red-50 text-danger' : 'bg-golden/10 text-navy']">{{ gap.riskLevel }}</span>
+                                <div class="text-right">
+                                    <span class="text-2xl font-black text-navy">{{ gap.customerCount }}</span>
+                                    <p class="text-[9px] font-bold text-lightText uppercase">Target Users</p>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-black text-navy mb-2 group-hover:text-turquoise transition-colors">{{ gap.type }}</h3>
+                            <p class="text-sm font-medium text-content mb-6 leading-relaxed opacity-70">{{ gap.recommendation }}</p>
+                            <button @click="openMarketing(gap)" class="w-full py-4 bg-navy text-white rounded-2xl font-black text-xs hover:bg-turquoise transition-all shadow-lg hover:shadow-turquoise/20">啟動行銷方案</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 保戶目錄 -->
+                <div v-else-if="activeMenu === 'Customers'" key="customers" class="space-y-6 animate-fade-in">
+                    <h2 class="text-4xl font-black text-navy mb-2">保戶通訊錄</h2>
+                    <div class="bg-white p-8 rounded-[32px] shadow-premium">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div v-for="user in topSafeUsers" :key="user.name" class="p-6 border border-gray-100 rounded-3xl hover:border-turquoise/30 transition-all">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <img :src="'https://ui-avatars.com/api/?name=' + user.name + '&background=1DD3B0&color=fff'" class="w-12 h-12 rounded-xl">
+                                    <div>
+                                        <div class="font-bold text-navy">{{ user.name }}</div>
+                                        <div class="text-[10px] font-black text-turquoise uppercase tracking-widest">Safety Score: {{ user.score }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-bold text-lightText">已享保費折抵</span>
+                                    <span class="font-black text-navy">{{ user.discount }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+        </main>
+
+        <!-- Marketing Campaign Modal -->
+        <transition name="fade">
+            <div v-if="showMarketingModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-navy/60 backdrop-blur-md" @click="showMarketingModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden animate-fade-in">
+                    <div class="hero-navy p-10 text-white relative">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-turquoise/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <div class="inline-flex items-center gap-2 bg-turquoise text-navy px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">InsurTech Campaign</div>
+                                <h3 class="text-3xl font-black mb-2">AI 精準行銷引擎</h3>
+                                <p class="text-white/60 text-sm font-medium">針對「{{ currentGap?.type }}」群體啟動自動化方案</p>
+                            </div>
+                            <button @click="showMarketingModal = false" class="text-white/40 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-10 space-y-8">
+                        <div v-if="campaignStatus === 'idle'" class="space-y-6">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-6 bg-bgMain rounded-3xl">
+                                    <div class="text-[10px] font-black text-lightText uppercase mb-1">受眾人數</div>
+                                    <div class="text-2xl font-black text-navy">{{ currentGap?.customerCount }} 人</div>
+                                </div>
+                                <div class="p-6 bg-bgMain rounded-3xl">
+                                    <div class="text-[10px] font-black text-lightText uppercase mb-1">預估轉化率</div>
+                                    <div class="text-2xl font-black text-turquoise">18.5%</div>
+                                </div>
+                            </div>
+                            <div class="p-6 border-2 border-dashed border-slate-200 rounded-3xl space-y-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-turquoise/10 text-turquoise flex items-center justify-center"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></div>
+                                    <span class="text-sm font-bold text-navy">多通路推送 (Email, App Push, SMS)</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-turquoise/10 text-turquoise flex items-center justify-center"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
+                                    <span class="text-sm font-bold text-navy">AI 個人化保障文案生成</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else-if="campaignStatus === 'running'" class="py-10 text-center space-y-6">
+                            <div class="w-20 h-20 border-4 border-turquoise/20 border-t-turquoise rounded-full animate-spin mx-auto"></div>
+                            <div>
+                                <h4 class="text-xl font-black text-navy">{{ runningStep }}</h4>
+                                <p class="text-sm font-medium text-lightText mt-2">正在分析區塊鏈藥物衝突數據，優化推薦額度...</p>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div class="h-full bg-turquoise transition-all duration-500" :style="{ width: campaignProgress + '%' }"></div>
+                            </div>
+                        </div>
+
+                        <div v-else class="py-10 text-center space-y-6 animate-fade-in">
+                            <div class="w-20 h-20 bg-turquoise text-white rounded-full flex items-center justify-center mx-auto shadow-glow">
+                                <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-2xl font-black text-navy">行銷方案已成功啟動</h4>
+                                <p class="text-sm font-medium text-lightText mt-2">方案 ID: AI-MKT-{{ Math.floor(Math.random()*9000) }}</p>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="p-3 bg-mint rounded-xl"><div class="text-[9px] font-black text-primary">SENT</div><div class="font-bold text-navy">{{ currentGap?.customerCount }}</div></div>
+                                <div class="p-3 bg-mint rounded-xl"><div class="text-[9px] font-black text-primary">CHANNELS</div><div class="font-bold text-navy">3</div></div>
+                                <div class="p-3 bg-mint rounded-xl"><div class="text-[9px] font-black text-primary">BLOCKCHAIN</div><div class="font-bold text-navy">LOGGED</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-10 bg-bgMain flex gap-4">
+                        <button v-if="campaignStatus !== 'success'" @click="showMarketingModal = false" class="flex-1 py-4 font-bold text-lightText hover:text-navy transition-colors">取消關閉</button>
+                        <button v-if="campaignStatus === 'idle'" @click="runCampaign" class="flex-[2] py-4 turquoise-gradient text-white font-black rounded-2xl shadow-lg shadow-turquoise/20 hover:scale-105 transition-all">啟動 AI 智慧投放</button>
+                        <button v-if="campaignStatus === 'success'" @click="showMarketingModal = false" class="flex-1 py-4 bg-navy text-white font-black rounded-2xl">返回儀表板</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Policy Creation Modal -->
+        <transition name="fade">
+            <div v-if="showPolicyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-navy/60 backdrop-blur-md" @click="showPolicyModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-xl shadow-2xl relative z-10 overflow-hidden animate-fade-in">
+                    <div class="turquoise-gradient p-10 text-white relative">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <h3 class="text-3xl font-black mb-2">建立全新保單專案</h3>
+                                <p class="text-white/80 text-sm font-medium">配置基於 AI 藥物安全數據的動態費率方案</p>
+                            </div>
+                            <button @click="showPolicyModal = false" class="text-white/50 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-10 space-y-6">
+                        <div v-if="policyStatus === 'idle'">
+                            <div class="space-y-5">
+                                <div>
+                                    <label class="block text-[10px] font-black text-lightText uppercase mb-2">保單專案名稱</label>
+                                    <input type="text" v-model="newPolicy.name" placeholder="例如：2024 智慧康健專案 (高齡版)" class="w-full bg-bgMain border-none rounded-2xl py-4 px-6 font-bold text-navy focus:ring-2 focus:ring-turquoise/20">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-lightText uppercase mb-2">基礎保額</label>
+                                        <select v-model="newPolicy.amount" class="w-full bg-bgMain border-none rounded-2xl py-4 px-6 font-bold text-navy">
+                                            <option>$100,000</option>
+                                            <option>$250,000</option>
+                                            <option>$500,000</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-lightText uppercase mb-2">目標安全評分</label>
+                                        <input type="number" placeholder="90" class="w-full bg-bgMain border-none rounded-2xl py-4 px-6 font-bold text-navy">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else-if="policyStatus === 'verifying'" class="py-10 text-center space-y-6">
+                            <div class="relative w-24 h-24 mx-auto">
+                                <div class="absolute inset-0 border-4 border-turquoise/20 rounded-full"></div>
+                                <div class="absolute inset-0 border-4 border-t-turquoise rounded-full animate-spin"></div>
+                                <div class="absolute inset-0 flex items-center justify-center text-turquoise font-black text-[10px]">TX COMMIT</div>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-black text-navy animate-pulse">正在廣播至區塊鏈節點...</h4>
+                                <p class="text-sm font-medium text-lightText mt-2">正在簽署智能合約並上傳保障條款</p>
+                            </div>
+                        </div>
+
+                        <div v-else class="py-10 text-center space-y-6 animate-fade-in">
+                            <div class="w-20 h-20 bg-success text-white rounded-full flex items-center justify-center mx-auto shadow-glow">
+                                <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <h4 class="text-2xl font-black text-navy">保單專案已生效</h4>
+                            <div class="p-4 bg-slate-50 rounded-2xl font-mono text-[10px] text-turquoise text-center">
+                                LEDGER_ID: 0x93f2...a7e1 | BLOCK: 14251003
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-10 bg-bgMain flex gap-4">
+                        <button v-if="policyStatus !== 'success'" @click="showPolicyModal = false" class="flex-1 py-4 font-bold text-lightText hover:text-navy transition-colors">取消</button>
+                        <button v-if="policyStatus === 'idle'" @click="createPolicy" class="flex-[2] py-4 turquoise-gradient text-white font-black rounded-2xl shadow-lg hover:scale-105 transition-all">確認建立專案</button>
+                        <button v-if="policyStatus === 'success'" @click="showPolicyModal = false" class="flex-1 py-4 bg-navy text-white font-black rounded-2xl">返回</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+    </div>
+
+    <!-- Icons Template -->
+    <script>
+        const Icons = {
+            Dashboard: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>` },
+            Policy: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>` },
+            Claims: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>` },
+            Risk: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>` },
+            AI: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>` },
+            Customers: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>` },
+            Blockchain: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>` },
+        };
+    </script>
+
+    <script src="js/mockData.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                const user = getCurrentUser();
+                if (!user || user.role !== 'insurance') window.location.href = 'login.html';
+                const insData = window.mockData.insurance;
+                return {
+                    user: user,
+                    stats: insData.stats,
+                    claims: insData.claimsTracking,
+                    coverageGaps: insData.coverageGaps,
+                    topSafeUsers: insData.topSafeUsers,
+                    activeMenu: 'Dashboard',
+                    showMarketingModal: false,
+                    showPolicyModal: false,
+                    currentGap: null,
+                    campaignStatus: 'idle',
+                    campaignProgress: 0,
+                    runningStep: '正在識別受眾...',
+                    policyStatus: 'idle',
+                    newPolicy: { name: '', amount: '$100,000' },
+                    recentPolicies: [
+                        { id: 'POL-9921', name: '智慧健康險 (Level 1)', amount: '$120,000', hash: '0x7d...f3a1' },
+                        { id: 'POL-9922', name: '智慧健康險 (Level 2)', amount: '$120,000', hash: '0x7d...f3a2' },
+                        { id: 'POL-9923', name: '智慧健康險 (Level 3)', amount: '$120,000', hash: '0x7d...f3a3' },
+                        { id: 'POL-9924', name: '智慧健康險 (Level 4)', amount: '$120,000', hash: '0x7d...f3a4' },
+                        { id: 'POL-9925', name: '智慧健康險 (Level 5)', amount: '$120,000', hash: '0x7d...f3a5' },
+                    ],
+                    menuItems: [
+                        { name: 'Dashboard', label: '總覽儀表板', icon: Icons.Dashboard },
+                        { name: 'Policy', label: '保單大數據', icon: Icons.Policy },
+                        { name: 'Claims', label: '理賠自動化', icon: Icons.Claims },
+                        { name: 'Risk', label: '動態風險評估', icon: Icons.Risk },
+                        { name: 'AI', label: 'AI 核保建議', icon: Icons.AI },
+                        { name: 'Customers', label: '保戶目錄', icon: Icons.Customers },
+                    ],
+                    kpis: [
+                        { label: 'Active Policies', value: insData.stats.activePolicies.toLocaleString(), icon: Icons.Policy, trend: 12.5, bg: 'turquoise-gradient', color: 'bg-turquoise', progress: 85 },
+                        { label: 'AI Risk Analysis', value: insData.stats.aiRiskAnalysis.toLocaleString(), icon: Icons.AI, trend: 24.1, bg: 'bg-navy', color: 'bg-turquoise', progress: 62 },
+                        { label: 'Coverage Health', value: insData.stats.coverageHealth + '%', icon: Icons.Risk, trend: 4.2, bg: 'turquoise-gradient', color: 'bg-navy', progress: 94 },
+                    ]
+                }
+            },
+            mounted() { this.initCharts(); },
+            methods: {
+                openMarketing(gap) {
+                    this.currentGap = gap;
+                    this.campaignStatus = 'idle';
+                    this.campaignProgress = 0;
+                    this.showMarketingModal = true;
+                },
+                runCampaign() {
+                    this.campaignStatus = 'running';
+                    const steps = ['受眾精準分群中...', 'AI 生成個性化方案...', '正在通過區塊鏈合規校驗...', '多通路並行投放中...'];
+                    let i = 0;
+                    const timer = setInterval(() => {
+                        this.campaignProgress += 25;
+                        this.runningStep = steps[i++];
+                        if (this.campaignProgress >= 100) {
+                            clearInterval(timer);
+                            setTimeout(() => { this.campaignStatus = 'success'; }, 500);
+                        }
+                    }, 800);
+                },
+                createPolicy() {
+                    this.policyStatus = 'verifying';
+                    this.policyModalTitle = '正在同步區塊鏈...';
+                    setTimeout(() => {
+                        this.policyStatus = 'success';
+                        this.recentPolicies.unshift({
+                            id: 'POL-99' + (Math.floor(Math.random()*100) + 30),
+                            name: this.newPolicy.name || '新智慧保單專案',
+                            amount: this.newPolicy.amount,
+                            hash: '0x' + Math.random().toString(16).slice(2, 10) + '...'
+                        });
+                    }, 2000);
+                },
+                switchMenu(menu) {
+                    this.activeMenu = menu;
+                    this.$nextTick(() => {
+                        if (menu === 'Dashboard') this.initCharts();
+                        else if (menu === 'Policy') this.initPolicyCharts();
+                    });
+                },
+                logout() { localStorage.removeItem('demo_user'); window.location.href = 'login.html'; },
+                initCharts() {
+                    const insData = window.mockData.insurance;
+                    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+                    new Chart(document.getElementById('heroAreaChart').getContext('2d'), {
+                        type: 'line',
+                        data: { labels: ['1', '2', '3', '4', '5', '6', '7'], datasets: [{ data: insData.aiPredictionTrend, borderColor: '#1DD3B0', borderWidth: 3, fill: true, backgroundColor: 'rgba(29, 211, 176, 0.1)', tension: 0.5, pointRadius: 0 }] },
+                        options: { animation: { duration: 2000, easing: 'easeOutQuart' }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
+                    });
+                    new Chart(document.getElementById('claimsTrendChart').getContext('2d'), {
+                        type: 'line',
+                        data: { labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月'], datasets: [{ label: '理賠量', data: insData.claimsTrend, borderColor: '#1DD3B0', borderWidth: 4, fill: true, backgroundColor: 'rgba(29, 211, 176, 0.05)', tension: 0.4, pointBackgroundColor: '#fff', pointBorderColor: '#1DD3B0', pointBorderWidth: 3, pointRadius: 5 }] },
+                        options: { animation: { duration: 2000, easing: 'easeOutQuart' }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    });
+                    new Chart(document.getElementById('riskRadarChart').getContext('2d'), {
+                        type: 'radar',
+                        data: { labels: ['慢性病', '藥物衝突', '年齡', '用藥規規', '回診'], datasets: [{ label: 'Risk', data: insData.riskRadar, backgroundColor: 'rgba(29, 211, 176, 0.2)', borderColor: '#1DD3B0', borderWidth: 2, pointRadius: 0 }] },
+                        options: { animation: { duration: 2000, easing: 'easeOutQuart' }, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { ticks: { display: false }, grid: { color: 'rgba(0,0,0,0.05)' } } } }
+                    });
+                },
+                initPolicyCharts() {
+                    new Chart(document.getElementById('policyDistChart').getContext('2d'), {
+                        type: 'doughnut',
+                        data: { labels: ['健康險', '長照險', '意外險'], datasets: [{ data: [45, 30, 25], backgroundColor: ['#1DD3B0', '#292E4C', '#F5D001'], borderWidth: 0 }] },
+                        options: { animation: { duration: 2000, easing: 'easeOutQuart' }, cutout: '80%', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

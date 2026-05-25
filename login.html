@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 | MedSafe-Chain 智慧醫療系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#24A15D',
+                        deep: '#175C3A',
+                        tech: '#3BB77E',
+                        mint: '#EAF7F0',
+                        bgMain: '#F8FAF9',
+                        title: '#1C2B24',
+                        content: '#4B5563',
+                        danger: '#EF4444',
+                        lightText: '#9CA3AF',
+                    },
+                    borderRadius: {
+                        '2xl': '20px',
+                        '3xl': '30px',
+                    },
+                    boxShadow: {
+                        'premium': '0 10px 40px -10px rgba(36, 161, 93, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; background-color: #F8FAF9; }
+        [v-cloak] { display: none; }
+        .hero-gradient { background: linear-gradient(135deg, #24A15D 0%, #175C3A 100%); }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+        .demo-card:hover { border-color: rgba(36, 161, 93, 0.4); transform: scale(1.02); }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <div id="app" v-cloak class="flex w-full">
+        <!-- Left: Hero Section -->
+        <div class="hidden lg:flex w-1/2 hero-gradient relative items-center justify-center p-20 text-white overflow-hidden">
+            <div class="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 w-80 h-80 bg-white/5 rounded-full -ml-20 -mb-20 blur-3xl"></div>
+            
+            <div class="relative z-10 max-w-xl">
+                <div class="mb-12 flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <span class="text-3xl font-black tracking-tighter">MedSafe-Chain</span>
+                </div>
+                
+                <h1 class="text-6xl font-black leading-tight mb-8">智慧醫療，<br><span class="opacity-70">守護您的用藥安全。</span></h1>
+                <p class="text-xl text-white/80 leading-relaxed mb-12">透過區塊鏈存證與 AI 即時檢測，跨院用藥不再充滿未知風險。</p>
+                
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div><span class="text-lg font-semibold">AI 藥物交互作用即時預警</span></div>
+                    <div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div><span class="text-lg font-semibold">區塊鏈去中心化健康日誌</span></div>
+                </div>
+                <div class="mt-20 animate-float opacity-30">
+                    <svg class="w-full max-w-sm" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path fill="white" d="M47.5,-59.2C59.9,-51.1,67.3,-34.5,70.1,-17.8C72.9,-1.1,71.1,15.7,64.1,30.3C57.1,44.9,44.9,57.3,30.5,64.2C16.1,71.1,-0.5,72.4,-17.7,68.9C-34.9,65.4,-52.7,57.1,-63.3,43.3C-73.9,29.5,-77.4,10.2,-74.6,-7.7C-71.8,-25.6,-62.7,-42.1,-48.9,-50.1C-35.1,-58.1,-17.5,-57.6,0.3,-58C18.1,-58.4,35.1,-67.3,47.5,-59.2Z" transform="translate(100 100)" /></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Login Section -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-20 bg-white overflow-y-auto">
+            <div class="w-full max-w-md py-10">
+                <div class="mb-10 text-center lg:text-left">
+                    <h2 class="text-4xl font-black text-title mb-4">歡迎回來</h2>
+                    <p class="text-content">請輸入帳號密碼，或選擇下方快速登入。</p>
+                </div>
+
+                <form @submit.prevent="login" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-title mb-2">帳號</label>
+                        <input type="text" v-model="username" placeholder="請輸入帳號" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-4 px-6 outline-none transition-all font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-title mb-2">密碼</label>
+                        <input type="password" v-model="password" placeholder="••••••••" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-4 px-6 outline-none transition-all font-medium">
+                    </div>
+
+                    <div v-if="error" class="bg-red-50 text-danger text-xs font-bold p-4 rounded-xl border border-red-100">{{ error }}</div>
+
+                    <button type="submit" :disabled="loading" class="w-full hero-gradient text-white font-black py-4 rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-3">
+                        <svg v-if="loading" class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        {{ loading ? '驗證中...' : '登入系統' }}
+                    </button>
+                </form>
+
+                <!-- Demo Accounts Section -->
+                <div class="mt-12">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="flex-1 h-px bg-slate-100"></div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">演示帳號快速登入</span>
+                        <div class="flex-1 h-px bg-slate-100"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div v-for="u in demoUsers" :key="u.username" 
+                             @click="autoFill(u)"
+                             class="demo-card p-4 bg-slate-50 rounded-2xl border-2 border-transparent transition-all cursor-pointer group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span :class="getRoleClass(u.role)" class="text-[8px] font-black px-1.5 py-0.5 rounded uppercase">{{ u.role }}</span>
+                                <svg class="h-3 w-3 text-slate-300 group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                            </div>
+                            <div class="text-sm font-black text-title">{{ u.name }}</div>
+                            <div class="text-[10px] font-bold text-slate-400 mt-0.5">{{ u.username }} / {{ u.password }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-16 text-center">
+                    <div class="flex justify-center gap-8">
+                        <div class="text-center"><div class="text-xl font-black text-title">4.5k+</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Users</div></div>
+                        <div class="text-center"><div class="text-xl font-black text-title">12k+</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">DDI Rules</div></div>
+                        <div class="text-center"><div class="text-xl font-black text-title">100%</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Secured</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/mockData.js"></script>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    username: '', password: '', error: '', loading: false,
+                    demoUsers: window.mockData.users
+                }
+            },
+            methods: {
+                autoFill(user) {
+                    this.username = user.username;
+                    this.password = user.password;
+                    this.error = '';
+                },
+                getRoleClass(role) {
+                    const classes = {
+                        admin: 'bg-purple-100 text-purple-600',
+                        doctor: 'bg-blue-100 text-blue-600',
+                        patient: 'bg-green-100 text-green-600',
+                        insurance: 'bg-orange-100 text-orange-600'
+                    };
+                    return classes[role] || 'bg-slate-100 text-slate-600';
+                },
+                login() {
+                    this.error = '';
+                    if (!this.username || !this.password) { this.error = '請輸入帳號密碼'; return; }
+                    this.loading = true;
+                    setTimeout(() => {
+                        const user = this.demoUsers.find(u => u.username === this.username && u.password === this.password);
+                        if (user) {
+                            localStorage.setItem('demo_user', JSON.stringify(user));
+                            const routes = { admin: 'admin.html', doctor: 'dashboard.html', patient: 'patient.html', insurance: 'insurance.html' };
+                            window.location.href = routes[user.role] || 'index.html';
+                        } else {
+                            this.error = '帳號或密碼錯誤';
+                            this.loading = false;
+                        }
+                    }, 800);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
