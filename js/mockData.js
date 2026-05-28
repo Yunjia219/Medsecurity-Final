@@ -122,7 +122,7 @@ window.mockData = {
     ]
   },
 
-  // 保險端 (insurance.html) 數據 - 進階版
+  // 保險端數據
   insurance: {
     stats: {
       activePolicies: 12450,
@@ -132,22 +132,16 @@ window.mockData = {
       coverageHealth: 94.2,
       blockchainVerification: '100%'
     },
-    // 年度理賠趨勢 (Line)
     claimsTrend: [65, 59, 80, 81, 56, 55, 72],
-    // 保戶風險分析 (Radar)
-    riskRadar: [85, 90, 70, 80, 75], // 慢性病, 藥物衝突, 年齡因素, 用藥規律, 回診率
-    // 保費折抵統計 (Bar)
+    riskRadar: [85, 90, 70, 80, 75],
     discountsMonthly: [120000, 150000, 140000, 180000, 160000, 210000, 195000],
-    // AI 風險預測 (Area)
-    aiPredictionTrend: [25, 22, 18, 15, 12, 10, 8], // 預測未來半年出險率降低趨勢
-    // 理賠追蹤
+    aiPredictionTrend: [25, 22, 18, 15, 12, 10, 8],
     claimsTracking: [
       { id: 'CLM-8821', customer: '王大明', amount: '$1,200', status: 'Approved', statusClass: 'text-turquoise bg-turquoise/10', time: '2小時前', progress: 100 },
       { id: 'CLM-8822', customer: '陳小美', amount: '$4,500', status: 'Processing', statusClass: 'text-yellow-500 bg-yellow-50', time: '5小時前', progress: 65 },
       { id: 'CLM-8823', customer: '李國華', amount: '$850', status: 'AI Reviewing', statusClass: 'text-indigo-500 bg-indigo-50', time: '1天前', progress: 40 },
       { id: 'CLM-8824', customer: '張健', amount: '$2,300', status: 'Pending Documents', statusClass: 'text-gray-500 bg-gray-50', time: '2天前', progress: 20 },
     ],
-    // 保障缺口分析
     coverageGaps: [
       { type: '心血管疾病額度不足', customerCount: 450, riskLevel: 'High', recommendation: '建議調增 20% 醫療額度' },
       { type: '藥物衝突高風險群', customerCount: 120, riskLevel: 'Critical', recommendation: '啟動 AI 即時用藥監控專案' },
@@ -166,5 +160,27 @@ window.mockData = {
     { id: 2, name: 'Aspirin', zhName: '阿斯匹靈', category: '非類固醇消炎藥', dosage: '100mg', unit: '錠', stock: 2500, price: 5, status: '正常', location: 'A-02' },
     { id: 3, name: 'Metformin', zhName: '二甲雙胍', category: '降血糖藥', dosage: '500mg', unit: '錠', stock: 3000, price: 8, status: '正常', location: 'B-01' },
     { id: 4, name: 'Lisinopril', zhName: '賴諾普利', category: '降血壓藥', dosage: '10mg', unit: '錠', stock: 1500, price: 12, status: '正常', location: 'B-02' }
-  ]
+  ],
+
+  // -------------------------------------------------------------------
+  // 藥物交互作用網狀圖資料 (D3.js)
+  // -------------------------------------------------------------------
+  graphData: {
+    nodes: [
+      { id: "Warfarin", name_en: "Warfarin", name_zh: "華法林", hospital: "台大醫院", conflict: true, dosage: "5mg", freq: "每日一次" },
+      { id: "Aspirin", name_en: "Aspirin", name_zh: "阿斯匹靈", hospital: "長庚醫院", conflict: true, dosage: "100mg", freq: "每日一次" },
+      { id: "Amiodarone", name_en: "Amiodarone", name_zh: "胺碘酮", hospital: "成大醫院", conflict: true, dosage: "200mg", freq: "每日一次" },
+      { id: "Metformin", name_en: "Metformin", name_zh: "二甲雙胍", hospital: "榮總醫院", conflict: false, dosage: "500mg", freq: "每日兩次" },
+      { id: "Lisinopril", name_en: "Lisinopril", name_zh: "賴諾普利", hospital: "台大醫院", conflict: false, dosage: "10mg", freq: "每日一次" },
+      { id: "Atorvastatin", name_en: "Atorvastatin", name_zh: "阿托伐他汀", hospital: "馬偕醫院", conflict: false, dosage: "20mg", freq: "睡前一次" }
+    ],
+    links: [
+      { source: "Warfarin", target: "Aspirin", conflict: true, effect: "高風險：增加嚴重的胃腸道出血與內出血風險。", recommendation: "避免合併使用，或需嚴密監測 INR 值與出血徵兆。" },
+      { source: "Warfarin", target: "Amiodarone", conflict: true, effect: "高風險：顯著提升藥物血中濃度，易導致抗凝效果過強。", recommendation: "建議劑量減半，並密切監測凝血指標。" }
+    ],
+    scenarios: {
+      A: ["Warfarin", "Aspirin", "Metformin", "Amiodarone"],
+      B: ["Metformin", "Lisinopril", "Atorvastatin"]
+    }
+  }
 };

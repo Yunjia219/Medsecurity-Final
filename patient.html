@@ -7,7 +7,7 @@
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -26,6 +26,7 @@
                         success: '#22C55E',
                         warning: '#F59E0B',
                         danger: '#EF4444',
+                        golden: '#D4AF37'
                     },
                     borderRadius: {
                         '2xl': '20px',
@@ -63,90 +64,69 @@
     </style>
 </head>
 <body class="overflow-x-hidden">
-    <div id="app" v-cloak class="min-h-screen pb-20">
-        <!-- Top Nav -->
-        <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-glow">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                </div>
-                <span class="text-xl font-black text-title tracking-tighter">MedSafe-Chain</span>
-            </div>
+    <div id="app" v-cloak class="flex min-h-screen relative overflow-x-hidden text-left">
+        <!-- Mobile Sidebar Overlay -->
+        <transition name="fade">
+            <div v-if="showMobileMenu" @click="showMobileMenu = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden"></div>
+        </transition>
 
-            <div class="flex items-center gap-4 sm:gap-6">
-                <!-- Notifications Dropdown -->
-                <div class="relative">
-                    <button @click="showNotifDropdown = !showNotifDropdown" 
-                            class="relative p-2.5 text-slate-400 hover:text-primary bg-slate-50 rounded-xl transition-all shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-danger rounded-full border-2 border-white"></span>
-                    </button>
-
-                    <transition name="fade">
-                        <div v-if="showNotifDropdown" class="absolute right-0 mt-4 w-80 bg-white rounded-[32px] shadow-2xl border border-slate-100 z-50 overflow-hidden animate-fade-in">
-                            <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-                                <span class="font-black text-title text-sm">健康通知</span>
-                                <span class="text-[10px] font-black text-primary bg-mint px-2.5 py-1 rounded-lg">3 NEW</span>
-                            </div>
-                            <div class="max-h-96 overflow-y-auto">
-                                <div v-for="(notif, i) in notifications" :key="i" class="p-6 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer group">
-                                    <div class="flex gap-4">
-                                        <div :class="['w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white shadow-sm', notif.bg]">
-                                            <component :is="notif.icon" class="h-5 w-5"></component>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="flex justify-between items-start mb-1">
-                                                <span class="text-xs font-black text-title group-hover:text-primary transition-colors">{{ notif.title }}</span>
-                                                <span class="text-[9px] font-bold text-slate-400">{{ notif.time }}</span>
-                                            </div>
-                                            <p class="text-[11px] font-medium text-content leading-relaxed">{{ notif.content }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-4 text-center">
-                                <button @click="showNotifDropdown = false" class="text-xs font-black text-primary hover:underline uppercase tracking-widest">Mark all as read</button>
-                            </div>
+        <!-- Sidebar (Mobile & Desktop) -->
+        <aside :class="['w-72 fixed h-screen left-0 top-0 p-6 z-[70] transition-transform duration-300 bg-white lg:bg-transparent lg:translate-x-0 shadow-2xl lg:shadow-none', showMobileMenu ? 'translate-x-0' : '-translate-x-full lg:block']">
+            <div class="h-full flex flex-col">
+                <div class="flex items-center justify-between mb-12 px-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         </div>
-                    </transition>
+                        <span class="text-xl font-extrabold text-title tracking-tight truncate">MedSafe <span class="text-primary">患者端</span></span>
+                    </div>
+                    <button @click="showMobileMenu = false" class="lg:hidden p-2 text-slate-400 hover:text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                 </div>
 
-                <!-- Profile & Logout -->
-                <div class="flex items-center gap-4 pl-4 border-l border-gray-100">
-                    <div class="hidden sm:block text-right">
-                        <div class="text-sm font-black text-title">{{ profile.name }}</div>
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Premium Patient</div>
-                    </div>
-                    <img :src="profile.avatar" class="w-11 h-11 rounded-2xl border-2 border-white shadow-premium" alt="Avatar">
-                    
-                    <button @click="logout" class="ml-2 group flex items-center gap-2 bg-red-50 hover:bg-danger text-danger hover:text-white px-4 py-2.5 rounded-2xl transition-all duration-300 font-bold text-xs shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span>登出系統</span>
+                <nav class="flex-1 space-y-2">
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold bg-primary/10 text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> 健康首頁</a>
+                </nav>
+
+                <div class="mt-auto pt-6 border-t border-slate-100">
+                    <button @click="logout" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-danger hover:bg-red-50 w-full transition-all text-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg> 退出登入
                     </button>
                 </div>
             </div>
-        </nav>
+        </aside>
 
-        <main class="max-w-[1400px] mx-auto p-6 space-y-8">
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-72 p-4 md:p-8 space-y-6 md:space-y-10 min-w-0 text-left">
+            <!-- Header -->
+            <header class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button @click="showMobileMenu = true" class="lg:hidden p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-primary transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
+                    <div class="text-left"><h2 class="text-2xl md:text-4xl font-black text-title italic tracking-tighter uppercase">My Health Hub</h2><p class="text-xs md:text-sm font-bold text-lightText uppercase tracking-widest pl-1">FHIR Personal Health Record</p></div>
+                </div>
+                <div class="flex items-center gap-3 md:gap-6 bg-white p-2 md:p-2.5 rounded-3xl shadow-premium border border-white">
+                    <div class="relative hidden sm:block">
+                        <button @click="showNotifDropdown = !showNotifDropdown" class="p-2.5 text-lightText hover:text-primary transition-colors text-left"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg><span class="absolute top-2 right-2 w-2.5 h-2.5 bg-danger rounded-full border-2 border-white"></span></button>
+                    </div>
+                    <div class="flex items-center gap-3 border-l-2 border-slate-50 pl-3 md:pl-6 text-left">
+                        <div class="text-right hidden md:block"><div class="text-sm font-black text-title">{{ profile.name }}</div><div class="text-[9px] font-black text-primary uppercase">Patient Account</div></div>
+                        <img :src="'https://ui-avatars.com/api/?name=' + profile.name + '&background=24A15D&color=fff'" class="w-10 h-10 md:w-12 md:h-12 rounded-[20px] shadow-lg border-2 border-white shrink-0">
+                    </div>
+                </div>
+            </header>
+
             <!-- Welcome Hero -->
-            <section class="hero-gradient rounded-[32px] p-8 sm:p-12 text-white relative overflow-hidden shadow-premium animate-fade-in">
+            <section class="hero-gradient rounded-[32px] p-8 sm:p-12 text-white relative overflow-hidden shadow-premium animate-fade-in text-left">
                 <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
                 <div class="relative z-10 flex flex-col lg:flex-row justify-between lg:items-center gap-8">
-                    <div class="max-w-2xl">
-                        <h1 class="text-4xl sm:text-5xl font-black mb-6">早安，{{ profile.name }}</h1>
-                        <p class="text-lg text-white/80 leading-relaxed mb-8">{{ profile.healthSummary }}</p>
+                    <div class="max-w-2xl text-left">
+                        <h1 class="text-3xl sm:text-5xl font-black mb-6">早安，{{ profile.name }}</h1>
+                        <p class="text-base sm:text-lg text-white/80 leading-relaxed mb-8">{{ profile.healthSummary }}</p>
                         <div class="flex flex-wrap gap-4">
                             <div class="glass px-6 py-3 rounded-2xl flex items-center gap-3">
                                 <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
                                 <span class="text-sm font-bold">AI 安全監測中</span>
                             </div>
-                            <div class="glass px-6 py-3 rounded-2xl flex items-center gap-3">
+                            <div class="glass px-6 py-3 rounded-2xl flex items-center gap-3 text-left">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -170,54 +150,63 @@
                 <!-- Left: Medications & Reminders -->
                 <div class="xl:col-span-2 space-y-8">
                     <!-- Today's Schedule -->
-                    <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in" style="animation-delay: 0.1s">
-                        <div class="flex justify-between items-center mb-8">
-                            <h3 class="text-2xl font-black text-title flex items-center gap-3">
-                                <div class="w-10 h-10 bg-mint rounded-xl flex items-center justify-center text-primary">
+                    <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in text-left">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-black text-title flex items-center gap-3 text-left text-left">
+                                <div class="w-10 h-10 bg-mint rounded-xl flex items-center justify-center text-primary shadow-sm shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                                 今日用藥提醒
                             </h3>
-                            <span class="text-sm font-bold text-primary bg-mint px-4 py-2 rounded-xl">進度 1/3</span>
+                            <div class="text-right">
+                                <span class="text-sm font-black text-primary bg-mint px-4 py-2 rounded-xl">進度 {{ completedCount }}/{{ reminders.length }}</span>
+                            </div>
                         </div>
-                        <div class="space-y-4">
+
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full mb-10 overflow-hidden flex">
+                            <div class="h-full bg-primary transition-all duration-700 ease-out shadow-[0_0_10px_rgba(36,161,93,0.3)]" 
+                                 :style="{ width: (completedCount / reminders.length * 100) + '%' }"></div>
+                        </div>
+
+                        <div class="space-y-4 text-left">
                             <div v-for="(reminder, i) in reminders" :key="i" 
-                                 class="flex items-center gap-6 p-5 rounded-2xl border-2 transition-all"
-                                 :class="reminder.completed ? 'bg-mint/30 border-primary/10' : 'bg-bgMain border-transparent'">
-                                <div @click="reminder.completed = !reminder.completed" 
-                                     class="custom-checkbox flex-shrink-0 flex items-center justify-center"
-                                     :class="{ 'checked': reminder.completed }">
+                                 class="flex items-center gap-6 p-5 rounded-2xl border-2 transition-all cursor-pointer group text-left"
+                                 @click="reminder.completed = !reminder.completed"
+                                 :class="reminder.completed ? 'bg-mint/30 border-primary/10 shadow-sm' : 'bg-bgMain border-transparent hover:bg-white hover:border-slate-100 hover:shadow-md'">
+                                <div class="custom-checkbox flex-shrink-0 flex items-center justify-center transition-transform group-active:scale-90"
+                                     :class="{ 'checked shadow-lg': reminder.completed }">
                                     <svg v-if="reminder.completed" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <div class="flex-shrink-0 w-16 text-sm font-black text-title opacity-50">{{ reminder.time }}</div>
-                                <div class="flex-1 font-bold text-title" :class="{ 'line-through opacity-40': reminder.completed }">{{ reminder.text }}</div>
-                                <div class="hidden sm:block text-xs font-bold px-3 py-1 rounded-lg" :class="reminder.completed ? 'text-primary' : 'text-lightText'">
-                                    {{ reminder.completed ? '已完成' : '待執行' }}
+                                <div class="flex-shrink-0 w-16 text-sm font-black text-title" :class="{ 'opacity-30': reminder.completed }">{{ reminder.time }}</div>
+                                <div class="flex-1 font-bold text-title transition-all" :class="{ 'line-through opacity-30 italic': reminder.completed }">{{ reminder.text }}</div>
+                                <div class="hidden sm:block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all" 
+                                     :class="reminder.completed ? 'bg-primary text-white shadow-sm' : 'bg-white text-lightText border border-slate-100'">
+                                    {{ reminder.completed ? 'Completed' : 'Upcoming' }}
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Current Medications -->
-                    <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in" style="animation-delay: 0.2s">
+                    <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in text-left">
                         <div class="flex justify-between items-center mb-8">
-                            <h3 class="text-2xl font-black text-title flex items-center gap-3">
-                                <div class="w-10 h-10 bg-mint rounded-xl flex items-center justify-center text-primary">
+                            <h3 class="text-2xl font-black text-title flex items-center gap-3 text-left">
+                                <div class="w-10 h-10 bg-mint rounded-xl flex items-center justify-center text-primary shadow-sm shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.642.321a6 6 0 01-3.86.517l-2.388-.477a2 2 0 00-1.022.547l-1.168 1.168a2 2 0 00-.556 1.403V19a2 2 0 002 2h14a2 2 0 002-2v-1.403a2 2 0 00-.556-1.403l-1.168-1.168zM12 11a4 4 0 100-8 4 4 0 000 8z" />
                                     </svg>
                                 </div>
                                 我的數位藥箱
                             </h3>
-                            <button class="text-sm font-bold text-primary hover:underline">查看所有藥品</button>
+                            <button @click="showAllMedsModal = true" class="text-sm font-bold text-primary hover:underline transition-all">查看所有藥品</button>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div v-for="med in medications" :key="med.id" 
-                                 class="card-hover p-6 rounded-3xl bg-white border border-gray-100 flex gap-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                            <div v-for="med in medications.slice(0, 4)" :key="med.id" 
+                                 class="card-hover p-6 rounded-3xl bg-white border border-gray-100 flex gap-5 text-left text-left">
                                 <div :class="['w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0', med.color === 'danger' ? 'bg-red-50 text-danger' : 'bg-mint text-primary']">
                                     <svg v-if="med.icon === 'shield-exclamation'" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -226,16 +215,16 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex justify-between items-start mb-1">
-                                        <span class="text-lg font-black text-title truncate">{{ med.zhName }}</span>
-                                        <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter', med.color === 'danger' ? 'bg-red-50 text-danger' : 'bg-mint text-primary']">
+                                <div class="flex-1 min-w-0 text-left">
+                                    <div class="flex justify-between items-start mb-1 text-left text-left">
+                                        <span class="text-lg font-black text-title truncate text-left">{{ med.zhName }}</span>
+                                        <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter shrink-0', med.color === 'danger' ? 'bg-red-50 text-danger' : 'bg-mint text-primary']">
                                             {{ med.status }}
                                         </span>
                                     </div>
-                                    <div class="text-xs font-bold text-lightText mb-2 uppercase">{{ med.name }} • {{ med.dosage }}</div>
-                                    <div class="text-sm font-semibold text-content flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div class="text-xs font-bold text-lightText mb-2 uppercase text-left truncate">{{ med.name }} • {{ med.dosage }}</div>
+                                    <div class="text-sm font-semibold text-content flex items-center gap-2 text-left">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
                                         {{ med.freq }}
@@ -249,43 +238,45 @@
                 <!-- Right: AI Insights & Charts -->
                 <div class="space-y-8">
                     <!-- AI Health Insights -->
-                    <div class="bg-primary p-8 rounded-[32px] text-white shadow-premium animate-fade-in" style="animation-delay: 0.3s">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <div class="bg-primary p-8 rounded-[32px] text-white shadow-premium animate-fade-in text-left">
+                        <div class="flex items-center gap-3 mb-6 text-left text-left">
+                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                             </div>
-                            <h3 class="text-xl font-black">AI 健康分析</h3>
+                            <h3 class="text-xl font-black italic tracking-tighter text-left">AI 健康分析儀</h3>
                         </div>
-                        <div class="space-y-5">
-                            <div v-for="(insight, i) in aiInsights" :key="i" class="flex gap-4 group">
-                                <div class="w-1.5 h-auto bg-white/20 rounded-full group-hover:bg-white/50 transition-colors"></div>
-                                <p class="text-sm font-medium leading-relaxed opacity-90">{{ insight.text }}</p>
+                        <div class="space-y-5 text-left">
+                            <div v-for="(insight, i) in aiInsights" :key="i" class="flex gap-4 group text-left">
+                                <div class="w-1.5 h-auto bg-white/20 rounded-full group-hover:bg-white/50 transition-colors shrink-0"></div>
+                                <p class="text-sm font-medium leading-relaxed opacity-90 text-left">{{ insight.text }}</p>
                             </div>
                         </div>
-                        <button @click="showInsightsModal = true" class="w-full bg-white text-primary font-black py-4 rounded-2xl mt-8 shadow-lg hover:scale-105 active:scale-95 transition-all">
-                            查看完整建議
+                        <button @click="showInsightsModal = true" class="w-full bg-white text-primary font-black py-4 rounded-2xl mt-8 shadow-lg hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest text-left flex justify-center">
+                            完整智能建議
                         </button>
                     </div>
 
                     <!-- Safety Score Chart -->
-                    <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in" style="animation-delay: 0.4s">
-                        <h3 class="text-xl font-black text-title mb-6">安全評分趨勢</h3>
-                        <div class="h-[200px]">
-                            <canvas id="safetyTrendChart"></canvas>
-                        </div>
+                    <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in text-left">
+                        <h3 class="text-xl font-black text-title mb-6 flex items-center gap-2 text-left">
+                            <span class="w-1.5 h-5 bg-primary rounded-full shrink-0"></span> 安全評分趨勢
+                        </h3>
+                        <div id="safetyTrendChart" class="h-[200px]"></div>
                     </div>
 
                     <!-- Med Categories -->
-                    <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in" style="animation-delay: 0.5s">
-                        <h3 class="text-xl font-black text-title mb-2">藥品成分分佈</h3>
-                        <p class="text-xs font-bold text-lightText mb-6 uppercase tracking-widest">Medication Categories</p>
-                        <div class="h-[200px] relative">
-                            <canvas id="categoryChart"></canvas>
-                            <div class="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                                <span class="text-2xl font-black text-title">{{ stats.activeMeds }}</span>
-                                <span class="text-[10px] font-bold text-lightText uppercase">總藥數</span>
+                    <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white animate-fade-in text-left">
+                        <h3 class="text-xl font-black text-title mb-2 flex items-center gap-2 text-left">
+                            <span class="w-1.5 h-5 bg-tech rounded-full shrink-0"></span> 藥品成分分佈
+                        </h3>
+                        <p class="text-[10px] font-bold text-lightText mb-6 uppercase tracking-widest pl-4">Medication Categories</p>
+                        <div class="h-[200px] relative text-left text-left">
+                            <div id="categoryChart" class="h-full w-full"></div>
+                            <div class="absolute inset-0 flex items-center justify-center flex-col pointer-events-none text-left">
+                                <span class="text-2xl font-black text-title text-left">{{ stats.activeMeds }}</span>
+                                <span class="text-[9px] font-black text-lightText uppercase text-left">總項數</span>
                             </div>
                         </div>
                     </div>
@@ -293,31 +284,34 @@
             </div>
 
             <!-- Urgent Alerts Section -->
-            <section v-if="ddiAlerts.length > 0" class="animate-fade-in" style="animation-delay: 0.6s">
-                <div class="bg-red-50 border-2 border-danger/10 rounded-[32px] p-8">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 bg-danger text-white rounded-2xl flex items-center justify-center animate-pulse">
+            <section v-if="ddiAlerts.length > 0" class="animate-fade-in text-left">
+                <div class="bg-red-50 border-2 border-danger/10 rounded-[32px] p-8 text-left">
+                    <div class="flex items-center gap-4 mb-6 text-left">
+                        <div class="w-12 h-12 bg-danger text-white rounded-2xl flex items-center justify-center animate-pulse shadow-lg shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
-                        <h3 class="text-2xl font-black text-danger">關鍵交互作用警告 (Critical DDI)</h3>
+                        <h3 class="text-2xl font-black text-danger uppercase italic tracking-tighter text-left">Critical DDI Interception</h3>
                     </div>
-                    <div v-for="alert in ddiAlerts" :key="alert.id" class="bg-white p-8 rounded-3xl shadow-sm border border-red-100 flex flex-col lg:flex-row gap-8 items-start">
-                        <div class="flex-1 space-y-4">
-                            <div class="flex items-center gap-3">
-                                <span v-for="drug in alert.drugs" class="px-4 py-1.5 bg-red-50 text-danger font-black rounded-xl text-sm">{{ drug }}</span>
-                                <span class="mx-2 text-danger font-black">X</span>
+                    <div v-for="alert in ddiAlerts" :key="alert.id" class="bg-white p-8 rounded-[40px] shadow-sm border border-red-100 flex flex-col lg:flex-row gap-10 items-start text-left text-left text-left">
+                        <div class="flex-1 space-y-6 text-left text-left">
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span v-for="drug in alert.drugs" :key="drug" class="px-5 py-2 bg-red-50 text-danger font-black rounded-2xl text-xs border border-red-100 shadow-sm">{{ drug }}</span>
+                                <span class="mx-2 text-danger font-black text-xl">×</span>
                             </div>
-                            <h4 class="text-xl font-black text-title">{{ alert.message }}</h4>
-                            <p class="text-content leading-relaxed">{{ alert.recommendation }}</p>
+                            <h4 class="text-2xl font-black text-title leading-tight text-left">{{ alert.message }}</h4>
+                            <div class="p-5 bg-slate-50 rounded-3xl border-l-4 border-danger text-left">
+                                <p class="text-sm font-bold text-slate-600 leading-relaxed text-left text-left">{{ alert.recommendation }}</p>
+                            </div>
                         </div>
-                        <div class="w-full lg:w-auto flex flex-col gap-3">
-                            <button class="bg-danger text-white font-black px-8 py-4 rounded-2xl shadow-lg shadow-danger/20 hover:scale-105 transition-all whitespace-nowrap">
+                        <div class="w-full lg:w-72 flex flex-col gap-4 text-left">
+                            <button @click="startTelehealth" class="bg-danger text-white font-black py-5 rounded-3xl shadow-xl shadow-danger/30 hover:scale-[1.03] active:scale-[0.97] transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3 text-left">
+                                <div class="w-2 h-2 bg-white rounded-full animate-ping shrink-0 text-left text-left"></div>
                                 立即連線醫師
                             </button>
-                            <button class="bg-bgMain text-title font-bold px-8 py-4 rounded-2xl hover:bg-gray-100 transition-all whitespace-nowrap">
-                                了解臨床細節
+                            <button @click="showDdiDetailModal = true" class="bg-bgMain text-title font-black py-5 rounded-3xl hover:bg-slate-100 transition-all text-xs uppercase tracking-widest border border-slate-200 shadow-sm text-left flex justify-center">
+                                了解臨床機轉
                             </button>
                         </div>
                     </div>
@@ -325,61 +319,209 @@
             </section>
         </main>
 
-        <!-- AI Insights Modal -->
+        <!-- Modals -->
+
+        <!-- 1. AI Insights Modal -->
         <transition name="fade">
-            <div v-if="showInsightsModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md" @click="showInsightsModal = false"></div>
-                <div class="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden animate-fade-in">
-                    <div class="hero-gradient p-10 text-white relative">
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                        <div class="relative z-10 flex justify-between items-start">
-                            <div>
-                                <div class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">MedSafe AI Analysis</div>
-                                <h3 class="text-3xl font-black mb-2">全方位用藥健康建議</h3>
-                                <p class="text-white/70 text-sm font-medium">基於區塊鏈跨院數據與 DDI 臨床知識庫之深度分析</p>
+            <div v-if="showInsightsModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showInsightsModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden animate-fade-in text-left flex flex-col">
+                    <div class="hero-gradient p-12 text-white relative shrink-0">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl text-left text-left text-left"></div>
+                        <div class="relative z-10 flex justify-between items-start text-left text-left">
+                            <div class="text-left text-left">
+                                <div class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] mb-4 text-left">Clinical Intelligence</div>
+                                <h3 class="text-4xl font-black tracking-tighter text-left">用藥健康策略建議</h3>
                             </div>
-                            <button @click="showInsightsModal = false" class="text-white/50 hover:text-white transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                            <button @click="showInsightsModal = false" class="text-white/40 hover:text-white transition-colors p-2 bg-white/10 rounded-full shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
                     </div>
-                    <div class="p-10 space-y-8 max-h-[60vh] overflow-y-auto">
-                        <div v-for="(detail, i) in detailedInsights" :key="i" class="flex gap-6 items-start group">
-                            <div :class="['w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-110', detail.bg]">
-                                <component :is="detail.icon" class="h-6 w-6"></component>
+                    <div class="p-10 space-y-8 overflow-y-auto max-h-[60vh] text-left">
+                        <div v-for="(detail, i) in detailedInsights" :key="i" class="flex gap-8 items-start group text-left">
+                            <div :class="['w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-all group-hover:scale-110 group-hover:shadow-glow', detail.bg]">
+                                <component :is="detail.icon" class="h-7 w-7"></component>
                             </div>
-                            <div class="space-y-2">
-                                <h4 class="text-lg font-black text-title">{{ detail.title }}</h4>
-                                <p class="text-sm text-content leading-relaxed font-medium">{{ detail.content }}</p>
-                                <div v-if="detail.tag" class="inline-block px-2 py-0.5 bg-mint text-primary text-[10px] font-black rounded-md uppercase tracking-tighter">{{ detail.tag }}</div>
+                            <div class="space-y-3 text-left">
+                                <h4 class="text-xl font-black text-title group-hover:text-primary transition-colors text-left">{{ detail.title }}</h4>
+                                <p class="text-sm text-content font-medium leading-relaxed text-left">{{ detail.content }}</p>
+                                <div v-if="detail.tag" class="inline-block px-3 py-1 bg-mint text-primary text-[10px] font-black rounded-lg uppercase tracking-widest border border-primary/10">{{ detail.tag }}</div>
                             </div>
                         </div>
                     </div>
-                    <div class="p-10 bg-slate-50 border-t border-slate-100 flex justify-end">
-                        <button @click="showInsightsModal = false" class="hero-gradient text-white font-black px-10 py-4 rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 transition-all">
-                            了解並確認
+                    <div class="p-8 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+                        <button @click="showInsightsModal = false" class="hero-gradient text-white font-black px-12 py-4 rounded-2xl shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest">
+                            確認並同步雲端
                         </button>
                     </div>
                 </div>
             </div>
         </transition>
+
+        <!-- 2. Medication Cabinet Modal -->
+        <transition name="fade">
+            <div v-if="showAllMedsModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showAllMedsModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-4xl max-h-[90vh] shadow-2xl relative z-10 overflow-hidden animate-fade-in flex flex-col text-left text-left">
+                    <div class="bg-mint p-8 md:p-12 flex justify-between items-center shrink-0 text-left">
+                        <div class="flex items-center gap-6 text-left">
+                            <div class="w-16 h-16 bg-primary rounded-3xl flex items-center justify-center text-white shadow-xl shadow-primary/20 shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.642.321a6 6 0 01-3.86.517l-2.388-.477a2 2 0 00-1.022.547l-1.168 1.168a2 2 0 00-.556 1.403V19a2 2 0 002 2h14a2 2 0 002-2v-1.403a2 2 0 00-.556-1.403l-1.168-1.168zM12 11a4 4 0 100-8 4 4 0 000 8z" /></svg>
+                            </div>
+                            <div class="text-left text-left">
+                                <h3 class="text-2xl md:text-4xl font-black text-title italic tracking-tighter text-left">My Med-Cabinet</h3>
+                                <p class="text-primary font-black text-xs md:text-sm uppercase tracking-widest mt-1 text-left">目前共有 {{ medications.length }} 項區塊鏈存證處方</p>
+                            </div>
+                        </div>
+                        <button @click="showAllMedsModal = false" class="text-slate-400 hover:text-danger transition-colors p-3 bg-white rounded-full shadow-sm shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div class="p-6 md:p-12 overflow-y-auto space-y-4 text-left">
+                        <div class="overflow-x-auto text-left">
+                            <table class="w-full text-left border-separate border-spacing-y-4 min-w-[600px]">
+                                <thead>
+                                    <tr class="text-[10px] font-black uppercase tracking-[0.25em] text-lightText px-6 text-left">
+                                        <th class="pb-4 pl-10">成分名稱 / FHIR Resource</th>
+                                        <th class="pb-4">劑量頻率</th>
+                                        <th class="pb-4">醫療機構</th>
+                                        <th class="pb-4 pr-10 text-right">狀態</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="med in medications" :key="med.id" class="bg-bgMain rounded-[32px] group transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1 text-left text-left">
+                                        <td class="py-8 pl-10 rounded-l-[32px] border-l-8 text-left" :class="med.color === 'danger' ? 'border-danger' : 'border-primary'">
+                                            <div class="font-black text-xl text-title leading-none mb-1 text-left">{{ med.zhName }}</div>
+                                            <div class="text-[11px] font-black text-lightText uppercase tracking-widest text-left">{{ med.name }}</div>
+                                        </td>
+                                        <td class="py-8 text-left">
+                                            <div class="text-sm font-black text-title text-left">{{ med.dosage }}</div>
+                                            <div class="text-xs text-content font-bold opacity-60 mt-1 uppercase text-left">{{ med.freq }}</div>
+                                        </td>
+                                        <td class="py-8 italic font-black text-slate-400 text-sm text-left">
+                                            台大醫院 (模擬節點)
+                                        </td>
+                                        <td class="py-8 rounded-r-[32px] pr-10 text-right">
+                                            <span :class="['px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm shrink-0', med.color === 'danger' ? 'bg-red-50 text-danger border border-red-100' : 'bg-mint text-primary border border-primary/10']">
+                                                {{ med.status }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 3. Telehealth Modal -->
+        <transition name="fade">
+            <div v-if="showTelehealthModal" class="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/95 backdrop-blur-2xl" @click="closeTelehealth"></div>
+                <div class="bg-slate-900 w-full max-w-2xl rounded-[50px] shadow-[0_0_80px_rgba(36,161,93,0.3)] relative z-10 overflow-hidden border border-white/10 animate-fade-in flex flex-col text-left">
+                    <div class="p-8 md:p-12 flex flex-col items-center justify-center space-y-10 min-h-[500px] text-center text-left text-left">
+                        <div v-if="telehealthStatus === 'connecting'" class="flex flex-col items-center text-left">
+                            <div class="w-24 h-24 md:w-32 md:h-32 rounded-full border-[6px] border-primary/20 border-t-primary animate-spin mb-10 shadow-glow shrink-0"></div>
+                            <h3 class="text-2xl md:text-3xl font-black text-white italic tracking-widest uppercase text-left">SECURE LINKING...</h3>
+                            <p class="text-slate-500 font-bold text-xs md:text-sm mt-4 uppercase tracking-[0.3em] text-left">HAPI Messaging Gate Establishing</p>
+                        </div>
+                        <div v-if="telehealthStatus === 'active'" class="w-full space-y-10 animate-fade-in text-left">
+                            <div class="relative w-24 h-24 md:w-32 md:h-32 mx-auto text-left">
+                                <div class="absolute inset-0 bg-primary/20 rounded-[40px] animate-ping"></div>
+                                <div class="relative w-full h-full rounded-[40px] hero-gradient p-1.5 shadow-2xl border-4 border-white/20">
+                                    <img src="https://ui-avatars.com/api/?name=Doctor&background=fff&color=24A15D" class="w-full h-full rounded-[35px] object-cover">
+                                </div>
+                            </div>
+                            <div class="text-center text-left">
+                                <h3 class="text-3xl md:text-4xl font-black text-white tracking-tighter italic uppercase text-center text-left">Dr. Mei-Ling Lee</h3>
+                                <p class="text-primary font-black uppercase tracking-[0.3em] mt-2 text-[10px] md:text-xs text-center">Attending Physician • SECURE CONNECTION</p>
+                            </div>
+                            <div class="bg-white/5 p-6 md:p-8 rounded-[40px] border border-white/10 text-left relative overflow-hidden group">
+                                <div class="absolute top-0 right-0 p-4 opacity-10"><svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.609 9.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-11zm-14 0v-7.391c0-5.704 3.748-9.609 10-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-11z"/></svg></div>
+                                <div class="flex gap-5 items-start relative z-10 text-left">
+                                    <div class="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 font-black shadow-lg">AI</div>
+                                    <p class="text-sm md:text-base text-slate-300 leading-relaxed font-bold text-left">您好，{{ profile.name }}。我收到系統的自動交互警報了。這兩款藥物併用可能會有出血風險，我現在立即在 FHIR Server 上幫您更新用藥指示，請先暫停服用...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 md:p-10 bg-black/50 border-t border-white/5 flex gap-6 shrink-0 text-left">
+                        <button @click="closeTelehealth" class="flex-1 py-5 font-black text-slate-500 hover:text-danger transition-colors uppercase tracking-[0.2em] text-[10px]">Disconnect</button>
+                        <button class="flex-[2] bg-primary text-white font-black py-5 rounded-[24px] shadow-2xl shadow-primary/30 hover:scale-[1.03] active:scale-[0.97] transition-all text-xs uppercase tracking-widest text-left flex justify-center">Send Response</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 4. Clinical Detail Modal -->
+        <transition name="fade">
+            <div v-if="showDdiDetailModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 text-left">
+                <div class="absolute inset-0 bg-red-950/80 backdrop-blur-md" @click="showDdiDetailModal = false"></div>
+                <div class="bg-white rounded-[40px] md:rounded-[50px] w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in flex flex-col text-left text-left">
+                    <div class="bg-danger p-8 md:p-12 text-white relative text-left shrink-0">
+                        <div class="absolute top-0 right-0 w-80 h-full bg-white/10 -mr-20 skew-x-12 text-left"></div>
+                        <h3 class="text-3xl md:text-4xl font-black tracking-tighter italic uppercase relative z-10 text-left">Mechanism Detail</h3>
+                        <p class="text-white/80 font-black mt-3 relative z-10 uppercase tracking-widest text-[10px] md:text-[11px] text-left">Pharmacological Deep-Dive Report</p>
+                    </div>
+                    <div class="p-8 md:p-12 space-y-10 text-left overflow-y-auto max-h-[60vh]">
+                        <div class="flex items-center gap-6 justify-center bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left">
+                            <span class="px-6 py-2.5 bg-white text-danger font-black rounded-2xl shadow-sm border border-danger/10 text-sm italic shrink-0">Warfarin</span>
+                            <div class="w-10 h-10 bg-danger text-white rounded-full flex items-center justify-center font-black animate-pulse shrink-0">×</div>
+                            <span class="px-6 py-2.5 bg-white text-danger font-black rounded-2xl shadow-sm border border-danger/10 text-sm italic shrink-0">Aspirin</span>
+                        </div>
+                        <div class="space-y-8 text-left">
+                            <div class="space-y-4 text-left">
+                                <h4 class="text-[11px] font-black text-danger uppercase tracking-[0.3em] flex items-center gap-3 text-left text-left">
+                                    <div class="w-2 h-2 bg-danger rounded-full shrink-0"></div> 生物機轉 (Mechanism)
+                                </h4>
+                                <p class="text-base text-title leading-relaxed font-bold text-left">Aspirin 會不可逆地抑制血小板中的 COX-1 酵素，阻斷止血過程。當與抗凝血劑 Warfarin 併用時，會產生嚴重的「血液動力學協同效應」，這使得體內微小血管受損時無法及時凝血，進而導致嚴重的胃出血或腦出血風險。</p>
+                            </div>
+                            <div class="space-y-4 text-left text-left">
+                                <h4 class="text-[11px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-3 text-left text-left">
+                                    <div class="w-2 h-2 bg-primary rounded-full shrink-0"></div> 區塊鏈校驗元數據
+                                </h4>
+                                <div class="bg-bgMain p-6 rounded-[32px] font-mono text-[10px] text-lightText border border-slate-100/50 leading-loose text-left text-left">
+                                    <div class="flex justify-between border-b border-white pb-2 mb-2 text-left"><span>Resource-ID:</span> <span class="text-slate-600 font-black">fhir-rx-warfarin-001</span></div>
+                                    <div class="flex justify-between border-b border-white pb-2 mb-2 text-left text-left"><span>Detection-Engine:</span> <span class="text-slate-600 font-black">MedSafe-AI v2.4</span></div>
+                                    <div class="flex justify-between text-left text-left"><span>Evidence-Base:</span> <span class="text-danger font-black underline italic uppercase">High Probability (p<0.001)</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-8 md:p-10 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0 text-left">
+                        <button @click="showDdiDetailModal = false" class="bg-danger text-white font-black px-12 py-5 rounded-[24px] shadow-2xl shadow-danger/20 hover:scale-[1.03] active:scale-[0.97] transition-all uppercase tracking-widest text-xs text-left flex justify-center">
+                            Confirm Awareness
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Toast -->
+        <transition name="fade">
+            <div v-if="showToast" class="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[200] bg-slate-900 text-white px-8 py-5 rounded-3xl shadow-2xl border border-white/10 flex items-center gap-4 animate-fade-in text-left">
+                <div class="w-10 h-10 bg-success rounded-full flex items-center justify-center text-white shrink-0 text-left"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-left" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg></div>
+                <div class="overflow-hidden text-left"><div class="font-black text-sm uppercase tracking-widest truncate text-left">{{ toastTitle }}</div><div class="text-[10px] text-slate-500 font-bold truncate text-left">{{ toastMessage }}</div></div>
+            </div>
+        </transition>
     </div>
 
+    <!-- Data Injection -->
     <script src="js/mockData.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        const { createApp } = Vue;
+        const { createApp, markRaw } = Vue;
 
         const Icons = {
-            Safety: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` },
-            Heart: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>` },
-            Apple: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>` },
-            Light: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>` },
-            Reminder: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>` },
-            AI: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>` },
-            System: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` }
+            Safety: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` }),
+            Heart: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>` }),
+            Apple: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>` }),
+            Light: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>` }),
+            Reminder: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>` }),
+            AI: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>` }),
+            System: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` })
         };
 
         createApp({
@@ -395,6 +537,14 @@
                     reminders: patientData.reminders,
                     showInsightsModal: false,
                     showNotifDropdown: false,
+                    showAllMedsModal: false,
+                    showTelehealthModal: false,
+                    showDdiDetailModal: false,
+                    showMobileMenu: false,
+                    showToast: false,
+                    telehealthStatus: 'idle', // idle, connecting, active
+                    toastTitle: '系統通知',
+                    toastMessage: '同步成功',
                     notifications: [
                         { title: 'AI 分析完成', content: '您的最新跨院處方箋已完成安全性比對，無重大風險。', time: '10 分鐘前', icon: Icons.AI, bg: 'bg-primary' },
                         { title: '用藥提醒', content: '該服用「二甲雙胍 (500mg)」了，建議飯後服用。', time: '1 小時前', icon: Icons.Reminder, bg: 'bg-golden' },
@@ -408,73 +558,89 @@
                     ]
                 }
             },
+            computed: {
+                completedCount() {
+                    return this.reminders.filter(r => r.completed).length;
+                }
+            },
+            created() {
+                this._charts = {};
+            },
             mounted() {
                 this.initCharts();
+                this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
+                window.addEventListener('resize', this._resizeHandler);
+            },
+            unmounted() {
+                window.removeEventListener('resize', this._resizeHandler);
+                this.destroyCharts();
             },
             methods: {
                 logout() {
                     localStorage.removeItem('demo_user');
                     window.location.href = 'login.html';
                 },
+                startTelehealth() {
+                    this.showTelehealthModal = true;
+                    this.telehealthStatus = 'connecting';
+                    setTimeout(() => {
+                        this.telehealthStatus = 'active';
+                    }, 3000);
+                },
+                closeTelehealth() {
+                    this.showTelehealthModal = false;
+                    this.telehealthStatus = 'idle';
+                },
+                triggerToast(title, msg) {
+                    this.toastTitle = title;
+                    this.toastMessage = msg;
+                    this.showToast = true;
+                    setTimeout(() => this.showToast = false, 3000);
+                },
+                destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
                 initCharts() {
+                    this.destroyCharts();
                     const patientData = window.mockData.patient;
-                    Chart.defaults.font.family = "'Plus Jakarta Sans', 'Noto Sans TC', sans-serif";
-                    Chart.defaults.color = '#9CA3AF';
-
-                    const ctxTrend = document.getElementById('safetyTrendChart').getContext('2d');
-                    const trendGradient = ctxTrend.createLinearGradient(0, 0, 0, 200);
-                    trendGradient.addColorStop(0, 'rgba(36, 161, 93, 0.1)');
-                    trendGradient.addColorStop(1, 'rgba(36, 161, 93, 0)');
-
-                    new Chart(ctxTrend, {
-                        type: 'line',
-                        data: {
-                            labels: ['週一', '週二', '週三', '週四', '週五', '週六', '週日'],
-                            datasets: [{
+                    
+                    const trendEl = document.getElementById('safetyTrendChart');
+                    if (trendEl) {
+                        this._charts.trend = echarts.init(trendEl);
+                        this._charts.trend.setOption({
+                            tooltip: { trigger: 'axis' },
+                            xAxis: { type: 'category', data: ['週一', '週二', '週三', '週四', '週五', '週六', '週日'] },
+                            yAxis: { type: 'value', min: 70, show: false },
+                            series: [{
+                                name: '安全評分',
                                 data: patientData.safetyTrend,
-                                borderColor: '#24A15D',
-                                borderWidth: 3,
-                                fill: true,
-                                backgroundColor: trendGradient,
-                                tension: 0.4,
-                                pointRadius: 0,
-                                pointHoverRadius: 6,
-                                pointHoverBackgroundColor: '#24A15D',
-                                pointHoverBorderColor: '#fff',
-                                pointHoverBorderWidth: 3
-                            }]
-                        },
-                        options: {
-                            animation: { duration: 2000, easing: 'easeOutQuart' },
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                y: { display: false, min: 70 },
-                                x: { grid: { display: false }, ticks: { font: { weight: 'bold', size: 10 } } }
-                            }
-                        }
-                    });
+                                type: 'line',
+                                smooth: true,
+                                itemStyle: { color: '#24A15D' },
+                                areaStyle: { color: 'rgba(36, 161, 93, 0.1)' },
+                                symbol: 'none'
+                            }],
+                            grid: { left: 20, right: 20, top: 10, bottom: 20 }
+                        });
+                    }
 
-                    const ctxCat = document.getElementById('categoryChart').getContext('2d');
-                    new Chart(ctxCat, {
-                        type: 'doughnut',
-                        data: {
-                            labels: patientData.medicationCategories.map(c => c.label),
-                            datasets: [{
-                                data: patientData.medicationCategories.map(c => c.value),
-                                backgroundColor: ['#24A15D', '#3BB77E', '#175C3A', '#EAF7F0'],
-                                borderWidth: 0,
-                                cutout: '85%'
+                    const catEl = document.getElementById('categoryChart');
+                    if (catEl) {
+                        this._charts.category = echarts.init(catEl);
+                        this._charts.category.setOption({
+                            tooltip: { trigger: 'item' },
+                            series: [{
+                                name: '藥品類別',
+                                type: 'pie',
+                                radius: ['70%', '85%'],
+                                avoidLabelOverlap: false,
+                                label: { show: false },
+                                data: patientData.medicationCategories.map((c, i) => ({
+                                    value: c.value,
+                                    name: c.label,
+                                    itemStyle: { color: ['#24A15D', '#3BB77E', '#175C3A', '#EAF7F0'][i] }
+                                }))
                             }]
-                        },
-                        options: {
-                            animation: { duration: 2000, easing: 'easeOutQuart' },
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }).mount('#app');

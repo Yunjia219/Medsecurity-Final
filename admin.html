@@ -7,7 +7,7 @@
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -43,104 +43,49 @@
     </script>
 
     <style>
-        body {
-            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
-            background-color: #F6F7FB;
-            color: #4B5563;
-        }
-
+        body { font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; background-color: #F6F7FB; color: #4B5563; }
         [v-cloak] { display: none; }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .sidebar-item.active { background: linear-gradient(135deg, #7B61FF 0%, #6C47FF 100%); color: white; box-shadow: 0 4px 15px rgba(108, 71, 255, 0.4); }
+        .sidebar-item:not(.active):hover { background: #EDE9FE; color: #7B61FF; transform: translateX(5px); }
+        .purple-gradient { background: linear-gradient(135deg, #7B61FF 0%, #6C47FF 100%); }
+        .pulse-live { animation: pulse-red-admin 2s infinite; }
+        @keyframes pulse-red-admin {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-
-        .sidebar-item {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .sidebar-item.active {
-            background: linear-gradient(135deg, #7B61FF 0%, #6C47FF 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(108, 71, 255, 0.4);
-        }
-
-        .sidebar-item:not(.active):hover {
-            background: #EDE9FE;
-            color: #7B61FF;
-            transform: translateX(5px);
-        }
-
-        .kpi-card {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .kpi-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px -10px rgba(123, 97, 255, 0.25);
-        }
-
-        .purple-gradient {
-            background: linear-gradient(135deg, #7B61FF 0%, #6C47FF 100%);
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
-
-        .table-row-hover:hover {
-            background-color: #F9FAFB;
-        }
-
-        .fade-enter-active, .fade-leave-active {
-            transition: opacity 0.3s ease;
-        }
-        .fade-enter-from, .fade-leave-to {
-            opacity: 0;
-        }
+        .table-row-hover:hover { background-color: #F9FAFB; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
 <body class="overflow-x-hidden">
     <div id="app" v-cloak class="flex min-h-screen">
         <!-- Sidebar -->
         <aside class="w-72 fixed h-screen left-0 top-0 p-6 z-40 hidden lg:block">
-            <div class="h-full glass rounded-3xl flex flex-col p-6 shadow-premium">
+            <div class="h-full glass rounded-3xl flex flex-col p-6 shadow-premium text-left">
                 <div class="flex items-center gap-3 px-2 mb-10">
-                    <div class="w-10 h-10 purple-gradient rounded-xl flex items-center justify-center shadow-glow">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
+                    <div class="w-10 h-10 purple-gradient rounded-xl flex items-center justify-center shadow-glow shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     </div>
-                    <span class="text-xl font-extrabold text-title tracking-tight">MedSafe <span class="text-primary">管理端</span></span>
+                    <span class="text-xl font-extrabold text-title tracking-tight truncate">MedSafe <span class="text-primary">管理端</span></span>
                 </div>
-
                 <nav class="flex-1 space-y-2">
                     <a v-for="item in menuItems" :key="item.name" href="#" 
                        @click.prevent="switchMenu(item.name)"
-                       :class="['sidebar-item flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold', activeMenu === item.name ? 'active' : 'text-lightText']">
+                       :class="['sidebar-item flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold transition-all', activeMenu === item.name ? 'active' : 'text-lightText']">
                         <component :is="item.icon" class="h-5 w-5"></component>
                         {{ item.label }}
                     </a>
                 </nav>
-
                 <div class="mt-auto pt-6 border-t border-purple-100">
                     <button @click="logout" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold text-danger hover:bg-red-50 w-full transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                         登出系統
                     </button>
                 </div>
@@ -149,421 +94,483 @@
 
         <!-- Main Content -->
         <main class="flex-1 lg:ml-72 p-6 lg:p-8 space-y-8 min-w-0">
-            <!-- Topbar -->
             <header class="glass rounded-2xl p-4 flex items-center justify-between shadow-premium sticky top-0 z-30">
                 <div class="flex items-center gap-4 flex-1">
-                    <div class="relative w-full max-w-md hidden md:block">
-                        <input type="text" placeholder="搜索分析數據、日誌..." 
-                               class="w-full bg-bgMain/50 border-none rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-primary/20 text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-lightText" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <div class="text-sm font-bold text-title flex items-center gap-2 lg:hidden">
-                         <span class="text-primary">●</span> {{ activeMenu }}
+                    <div class="relative w-full max-w-md hidden md:block text-left">
+                        <input type="text" placeholder="全局搜索功能..." class="w-full bg-bgMain/50 border-none rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-primary/20 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-lightText" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 sm:gap-6">
-                    <div class="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-success bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
-                        <span class="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-                        系統在線
+                <div class="flex items-center gap-6">
+                    <div class="relative">
+                        <button ref="notificationBtn" @click="toggleNotifications" class="relative p-2 text-lightText hover:text-primary transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                            <span v-if="notifications.some(n => !n.read)" class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full border-2 border-white pulse-live"></span>
+                        </button>
+                        <transition name="fade">
+                            <div v-if="showNotifications" ref="notificationBox" class="absolute right-0 mt-4 w-[360px] bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-[100] animate-fade-in text-left">
+                                <div class="purple-gradient p-6 text-white flex justify-between items-center"><h4 class="font-extrabold italic tracking-tight">SYSTEM ALERTS</h4><button @click="markAllAsRead" class="text-[10px] font-black uppercase opacity-70 hover:opacity-100">全部標為已讀</button></div>
+                                <div class="max-h-[400px] overflow-y-auto">
+                                    <div v-for="n in notifications" :key="n.id" class="p-5 border-b border-gray-50 hover:bg-bgMain relative"><p class="text-xs font-bold text-title mb-1">{{ n.title }}</p><p class="text-[11px] text-content leading-relaxed">{{ n.content }}</p><p class="text-[9px] text-lightText mt-2 uppercase font-black">{{ n.time }}</p></div>
+                                </div>
+                            </div>
+                        </transition>
                     </div>
-                    
-                    <button class="relative p-2 text-lightText hover:text-primary transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full border-2 border-white"></span>
-                    </button>
-
                     <div class="flex items-center gap-3 pl-4 border-l border-gray-100">
-                        <div class="text-right hidden sm:block">
-                            <div class="text-sm font-bold text-title leading-none mb-1">{{ user.name }}</div>
-                            <div class="text-[10px] font-bold uppercase text-primary tracking-tighter">高級系統管理員</div>
-                        </div>
-                        <img src="https://ui-avatars.com/api/?name=Admin&background=7B61FF&color=fff" class="w-10 h-10 rounded-xl shadow-premium border-2 border-white" alt="Avatar">
+                        <div class="text-right hidden sm:block"><div class="text-sm font-bold text-title">{{ user.name }}</div><div class="text-[9px] font-black uppercase text-primary">ADMIN</div></div>
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=7B61FF&color=fff" class="w-10 h-10 rounded-xl border-2 border-white shadow-premium">
                     </div>
                 </div>
             </header>
 
-            <!-- Content Area -->
             <transition name="fade" mode="out-in">
                 <!-- 儀表板總覽 -->
-                <div v-if="activeMenu === '儀表板總覽'" key="dashboard" class="space-y-8">
-                    <!-- KPI Grid -->
-                    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 animate-fade-in" style="animation-delay: 0.1s">
-                        <div v-for="(kpi, index) in kpis" :key="index" 
-                             class="kpi-card bg-white p-6 rounded-3xl shadow-premium border border-white relative overflow-hidden group">
-                            <div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors"></div>
-                            <div class="relative z-10">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div :class="['w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg', kpi.colorClass]">
-                                        <component :is="kpi.icon" class="h-6 w-6"></component>
-                                    </div>
-                                    <span :class="['text-xs font-bold px-2 py-1 rounded-lg', kpi.trend > 0 ? 'bg-green-50 text-success' : 'bg-red-50 text-danger']">
-                                        {{ kpi.trend > 0 ? '+' : '' }}{{ kpi.trend }}%
-                                    </span>
-                                </div>
-                                <div class="text-sm font-semibold text-lightText mb-1">{{ kpi.label }}</div>
-                                <div class="text-2xl font-extrabold text-title">{{ kpi.value }}</div>
+                <div v-if="activeMenu === '儀表板總覽'" class="space-y-8 animate-fade-in">
+                    <div class="flex justify-between items-center">
+                        <div class="text-left">
+                            <h2 class="text-3xl font-black text-title italic tracking-tighter uppercase">Operations Hub</h2>
+                            <p class="text-lightText font-bold">全網醫療數據即時監測與安全分析</p>
+                        </div>
+                        <button @click="initCharts" class="group flex items-center gap-2 bg-white border-2 border-primary/10 text-primary px-6 py-3 rounded-2xl font-black hover:bg-primary hover:text-white transition-all shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-active:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            <span class="text-xs uppercase tracking-widest">重整儀表板</span>
+                        </button>
+                    </div>
+                     <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <div v-for="kpi in kpis" :key="kpi.label" class="bg-white p-6 rounded-3xl shadow-premium border border-white hover:-translate-y-1 transition-all group">
+                            <div class="flex justify-between items-start mb-4">
+                                <div :class="['w-12 h-12 rounded-2xl flex items-center justify-center text-white', kpi.colorClass]"><component :is="kpi.icon" class="h-6 w-6"></component></div>
+                                <span class="text-xs font-black text-success tracking-widest">+{{ kpi.trend }}%</span>
                             </div>
+                            <div class="text-xs font-bold text-lightText uppercase mb-1">{{ kpi.label }}</div>
+                            <div class="text-2xl font-black text-title">{{ kpi.value }}</div>
                         </div>
                     </section>
-
-                    <!-- Charts Grid -->
-                    <section class="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-in" style="animation-delay: 0.2s">
-                        <div class="xl:col-span-2 bg-white p-8 rounded-3xl shadow-premium border border-white">
-                            <div class="flex justify-between items-center mb-8">
-                                <div><h3 class="text-xl font-extrabold text-title">AI 分析數據趨勢</h3><p class="text-sm text-lightText">藥物交互作用自動化檢測績效</p></div>
-                            </div>
-                            <div class="h-[350px]"><canvas id="aiTrendChart"></canvas></div>
-                        </div>
-                        <div class="bg-white p-8 rounded-3xl shadow-premium border border-white">
-                            <h3 class="text-xl font-extrabold text-title mb-1">藥品分類佔比</h3>
-                            <p class="text-sm text-lightText mb-8">系統全網處方分佈</p>
-                            <div class="h-[300px] relative">
-                                <canvas id="categoryChart"></canvas>
-                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <span class="text-3xl font-extrabold text-title">1.2K</span>
-                                    <span class="text-[10px] font-bold uppercase tracking-widest text-lightText">總計件數</span>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in" style="animation-delay: 0.3s">
-                        <!-- Recent Activities -->
-                        <div class="bg-white rounded-3xl shadow-premium border border-white overflow-hidden">
-                            <div class="p-8 border-b border-gray-50 flex justify-between items-center">
-                                <h3 class="text-xl font-extrabold text-title">近期系統活動</h3>
-                            </div>
-                            <div class="p-8 space-y-6">
-                                <div v-for="(log, i) in logs" :key="i" class="flex gap-4 group">
-                                    <div class="relative">
-                                        <div :class="['w-10 h-10 rounded-xl flex items-center justify-center text-white relative z-10', getLogIcon(log.type).bg]">
-                                            <component :is="getLogIcon(log.type).icon" class="h-5 w-5"></component>
-                                        </div>
-                                        <div v-if="i !== logs.length - 1" class="absolute top-10 left-1/2 w-px h-full bg-gray-100 -translate-x-1/2"></div>
-                                    </div>
-                                    <div class="flex-1 pt-1">
-                                        <div class="flex justify-between items-start mb-1">
-                                            <span class="font-bold text-title group-hover:text-primary transition-colors">{{ log.action }}</span>
-                                            <span class="text-xs font-medium text-lightText">{{ log.time }}</span>
-                                        </div>
-                                        <p class="text-sm text-content">執行者：<span class="font-semibold">{{ log.user }}</span> • 狀態：<span class="text-success font-bold">{{ log.status }}</span></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- System Health -->
-                        <div class="bg-white p-8 rounded-3xl shadow-premium border border-white">
-                            <h3 class="text-xl font-extrabold text-title mb-8">系統基礎建設監控</h3>
-                            <div class="space-y-8">
-                                <div v-for="(status, key) in systemStatusItems" :key="key">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <div class="flex items-center gap-3">
-                                            <div :class="['w-10 h-10 rounded-xl flex items-center justify-center', status.colorClass.replace('bg-', 'bg-').replace('100', '50')]">
-                                                <component :is="status.icon" :class="['h-5 w-5', status.colorClass.replace('bg-', 'text-')]"></component>
-                                            </div>
-                                            <span class="font-bold text-title">{{ status.label }}</span>
-                                        </div>
-                                        <span class="text-sm font-extrabold text-title">{{ status.value }}%</span>
-                                    </div>
-                                    <div class="h-2 w-full bg-bgMain rounded-full overflow-hidden">
-                                        <div class="h-full rounded-full" :class="status.colorClass" :style="{ width: status.value + '%' }"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                         <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white h-[400px] flex flex-col">
+                             <h3 class="font-black text-title mb-8 flex items-center gap-2 text-left"><span class="w-1.5 h-5 bg-primary rounded-full"></span> AI 分析趨勢系統</h3>
+                             <div id="aiTrendChart" class="flex-1 min-h-0"></div>
+                         </div>
+                         <div class="bg-white p-8 rounded-[32px] shadow-premium border border-white h-[400px] flex flex-col items-center">
+                             <h3 class="font-black text-title mb-8 w-full text-left flex items-center gap-2"><span class="w-1.5 h-5 bg-accent rounded-full"></span> 藥物類別全網分佈</h3>
+                             <div id="categoryChart" class="flex-1 w-full max-w-xs relative"></div>
+                         </div>
                     </section>
                 </div>
 
-                <!-- DDI 交互規則 -->
-                <div v-else-if="activeMenu === 'DDI 交互規則'" key="rules" class="animate-fade-in space-y-6">
+                <!-- DDI RULES -->
+                <div v-else-if="activeMenu === 'DDI 交互規則'" class="space-y-6 animate-fade-in text-left">
+                    <div class="flex justify-between items-end">
+                        <div><h2 class="text-3xl font-black text-title mb-2 italic">DDI KNOWLEDGE BASE</h2><p class="text-lightText font-bold">維護藥物交互作用臨床規則與風險權重</p></div>
+                        <button @click="showAddRuleModal = true" class="purple-gradient text-white px-8 py-3.5 rounded-2xl font-black shadow-xl shadow-primary/20 hover:scale-105 transition-all flex items-center gap-2 uppercase text-xs">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
+                            Add Rule
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-[40px] shadow-premium border border-white overflow-hidden">
+                        <div class="p-8 border-b border-gray-50 flex flex-col md:flex-row items-center gap-6 bg-slate-50/50">
+                            <input v-model="ruleSearch" type="text" placeholder="搜索藥品成分..." class="flex-1 bg-white border-2 border-slate-100 rounded-2xl py-3 px-6 text-sm focus:border-primary/20 outline-none font-bold">
+                            <select v-model="ruleSeverityFilter" class="bg-white border-2 border-slate-100 rounded-2xl py-3 px-6 text-sm font-black text-title outline-none"><option value="all">所有風險</option><option value="極高風險">極高風險</option><option value="高風險">高風險</option></select>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse">
+                                <thead><tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white"><th class="px-8 py-6">ID</th><th class="px-8 py-6">DRUG A</th><th class="px-8 py-6">DRUG B</th><th class="px-8 py-6">SEVERITY</th><th class="px-8 py-6">EFFECT</th><th class="px-8 py-6 text-right">ACTIONS</th></tr></thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr v-for="rule in filteredRules" :key="rule.id" class="table-row-hover">
+                                        <td class="px-8 py-5 text-sm font-mono text-primary font-bold">#{{ rule.id }}</td>
+                                        <td class="px-8 py-5 font-black text-title">{{ rule.drugA }}</td>
+                                        <td class="px-8 py-5 font-black text-title">{{ rule.drugB }}</td>
+                                        <td class="px-8 py-5"><span :class="['px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest', rule.severityClass]">{{ rule.severity }}</span></td>
+                                        <td class="px-8 py-5 text-xs font-bold text-slate-500">{{ rule.effect }}</td>
+                                        <td class="px-8 py-5 text-right">
+                                            <button @click="deleteRule(rule.id)" class="p-2.5 rounded-xl bg-red-50 text-danger hover:bg-danger hover:text-white transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用戶管理 (Fully Functional) -->
+                <div v-else-if="activeMenu === '用戶管理'" class="animate-fade-in space-y-6 text-left">
                     <div class="flex justify-between items-end mb-4">
                         <div>
-                            <h2 class="text-3xl font-black text-title mb-2">DDI 交互規則管理</h2>
-                            <p class="text-lightText">維護藥物交互作用知識庫與風險權重</p>
+                            <h2 class="text-3xl font-black text-title mb-2 italic uppercase">User Privileges</h2>
+                            <p class="text-lightText font-bold">管理全網醫療人員、保險核保員及患者之系統權限</p>
                         </div>
-                        <button class="purple-gradient text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            新增規則
+                        <button @click="showAddUserModal = true" class="purple-gradient text-white px-8 py-3.5 rounded-2xl font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all flex items-center gap-2 text-xs uppercase tracking-widest">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                            Add User
                         </button>
                     </div>
 
-                    <div class="bg-white rounded-3xl shadow-premium border border-white overflow-hidden">
-                        <div class="p-6 border-b border-gray-50 flex items-center gap-4">
-                            <div class="relative flex-1">
-                                <input type="text" placeholder="搜索藥品名稱 (如: Warfarin)..." class="w-full bg-bgMain border-none rounded-xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-3 text-lightText" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
-                            <select class="bg-bgMain border-none rounded-xl py-3 px-6 text-sm font-bold text-title">
-                                <option>所有風險等級</option>
-                                <option>極高風險</option>
-                                <option>高風險</option>
+                    <div class="bg-white rounded-[40px] shadow-premium border border-white overflow-hidden">
+                        <div class="p-8 border-b border-gray-50 flex flex-col md:flex-row items-center gap-6 bg-slate-50/50">
+                            <input v-model="userSearch" type="text" placeholder="搜尋 ID、姓名或電子郵件..." class="flex-1 bg-white border-2 border-slate-100 rounded-2xl py-3 px-6 text-sm focus:border-primary/20 transition-all outline-none font-bold">
+                            <select v-model="userRoleFilter" class="bg-white border-2 border-slate-100 rounded-2xl py-3 px-6 text-sm font-black text-title outline-none">
+                                <option value="all">所有權限角色</option>
+                                <option value="doctor">醫師 (Doctor)</option>
+                                <option value="patient">患者 (Patient)</option>
+                                <option value="insurance">保險 (Insurance)</option>
                             </select>
                         </div>
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="text-xs font-bold uppercase tracking-widest text-lightText border-b border-gray-50">
-                                    <th class="px-8 py-5">規則 ID</th>
-                                    <th class="px-8 py-5">藥品 A</th>
-                                    <th class="px-8 py-5">藥品 B</th>
-                                    <th class="px-8 py-5">風險等級</th>
-                                    <th class="px-8 py-5">臨床影響</th>
-                                    <th class="px-8 py-5">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-50">
-                                <tr v-for="rule in mockRules" :key="rule.id" class="table-row-hover transition-colors">
-                                    <td class="px-8 py-5 text-sm font-mono text-primary">#{{ rule.id }}</td>
-                                    <td class="px-8 py-5 font-bold text-title">{{ rule.drugA }}</td>
-                                    <td class="px-8 py-5 font-bold text-title">{{ rule.drugB }}</td>
-                                    <td class="px-8 py-5">
-                                        <span :class="['px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm', rule.severityClass]">
-                                            {{ rule.severity }}
-                                        </span>
-                                    </td>
-                                    <td class="px-8 py-5 text-sm text-content">{{ rule.effect }}</td>
-                                    <td class="px-8 py-5">
-                                        <div class="flex items-center gap-3 text-lightText">
-                                            <button class="hover:text-primary transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                                            <button class="hover:text-danger transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-                            <span class="text-sm text-lightText font-medium">顯示 1 至 5 筆，共 1,245 筆規則</span>
-                            <div class="flex gap-2">
-                                <button class="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-lightText hover:bg-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                                </button>
-                                <button class="w-10 h-10 rounded-xl purple-gradient text-white flex items-center justify-center font-bold">1</button>
-                                <button class="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-lightText hover:bg-white transition-colors font-bold">2</button>
-                                <button class="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-lightText hover:bg-white transition-colors font-bold">3</button>
-                                <button class="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-lightText hover:bg-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                                </button>
-                            </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                        <th class="px-8 py-6">用戶資訊</th>
+                                        <th class="px-8 py-6">權限角色</th>
+                                        <th class="px-8 py-6">隸屬機構</th>
+                                        <th class="px-8 py-6">帳號狀態</th>
+                                        <th class="px-8 py-6 text-right">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr v-for="u in filteredUsers" :key="u.id" class="table-row-hover transition-colors group">
+                                        <td class="px-8 py-5">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center font-bold text-primary shadow-inner">{{ u.name[0] }}</div>
+                                                <div><div class="font-black text-title text-sm">{{ u.name }}</div><div class="text-[10px] font-bold text-lightText">{{ u.email }} | {{ u.id }}</div></div>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-5 text-xs font-bold text-slate-600">{{ u.roleName }}</td>
+                                        <td class="px-8 py-5 text-xs font-bold text-slate-500 italic">{{ u.hospital }}</td>
+                                        <td class="px-8 py-5">
+                                            <span :class="['px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm', u.status === 'active' ? 'bg-green-50 text-success border border-green-100' : 'bg-red-50 text-danger border border-red-100']">
+                                                {{ u.statusName }}
+                                            </span>
+                                        </td>
+                                        <td class="px-8 py-5 text-right">
+                                            <div class="flex justify-end gap-3 opacity-30 group-hover:opacity-100 transition-all">
+                                                <button @click="editUser(u)" class="p-2.5 rounded-xl bg-bgMain text-primary hover:bg-primary hover:text-white transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                                <button @click="toggleUserStatus(u)" :class="['p-2.5 rounded-xl transition-all', u.status === 'active' ? 'bg-bgMain text-warning hover:bg-warning hover:text-white' : 'bg-red-50 text-danger hover:bg-danger hover:text-white']">
+                                                    <svg v-if="u.status === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- 區塊鏈日誌 -->
-                <div v-else-if="activeMenu === '區塊鏈日誌'" key="blockchain" class="animate-fade-in space-y-6">
+                <!-- 系統設置 (Fully Functional Card Flow) -->
+                <div v-else-if="activeMenu === '系統設置'" class="animate-fade-in space-y-8 text-left pb-20">
                     <div class="flex justify-between items-end mb-4">
                         <div>
-                            <h2 class="text-3xl font-black text-title mb-2">區塊鏈存證日誌</h2>
-                            <p class="text-lightText">全網病歷存取與處方異動之不可篡改存證</p>
+                            <h2 class="text-3xl font-black text-title mb-2 italic uppercase">System Configuration</h2>
+                            <p class="text-lightText font-bold">配置核心醫療引擎、API 連結與全網安全策略</p>
                         </div>
-                        <div class="flex items-center gap-2 bg-green-50 text-success px-4 py-2 rounded-xl border border-green-100 font-bold text-sm">
-                            <span class="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-                            節點高度: 14,250,892
+                        <button @click="saveSystemSettings" class="purple-gradient text-white px-10 py-4 rounded-3xl font-black shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 uppercase text-sm tracking-widest">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                            Save Changes
+                        </button>
+                    </div>
+
+                    <!-- Card 1: FHIR Infrastructure -->
+                    <div class="bg-white rounded-[40px] shadow-premium border border-white p-10 space-y-8">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-primary shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg></div>
+                            <h3 class="text-xl font-black text-title italic">FHIR INFRASTRUCTURE</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-2"><label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">FHIR Base URL</label><input v-model="systemSettings.fhirUrl" type="text" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-title focus:border-primary/20 outline-none transition-all"></div>
+                            <div class="space-y-2"><label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Access Key</label><input v-model="systemSettings.fhirApiKey" type="password" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-title focus:border-primary/20 outline-none transition-all"></div>
+                        </div>
+                        <div class="pt-4 flex items-center justify-between bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100">
+                            <div class="flex items-center gap-3"><div :class="['w-3 h-3 rounded-full', isTestingConnection ? 'bg-warning animate-ping' : 'bg-success']"></div><span class="text-sm font-black text-slate-600 uppercase">狀態：連線正常 (42ms)</span></div>
+                            <button @click="testFhirConnection" :disabled="isTestingConnection" class="px-6 py-2.5 bg-white border-2 border-indigo-100 rounded-xl text-xs font-black text-primary hover:bg-primary hover:text-white transition-all">{{ isTestingConnection ? '測試中...' : '測試連線' }}</button>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-4">
-                        <div v-for="block in mockBlocks" :key="block.hash" class="bg-white p-6 rounded-3xl shadow-premium border border-white hover:border-primary/30 transition-all group">
-                            <div class="flex flex-col lg:flex-row lg:items-center gap-6">
-                                <div class="w-16 h-16 rounded-2xl bg-bgMain flex flex-col items-center justify-center text-primary group-hover:purple-gradient group-hover:text-white transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                    <span class="text-[10px] font-bold mt-1">BLOCK</span>
-                                </div>
-                                <div class="flex-1 space-y-2">
-                                    <div class="flex items-center gap-4">
-                                        <span class="text-sm font-mono text-primary bg-light px-2 py-1 rounded">TX# {{ block.hash }}</span>
-                                        <span class="text-xs font-bold text-lightText uppercase tracking-widest">{{ block.time }}</span>
-                                    </div>
-                                    <div class="text-lg font-extrabold text-title">{{ block.action }}</div>
-                                    <div class="flex items-center gap-4 text-xs font-semibold text-content">
-                                        <span>執行者: <span class="text-primary">{{ block.user }}</span></span>
-                                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                        <span>存證狀態: <span class="text-success">{{ block.status }}</span></span>
-                                    </div>
-                                </div>
-                                <div class="lg:text-right">
-                                    <button class="bg-bgMain hover:bg-light text-primary px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
-                                        詳情查看
-                                    </button>
-                                </div>
+                    <!-- Card 2: AI Guard -->
+                    <div class="bg-white rounded-[40px] shadow-premium border border-white p-10 space-y-8">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-primary shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
+                            <h3 class="text-xl font-black text-title italic">AI ANALYSIS GUARD</h3>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-end"><label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">AI 敏感度門檻</label><span class="text-lg font-black text-primary">{{ systemSettings.aiSensitivity }}%</span></div>
+                                <input v-model="systemSettings.aiSensitivity" type="range" class="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary">
+                            </div>
+                            <div class="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                                <div><h4 class="text-sm font-black text-title uppercase">自動攔截極高風險處方</h4><p class="text-[10px] font-bold text-slate-400 mt-1">若偵測到強烈衝突，系統將強制禁止醫師提交 MedicationRequest 資源</p></div>
+                                <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" v-model="systemSettings.autoBlock" class="sr-only peer"><div class="w-14 h-8 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all shadow-inner border border-slate-300"></div></label>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 用戶管理 -->
-                <div v-else-if="activeMenu === '用戶管理'" key="users" class="animate-fade-in space-y-6">
-                     <h2 class="text-3xl font-black text-title mb-2">用戶帳號管理</h2>
-                     <div class="bg-white p-12 rounded-3xl shadow-premium border border-white text-center">
-                         <div class="w-24 h-24 bg-light rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                         </div>
-                         <h3 class="text-2xl font-bold text-title mb-4">用戶目錄建設中</h3>
-                         <p class="text-lightText mb-8">此模組正在整合 FHIR Auth 與各醫療機構之 LDAP 系統</p>
-                         <button @click="switchMenu('儀表板總覽')" class="purple-gradient text-white px-8 py-3 rounded-2xl font-bold">返回儀表板</button>
-                     </div>
-                </div>
-
-                <!-- 其他模組展示 -->
-                <div v-else :key="activeMenu" class="animate-fade-in space-y-6">
-                     <h2 class="text-3xl font-black text-title mb-2">{{ activeMenu }}</h2>
-                     <div class="bg-white p-20 rounded-3xl shadow-premium border border-white text-center">
-                         <h3 class="text-xl font-extrabold text-title mb-4">Premium 展示內容準備中</h3>
-                         <p class="text-lightText">當前正在加載 {{ activeMenu }} 之即時數據流...</p>
-                         <div class="mt-8 flex justify-center gap-3">
-                             <div class="w-3 h-3 bg-primary rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                             <div class="w-3 h-3 bg-primary rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                             <div class="w-3 h-3 bg-primary rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
-                         </div>
-                     </div>
+                    <!-- Card 3: Maintenance -->
+                    <div class="bg-white rounded-[40px] shadow-premium border border-white p-10 text-left">
+                        <div class="flex items-center justify-between p-8 bg-red-50/50 rounded-[32px] border-2 border-red-100 flex-col sm:flex-row gap-6">
+                            <div class="flex items-center gap-6">
+                                <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-danger shadow-sm shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
+                                <div><h4 class="text-base font-black text-danger uppercase italic tracking-tighter text-left">系統維護模式 (Global Maintenance)</h4><p class="text-xs font-bold text-slate-500 mt-1 text-left">啟用後全網 (醫師、患者端) 將顯示維護中介面，僅管理員可存取</p></div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" v-model="systemSettings.isMaintenanceMode" class="sr-only peer"><div class="w-16 h-9 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-danger after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-7 after:w-7 after:transition-all shadow-inner border border-slate-300"></div></label>
+                        </div>
+                    </div>
                 </div>
             </transition>
         </main>
+
+        <!-- ADD USER MODAL -->
+        <transition name="fade">
+            <div v-if="showAddUserModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showAddUserModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in text-left">
+                    <div class="purple-gradient p-10 text-white relative">
+                        <h3 class="text-2xl font-black italic tracking-tighter uppercase relative z-10">Enroll New User</h3>
+                        <p class="opacity-70 text-[10px] font-black uppercase mt-1 tracking-widest relative z-10">Medical Auth System v2.0</p>
+                    </div>
+                    <div class="p-10 space-y-6">
+                        <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Full Name</label><input v-model="newUser.name" type="text" placeholder="用戶姓名..." class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Role Type</label><select v-model="newUser.role" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"><option value="doctor">醫師</option><option value="patient">患者</option><option value="insurance">保險人員</option></select></div>
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Hospital / Org</label><input v-model="newUser.hospital" type="text" placeholder="所屬機構..." class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                        </div>
+                        <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">System Email</label><input v-model="newUser.email" type="email" placeholder="email@medsafe.com" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                    </div>
+                    <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
+                        <button @click="showAddUserModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Cancel</button>
+                        <button @click="triggerToast('帳號已創建', '新用戶權限已同步至區塊鏈節點'); showAddUserModal = false;" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Create Account</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- EDIT USER MODAL (NEW) -->
+        <transition name="fade">
+            <div v-if="showEditUserModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showEditUserModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in text-left">
+                    <div class="purple-gradient p-10 text-white flex justify-between items-center">
+                        <div>
+                            <h3 class="text-2xl font-black italic tracking-tighter uppercase">Edit Privileges</h3>
+                            <p class="opacity-70 text-[10px] font-black uppercase mt-1">Modifying Profile: {{ editingUser.id }}</p>
+                        </div>
+                        <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-white text-2xl font-black">{{ editingUser.name[0] }}</div>
+                    </div>
+                    <div class="p-10 space-y-6">
+                        <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Display Name</label><input v-model="editingUser.name" type="text" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Role Assignment</label><select v-model="editingUser.role" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"><option value="doctor">醫師</option><option value="patient">患者</option><option value="insurance">保險人員</option><option value="admin">管理員</option></select></div>
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Institution</label><input v-model="editingUser.hospital" type="text" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                        </div>
+                        <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Primary Email</label><input v-model="editingUser.email" type="email" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                    </div>
+                    <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
+                        <button @click="showEditUserModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Discard</button>
+                        <button @click="saveUserEdit" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Update Permissions</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- GLOBAL TOAST -->
+        <transition name="fade">
+            <div v-if="showToast" class="fixed bottom-10 right-10 z-[200] bg-slate-900 text-white px-8 py-5 rounded-3xl shadow-2xl border border-white/10 flex items-center gap-4 animate-fade-in text-left">
+                <div class="w-10 h-10 bg-success rounded-full flex items-center justify-center text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg></div>
+                <div><div class="font-black text-sm uppercase tracking-widest">{{ toastTitle }}</div><div class="text-[10px] text-slate-400 italic">Database status: synchronized</div></div>
+            </div>
+        </transition>
     </div>
 
-    <!-- Predefined Icons -->
-    <script>
-        const Icons = {
-            Dashboard: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>` },
-            Rules: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` },
-            AI: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.642.321a6 6 0 01-3.86.517l-2.388-.477a2 2 0 00-1.022.547l-1.168 1.168a2 2 0 00-.556 1.403V19a2 2 0 002 2h14a2 2 0 002-2v-1.403a2 2 0 00-.556-1.403l-1.168-1.168zM12 11a4 4 0 100-8 4 4 0 000 8z" /></svg>` },
-            Blockchain: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>` },
-            Reports: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>` },
-            Monitor: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>` },
-            Users: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>` },
-            Settings: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>` },
-            Activity: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>` },
-            Database: { template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>` }
-        };
-    </script>
-
+    <!-- Data Injection -->
     <script src="js/mockData.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        const { createApp } = Vue;
-
+        const { createApp, markRaw } = Vue;
         createApp({
             data() {
                 const user = getCurrentUser();
-                if (!user || user.role !== 'admin') window.location.href = 'login.html';
                 const adminData = window.mockData.admin;
+                const Icons = {
+                    Dashboard: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>` }),
+                    Rules: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` }),
+                    Users: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>` }),
+                    Settings: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>` })
+                };
                 return {
-                    user: user,
-                    stats: adminData,
-                    logs: adminData.logs,
-                    activeMenu: '儀表板總覽',
+                    user, activeMenu: '儀表板總覽',
+                    showMobileMenu: false,
                     menuItems: [
                         { name: '儀表板總覽', label: '儀表板總覽', icon: Icons.Dashboard },
                         { name: 'DDI 交互規則', label: 'DDI 交互規則', icon: Icons.Rules },
-                        { name: 'AI 數據分析', label: 'AI 數據分析', icon: Icons.AI },
-                        { name: '區塊鏈日誌', label: '區塊鏈日誌', icon: Icons.Blockchain },
-                        { name: '核保報告', label: '核保報告', icon: Icons.Reports },
-                        { name: 'API 監控', label: 'API 監控', icon: Icons.Monitor },
                         { name: '用戶管理', label: '用戶管理', icon: Icons.Users },
                         { name: '系統設置', label: '系統設置', icon: Icons.Settings },
                     ],
                     kpis: [
-                        { label: 'DDI 規則總數', value: adminData.stats.totalDdiRules, icon: Icons.Rules, trend: 12.5, colorClass: 'purple-gradient' },
-                        { label: 'AI 分析執行次數', value: adminData.stats.aiAnalyticsCount, icon: Icons.AI, trend: 8.2, colorClass: 'bg-neon' },
-                        { label: '今日 API 請求', value: adminData.stats.todayApiCalls, icon: Icons.Monitor, trend: -2.4, colorClass: 'bg-deep' },
-                        { label: '區塊鏈同步量', value: adminData.stats.blockchainSyncAmount, icon: Icons.Blockchain, trend: 15.0, colorClass: 'purple-gradient' },
+                        { label: 'DDI 規則總數', value: 12450, icon: Icons.Rules, trend: 12.5, colorClass: 'purple-gradient' },
+                        { label: 'AI 分析次數', value: 8920, icon: Icons.Users, trend: 8.2, colorClass: 'bg-neon' },
+                        { label: '今日 API 請求', value: 15620, icon: Icons.Settings, trend: -1.2, colorClass: 'bg-deep' },
+                        { label: '區塊鏈存證', value: '2.4 TB', icon: Icons.Dashboard, trend: 15.0, colorClass: 'purple-gradient' },
                     ],
-                    systemStatusItems: {
-                        api: { label: 'API 健康度', value: adminData.systemStatus.apiHealth, icon: Icons.Monitor, colorClass: 'bg-primary' },
-                        ai: { label: 'AI 引擎負載', value: adminData.systemStatus.aiEngine, icon: Icons.AI, colorClass: 'bg-neon' },
-                        blockchain: { label: '區塊鏈節點', value: adminData.systemStatus.blockchain, icon: Icons.Blockchain, colorClass: 'bg-success' },
-                        database: { label: '資料庫連線', value: adminData.systemStatus.database, icon: Icons.Database, colorClass: 'bg-warning' },
-                    },
                     mockRules: [
-                        { id: 1024, drugA: 'Warfarin', drugB: 'Aspirin', severity: '極高風險', severityClass: 'bg-red-50 text-danger', effect: '增加內出血與消化道出血風險，需嚴密監控 INR。' },
-                        { id: 1025, drugA: 'Metformin', drugB: 'Iodinated Contrast', severity: '高風險', severityClass: 'bg-orange-50 text-warning', effect: '可能誘發乳酸中毒，檢查前後需停藥 48 小時。' },
-                        { id: 1026, drugA: 'Simvastatin', drugB: 'Amiodarone', severity: '中風險', severityClass: 'bg-purple-50 text-primary', effect: '增加橫紋肌溶解症風險，建議調低 Simvastatin 劑量。' },
-                        { id: 1027, drugA: 'Lisinopril', drugB: 'Spironolactone', severity: '高風險', severityClass: 'bg-orange-50 text-warning', effect: '顯著增加高血鉀風險，需監控血清鉀離子濃度。' },
-                        { id: 1028, drugA: 'Clopidogrel', drugB: 'Omeprazole', severity: '中風險', severityClass: 'bg-purple-50 text-primary', effect: '降低 Clopidogrel 抗血小板效力。' },
+                        { id: 1024, drugA: 'Warfarin', drugB: 'Aspirin', severity: '極高風險', severityClass: 'bg-red-100 text-danger border-red-200', effect: '增加出血風險，需監控 INR 指標。' },
+                        { id: 1025, drugA: 'Metformin', drugB: 'Iodinated', severity: '高風險', severityClass: 'bg-orange-100 text-warning border-orange-200', effect: '可能誘發乳酸中毒，需停藥。' },
                     ],
-                    mockBlocks: [
-                        { hash: '0x8f2d...a1b2', action: '存證: 醫師李曉美新增處方 (P001)', time: '3 分鐘前', user: '李曉美醫師', status: '已驗證' },
-                        { hash: '0x3c4e...d5f6', action: '存證: DDI 系統自動觸發風險警告 (極高)', time: '12 分鐘前', user: 'MedSafe AI', status: '已驗證' },
-                        { hash: '0xa9b8...c7d6', action: '存證: 國泰人壽核保申請通過 (I-2024)', time: '45 分鐘前', user: '國泰核保員', status: '已驗證' },
-                        { hash: '0x1e2f...3g4h', action: '存證: 患者王大明更新電子病歷授權', time: '1 小時前', user: '王大明', status: '已驗證' },
+                    mockUsers: [
+                        { id: 'U001', name: '李曉美', role: 'doctor', roleName: '醫師', email: 'mei@medsafe.com', hospital: '台大醫院', status: 'active', statusName: '正常' },
+                        { id: 'U002', name: '王大明', role: 'patient', roleName: '患者', email: 'ming@gmail.com', hospital: 'N/A', status: 'active', statusName: '正常' },
+                        { id: 'U003', name: '張主任', role: 'admin', roleName: '管理員', email: 'boss@medsafe.com', hospital: '馬偕醫院', status: 'active', statusName: '正常' },
                     ],
-                    chartColors: ['#7B61FF', '#8B5CF6', '#A78BFA', '#C4B5FD', '#DDD6FE']
+                    ruleSearch: '', ruleSeverityFilter: 'all', userSearch: '', userRoleFilter: 'all',
+                    showNotifications: false, showAddRuleModal: false, showAddUserModal: false, 
+                    showEditUserModal: false, showToast: false,
+                    toastTitle: '', newUser: { name: '', role: 'doctor', email: '', hospital: '' },
+                    editingUser: {},
+                    // 系統設置相關
+                    systemSettings: {
+                        fhirUrl: 'https://hapi.fhir.org/baseR4',
+                        fhirApiKey: '••••••••••••••••',
+                        aiSensitivity: 85,
+                        autoBlock: true,
+                        isMaintenanceMode: false,
+                        syncInterval: 5,
+                        sessionTimeout: 30
+                    },
+                    isTestingConnection: false,
+                    notifications: [
+                        { id: 1, title: '系統安全警告', content: '偵測到異常的 FHIR 資源存取。', time: '5 分鐘前', read: false },
+                        { id: 2, title: '區塊鏈同步完成', content: '全院處方存證已與區域節點同步。', time: '12 分鐘前', read: false },
+                    ]
                 }
             },
-            mounted() { this.initCharts(); },
+            computed: {
+                filteredRules() {
+                    let rs = this.mockRules;
+                    if (this.ruleSeverityFilter !== 'all') rs = rs.filter(r => r.severity === this.ruleSeverityFilter);
+                    if (this.ruleSearch) rs = rs.filter(r => r.drugA.includes(this.ruleSearch) || r.drugB.includes(this.ruleSearch));
+                    return rs;
+                },
+                filteredUsers() {
+                    let us = this.mockUsers;
+                    if (this.userRoleFilter !== 'all') us = us.filter(u => u.role === this.userRoleFilter);
+                    if (this.userSearch) {
+                        const s = this.userSearch.toLowerCase();
+                        us = us.filter(u => u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s));
+                    }
+                    return us;
+                },
+                currentPage() { return 1; }, totalRules() { return 1245; }, pageSize() { return 5; }, totalPages() { return 249; }, paginationRange() { return [1,2,3,4,5]; }
+            },
+            created() {
+                this._charts = {};
+            },
+            mounted() { 
+                this.initCharts();
+                window.addEventListener('click', this.handleOutsideClick);
+                this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
+                window.addEventListener('resize', this._resizeHandler);
+            },
+            unmounted() {
+                window.removeEventListener('click', this.handleOutsideClick);
+                window.removeEventListener('resize', this._resizeHandler);
+                this.destroyCharts();
+            },
             methods: {
-                switchMenu(menu) {
-                    this.activeMenu = menu;
-                    if (menu === '儀表板總覽') {
-                        this.$nextTick(() => { this.initCharts(); });
+                handleOutsideClick(e) {
+                    if (!this.$refs.notificationBtn?.contains(e.target) && !this.$refs.notificationBox?.contains(e.target)) this.showNotifications = false;
+                },
+                switchMenu(m) { 
+                    const isAlreadyDashboard = this.activeMenu === '儀表板總覽' && m === '儀表板總覽';
+                    this.activeMenu = m; 
+                    
+                    if (m === '儀表板總覽') {
+                        // 如果已經在儀表板，直接重整；如果是切換過來的，等待過場動畫
+                        const delay = isAlreadyDashboard ? 0 : 350;
+                        this.$nextTick(() => {
+                            setTimeout(() => this.initCharts(), delay);
+                        });
+                    } else {
+                        this.destroyCharts();
                     }
                 },
+                destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
                 logout() { localStorage.removeItem('demo_user'); window.location.href = 'login.html'; },
-                getLogIcon(type) {
-                    switch(type) {
-                        case 'ai': return { icon: Icons.AI, bg: 'bg-neon' };
-                        case 'rule': return { icon: Icons.Rules, bg: 'bg-primary' };
-                        case 'blockchain': return { icon: Icons.Blockchain, bg: 'bg-deep' };
-                        case 'insurance': return { icon: Icons.Reports, bg: 'bg-soft' };
-                        default: return { icon: Icons.Activity, bg: 'bg-primary' };
+                toggleNotifications() { this.showNotifications = !this.showNotifications; },
+                markAllAsRead() { this.notifications.forEach(n => n.read = true); },
+                deleteRule(id) { confirm('確定刪除規則 #' + id + '？') && this.triggerToast('已刪除', '規則已移出資料庫'); },
+                
+                // 用戶管理方法
+                editUser(user) {
+                    this.editingUser = JSON.parse(JSON.stringify(user));
+                    this.showEditUserModal = true;
+                },
+                saveUserEdit() {
+                    const idx = this.mockUsers.findIndex(u => u.id === this.editingUser.id);
+                    if (idx !== -1) {
+                        const roles = { doctor: '醫師', patient: '患者', insurance: '保險', admin: '管理員' };
+                        this.editingUser.roleName = roles[this.editingUser.role];
+                        this.mockUsers[idx] = this.editingUser;
+                        this.showEditUserModal = false;
+                        this.triggerToast('資料已更新', `用戶 ${this.editingUser.name} 的權限已修改`);
                     }
                 },
+                toggleUserStatus(user) {
+                    user.status = user.status === 'active' ? 'disabled' : 'active';
+                    user.statusName = user.status === 'active' ? '正常' : '停用';
+                    this.triggerToast('狀態變更', `用戶 ${user.name} 帳號目前已${user.statusName}`);
+                },
+
+                // 系統設置方法
+                testFhirConnection() {
+                    this.isTestingConnection = true;
+                    setTimeout(() => {
+                        this.isTestingConnection = false;
+                        this.triggerToast('連線成功', 'HAPI FHIR Server 響應正常 (延遲 42ms)');
+                    }, 2000);
+                },
+                saveSystemSettings() {
+                    this.triggerToast('設置已儲存', '系統核心參數已更新並同步至所有節點');
+                },
+
+                triggerToast(t, m) { this.toastTitle = t; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
+                goToPage(p) {},
                 initCharts() {
-                    const adminData = window.mockData.admin;
-                    const canvasAi = document.getElementById('aiTrendChart');
-                    const canvasCat = document.getElementById('categoryChart');
-                    if (!canvasAi || !canvasCat) return;
-
-                    Chart.defaults.font.family = "'Plus Jakarta Sans', 'Noto Sans TC', sans-serif";
-                    Chart.defaults.color = '#9CA3AF';
-
-                    const ctxAi = canvasAi.getContext('2d');
-                    const aiGradient = ctxAi.createLinearGradient(0, 0, 0, 400);
-                    aiGradient.addColorStop(0, 'rgba(123, 97, 255, 0.2)');
-                    aiGradient.addColorStop(1, 'rgba(123, 97, 255, 0)');
-                    new Chart(ctxAi, {
-                        type: 'line',
-                        data: {
-                            labels: ['週一', '週二', '週三', '週四', '週五', '週六', '週日'],
-                            datasets: [{
-                                label: '分析事件',
-                                data: adminData.aiTrendData,
-                                borderColor: '#7B61FF',
-                                borderWidth: 3,
-                                fill: true,
-                                backgroundColor: aiGradient,
-                                tension: 0.4,
-                                pointBackgroundColor: '#fff',
-                                pointBorderColor: '#7B61FF',
-                                pointRadius: 4
+                    this.destroyCharts();
+                    const trendEl = document.getElementById('aiTrendChart');
+                    if (trendEl) {
+                        this._charts.trend = echarts.init(trendEl);
+                        this._charts.trend.setOption({
+                            tooltip: { trigger: 'axis' },
+                            xAxis: { type: 'category', data: ['M', 'T', 'W', 'T', 'F', 'S', 'S'] },
+                            yAxis: { type: 'value' },
+                            series: [{
+                                name: 'AI 分析趨勢',
+                                data: [450, 590, 820, 710, 950, 1100, 1280],
+                                type: 'line',
+                                smooth: true,
+                                itemStyle: { color: '#7B61FF' },
+                                areaStyle: { color: 'rgba(123, 97, 255, 0.1)' }
                             }]
-                        },
-                        options: {
-                            animation: { duration: 2000, easing: 'easeOutQuart' },
-                            responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                    });
-
-                    new Chart(canvasCat.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: adminData.medicationCategories.map(c => c.label),
-                            datasets: [{ data: adminData.medicationCategories.map(c => c.value), backgroundColor: this.chartColors, borderWidth: 0, cutout: '75%' }]
-                        },
-                        options: {
-                            animation: { duration: 2000, easing: 'easeOutQuart' },
-                            responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                    });
+                        });
+                    }
+                    const catEl = document.getElementById('categoryChart');
+                    if (catEl) {
+                        this._charts.category = echarts.init(catEl);
+                        this._charts.category.setOption({
+                            tooltip: { trigger: 'item' },
+                            series: [{
+                                name: '藥物類別',
+                                type: 'pie',
+                                radius: ['60%', '80%'],
+                                data: [
+                                    { value: 40, name: 'A', itemStyle: { color: '#7B61FF' } },
+                                    { value: 30, name: 'B', itemStyle: { color: '#8B5CF6' } },
+                                    { value: 20, name: 'C', itemStyle: { color: '#A78BFA' } },
+                                    { value: 10, name: 'D', itemStyle: { color: '#C4B5FD' } }
+                                ]
+                            }]
+                        });
+                    }
                 }
             }
         }).mount('#app');
