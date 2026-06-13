@@ -61,10 +61,10 @@ window.mockData = {
       { label: '其他', value: 100 }
     ],
     recentPatients: [
+      { id: 'P004', name: '劉建國', status: '危險', lastCheck: '2025-05-24' },
       { id: 'P001', name: '張小泉', status: '安全', lastCheck: '2025-05-20' },
       { id: 'P002', name: '李大維', status: '警告', lastCheck: '2025-05-22' },
-      { id: 'P003', name: '陳美花', status: '安全', lastCheck: '2025-05-23' },
-      { id: 'P004', name: '劉建國', status: '危險', lastCheck: '2025-05-24' }
+      { id: 'P003', name: '陳美花', status: '安全', lastCheck: '2025-05-23' }
     ]
   },
 

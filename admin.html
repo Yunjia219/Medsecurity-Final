@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MedSafe-Chain | 智慧醫療管理中心</title>
+    <link rel="icon" type="image/png" href="images/LOGO.png">
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -66,18 +67,26 @@
 </head>
 <body class="overflow-x-hidden">
     <div id="app" v-cloak class="flex min-h-screen">
+        <!-- Mobile Sidebar Overlay -->
+        <transition name="fade">
+            <div v-if="showMobileMenu" @click="showMobileMenu = false" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[60] lg:hidden"></div>
+        </transition>
+
         <!-- Sidebar -->
-        <aside class="w-72 fixed h-screen left-0 top-0 p-6 z-40 hidden lg:block">
+        <aside :class="['w-72 fixed h-screen left-0 top-0 p-6 z-[70] transition-transform duration-300 bg-bgMain lg:bg-transparent shadow-2xl lg:shadow-none', showMobileMenu ? 'translate-x-0' : '-translate-x-full lg:translate-x-0']">
             <div class="h-full glass rounded-3xl flex flex-col p-6 shadow-premium text-left">
-                <div class="flex items-center gap-3 px-2 mb-10">
-                    <div class="w-10 h-10 purple-gradient rounded-xl flex items-center justify-center shadow-glow shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                <div class="flex items-center justify-between gap-3 px-2 mb-10">
+                    <div class="flex items-center gap-3">
+                        <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe-Chain">
+                        <span class="text-xl font-extrabold text-title tracking-tight truncate">MedSafe <span class="text-primary">管理端</span></span>
                     </div>
-                    <span class="text-xl font-extrabold text-title tracking-tight truncate">MedSafe <span class="text-primary">管理端</span></span>
+                    <button @click="showMobileMenu = false" class="lg:hidden p-2 text-lightText hover:text-primary transition-colors rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
                 <nav class="flex-1 space-y-2">
                     <a v-for="item in menuItems" :key="item.name" href="#" 
-                       @click.prevent="switchMenu(item.name)"
+                       @click.prevent="switchMenu(item.name); showMobileMenu = false"
                        :class="['sidebar-item flex items-center gap-3 px-4 py-3.5 rounded-2xl font-semibold transition-all', activeMenu === item.name ? 'active' : 'text-lightText']">
                         <component :is="item.icon" class="h-5 w-5"></component>
                         {{ item.label }}
@@ -96,6 +105,9 @@
         <main class="flex-1 lg:ml-72 p-6 lg:p-8 space-y-8 min-w-0">
             <header class="glass rounded-2xl p-4 flex items-center justify-between shadow-premium sticky top-0 z-30">
                 <div class="flex items-center gap-4 flex-1">
+                    <button @click="showMobileMenu = true" class="lg:hidden p-2 text-lightText hover:text-primary bg-white rounded-xl shadow-sm border border-slate-100 transition-all shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
                     <div class="relative w-full max-w-md hidden md:block text-left">
                         <input type="text" placeholder="全局搜索功能..." class="w-full bg-bgMain/50 border-none rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-primary/20 text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-lightText" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>

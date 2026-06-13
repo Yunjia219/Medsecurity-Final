@@ -1,0 +1,623 @@
+================================================================
+  MedSafe-Chain — 版面設計規格書
+  Design Specification Document
+================================================================
+建立日期：2026-06-13
+適用頁面：login / dashboard / patient / insurance / admin
+
+================================================================
+目錄
+================================================================
+1. 設計系統概述
+2. 色彩系統（各角色主題）
+3. 字型系統
+4. 尺寸與間距
+5. 圓角規格
+6. 陰影系統
+7. 漸層定義
+8. 動畫規格
+9. 排版結構
+10. 元件規格
+11. 響應式斷點
+12. 捲軸樣式
+
+================================================================
+1. 設計系統概述
+================================================================
+設計語言：Premium Medical Dark + Light Hybrid
+設計哲學：深色 Sidebar（深邃感 / 專業感）+ 淺色主內容區（清爽感）
+           搭配大圓角、柔和陰影、角色主題色系
+
+全站共用框架：
+  - CSS 框架：Tailwind CSS（CDN）
+  - 字型：Plus Jakarta Sans + Noto Sans TC
+  - 圖示：Inline SVG（Heroicons 風格）
+  - 圖表：ECharts 5
+  - 網狀圖：D3.js v7
+  - 互動框架：Vue 3
+
+================================================================
+2. 色彩系統（各角色主題）
+================================================================
+
+────────────────────────────────────────────────────────────────
+【 全角色共用色 — Semantic Colors 】
+────────────────────────────────────────────────────────────────
+  成功 success   #22C55E  / #10B981（醫師頁）
+  警告 warning   #F59E0B
+  危險 danger    #EF4444
+  文字（內容）   #4B5563
+  淺文字        #9CA3AF
+  白色卡片      #FFFFFF
+  分隔線        #E5E7EB / rgba(255,255,255,0.05)~0.10（深色 Sidebar）
+
+────────────────────────────────────────────────────────────────
+【 login.html — 綠色主題（登入頁） 】
+────────────────────────────────────────────────────────────────
+  primary       #24A15D   主綠（按鈕、強調）
+  deep          #175C3A   深綠（漸層底色）
+  tech          #3BB77E   科技綠（次要元素）
+  mint          #EAF7F0   薄荷淡綠（背景點綴）
+  bgMain        #F8FAF9   頁面背景
+  title         #1C2B24   深綠黑（標題文字）
+  content       #4B5563   內容文字
+  lightText     #9CA3AF   輔助文字
+
+────────────────────────────────────────────────────────────────
+【 dashboard.html — 深藍主題（醫師） 】
+────────────────────────────────────────────────────────────────
+  primary       #1A5276   主藍（按鈕、標題）
+  accent        #2DD4BF   Teal 重點色（高亮、圖表）
+  bgMain        #F8FAFC   頁面背景
+  sidebar       #0F172A   深藍黑（Sidebar 背景）
+  cardBg        #FFFFFF   卡片白
+  success       #10B981   成功綠
+  warning       #F59E0B   警示黃
+  danger        #EF4444   危險紅
+  medRed        #C0392B   醫療危險深紅（D3 衝突節點）
+  medGreen      #1E8449   醫療安全深綠（D3 安全節點）
+
+────────────────────────────────────────────────────────────────
+【 patient.html — 綠色主題（病患） 】
+────────────────────────────────────────────────────────────────
+  primary       #24A15D   主綠
+  deep          #175C3A   深綠
+  tech          #3BB77E   次綠
+  mint          #EAF7F0   薄荷淡綠
+  bgMain        #F8FAF9   頁面背景
+  title         #1C2B24   標題
+  content       #4B5563   內容
+  lightText     #9CA3AF   輔助
+  success       #22C55E   成功
+  warning       #F59E0B   警告
+  danger        #EF4444   危險
+  golden        #D4AF37   金色（特殊標章）
+  navy          #0F172A   深色（Modal、Sidebar）
+
+────────────────────────────────────────────────────────────────
+【 insurance.html — 深海藍主題（保險） 】
+────────────────────────────────────────────────────────────────
+  navy          #292E4C   主深藍（Sidebar、標題）
+  turquoise     #1DD3B0   主綠松色（高亮、CTA 按鈕）
+  golden        #F5D001   金黃色（特殊數據強調）
+  bgMain        #F5F4F5   頁面背景（偏灰白）
+  cardBg        #FFFFFF   卡片白
+  title         #1C2B24   標題文字
+  content       #4B5563   內容文字
+  lightText     #9CA3AF   輔助文字
+  success       #22C55E   成功綠
+  danger        #EF4444   危險紅
+
+────────────────────────────────────────────────────────────────
+【 admin.html — 紫色主題（系統管理） 】
+────────────────────────────────────────────────────────────────
+  primary       #7B61FF   主紫（按鈕、重點）
+  deep          #6C47FF   深紫（漸層）
+  neon          #8B5CF6   霓虹紫（次要）
+  soft          #A78BFA   柔和紫（圖示）
+  light         #EDE9FE   淡紫背景（hover）
+  bgMain        #F6F7FB   頁面背景（偏紫灰）
+  cardBg        #FFFFFF   卡片白
+  title         #1E1B4B   深紫黑（標題）
+  content       #4B5563   內容文字
+  lightText     #9CA3AF   輔助文字
+  success       #22C55E   成功綠
+  warning       #F59E0B   警告黃
+  danger        #EF4444   危險紅
+
+================================================================
+3. 字型系統
+================================================================
+
+────────────────────────────────────────────────────────────────
+字型家族（雙語堆疊）
+────────────────────────────────────────────────────────────────
+  Latin / 數字：Plus Jakarta Sans
+  中文：        Noto Sans TC
+  引入方式：    Google Fonts CDN
+  設定：        font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+
+────────────────────────────────────────────────────────────────
+字重（Weight）
+────────────────────────────────────────────────────────────────
+  300  font-light       — 輕量說明文字（少用）
+  400  font-normal      — 一般段落
+  500  font-medium      — 輕強調
+  600  font-semibold    — 次要標題
+  700  font-bold        — 標題
+  800  font-extrabold   — 強標題
+  900  font-black       — 最高強調（主標題、按鈕、KPI 數值）
+
+────────────────────────────────────────────────────────────────
+字級（Size Scale）
+────────────────────────────────────────────────────────────────
+  [8px]   — 最小 label、角標文字
+  [9px]   — Sidebar 分類標題、時間戳記
+  [10px]  — 標章（badge）、欄位 label、次要 Meta
+  [11px]  — 輔助說明
+  12px    text-xs      — 次要資訊、caption
+  14px    text-sm      — 主要正文、按鈕文字（小）
+  16px    text-base    — 預設（少用，多用 sm）
+  18px    text-lg      — 子標題（少用）
+  20px    text-xl      — 區塊標題（section title）
+  24px    text-2xl     — 頁面標題、Modal 標題
+  28px    text-3xl     — 主標題（h1）
+  36px    text-4xl     — 登入頁歡迎標題
+  60px    text-6xl     — 登入頁 Hero 大字
+
+────────────────────────────────────────────────────────────────
+字距與大小寫
+────────────────────────────────────────────────────────────────
+  tracking-tighter  — 大標題（緊縮，高端感）
+  tracking-widest   — badge、label、uppercase 標籤（[0.2em]）
+  uppercase         — 英文 badge、系統標籤、按鈕（次要）
+
+================================================================
+4. 尺寸與間距
+================================================================
+
+────────────────────────────────────────────────────────────────
+內距（Padding）
+────────────────────────────────────────────────────────────────
+  p-2   8px    — 圖示按鈕點擊區
+  p-3   12px   — 小型元素
+  p-4   16px   — 緊湊 padding（badge、小卡）
+  p-5   20px   — 藥物卡片
+  p-6   24px   — 標準卡片、Sidebar
+  p-8   32px   — 主要 section、大卡片
+  p-16  64px   — 登入頁 Hero 內容區
+
+────────────────────────────────────────────────────────────────
+外距 / 間距（Margin / Gap）
+────────────────────────────────────────────────────────────────
+  gap-2   8px    — 緊密元素（行內圖示+文字）
+  gap-3   12px   — Sidebar 選單項目
+  gap-4   16px   — 卡片內部分組
+  gap-6   24px   — 卡片之間
+  gap-8   32px   — 主要 Section 間距
+  space-y-4      — 垂直堆疊（列表）
+  space-y-6      — 表單欄位
+  space-y-8      — 大區塊堆疊
+
+────────────────────────────────────────────────────────────────
+固定寬度
+────────────────────────────────────────────────────────────────
+  Sidebar：         w-72（288px）
+  最大內容寬：      max-w-md（448px，登入表單）
+                    max-w-2xl（672px，Modal）
+  KPI 卡圖示：      w-12 h-12（48px）
+  頭像（小）：      w-10 h-10（40px）
+  頭像（中）：      w-16 h-16（64px，但依頁面而異）
+  頭像（大）：      w-32 h-32（128px，病患詳情）
+  狀態點：          w-2 h-2 / w-3.5 h-3.5
+  通知角標：        min-w-[18px] h-[18px]
+  進度條高度：      h-2（8px）
+
+================================================================
+5. 圓角規格
+================================================================
+
+────────────────────────────────────────────────────────────────
+全站圓角層級（由小到大）
+────────────────────────────────────────────────────────────────
+  rounded           4px    — 極小（幾乎不用）
+  rounded-lg        8px    — 很小元素（Tailwind 預設 lg）
+  rounded-xl        12px   — 按鈕、小圖示容器、輸入框（頁面依情境）
+  rounded-2xl       20px   — 標準卡片、表單輸入框、Badge
+  rounded-3xl       30px   — 大卡片、Dropdown、Toast、主 Modal
+  rounded-[24px]    24px   — 醫師頁 KPI 卡（dashboard）
+  rounded-[32px]    32px   — 醫師頁圖表卡、D3 容器（dashboard）
+  rounded-[40px]    40px   — 病患頁主要卡片（patient）
+  rounded-full      50%    — 頭像、狀態點、圓形按鈕、角標
+
+────────────────────────────────────────────────────────────────
+各元件建議圓角
+────────────────────────────────────────────────────────────────
+  主要 CTA 按鈕：   rounded-2xl / rounded-3xl
+  表單 Input：      rounded-2xl（20px）
+  Sidebar：         圓角只在右側內容元素，Sidebar 本身不圓角
+  KPI 卡片：        rounded-[24px]（醫師）/ rounded-2xl（其他）
+  Modal：           rounded-[40px]（病患）/ rounded-3xl（其他）
+  Toast：           rounded-3xl
+  Dropdown：        rounded-3xl
+  Avatar：          rounded-full / rounded-xl / rounded-[36px]（大頭像）
+  Badge / Pill：    rounded-full
+  圖示背景：        rounded-xl / rounded-2xl
+
+================================================================
+6. 陰影系統
+================================================================
+
+────────────────────────────────────────────────────────────────
+角色特定 shadow-premium（帶主題色調的柔和投影）
+────────────────────────────────────────────────────────────────
+  登入 / 病患（綠）：   0 10px 40px -10px rgba(36, 161, 93, 0.12)
+  醫師（深藍）：        0 20px 50px -12px rgba(15, 23, 42, 0.10)
+  保險（深海藍）：      0 10px 40px -10px rgba(41, 46, 76, 0.08)
+  管理員（紫）：        0 10px 40px -10px rgba(123, 97, 255, 0.15)
+
+────────────────────────────────────────────────────────────────
+角色特定 shadow-glow（發光效果，用於按鈕或重要元素）
+────────────────────────────────────────────────────────────────
+  病患（綠）：     0 0 20px rgba(36, 161, 93, 0.20)
+  保險（綠松）：   0 0 20px rgba(29, 211, 176, 0.25)
+  管理員（紫）：   0 0 20px rgba(123, 97, 255, 0.30)
+
+────────────────────────────────────────────────────────────────
+Tailwind 標準陰影用途
+────────────────────────────────────────────────────────────────
+  shadow-sm    — 輸入框、次要元素
+  shadow       — 預設（幾乎不用）
+  shadow-lg    — 標準卡片
+  shadow-xl    — 重要卡片、懸浮按鈕
+  shadow-2xl   — Modal、Sidebar、Dropdown
+
+================================================================
+7. 漸層定義
+================================================================
+
+────────────────────────────────────────────────────────────────
+各頁面主漸層（方向均為 135°）
+────────────────────────────────────────────────────────────────
+  登入 / 病患（綠）：
+    .hero-gradient     background: linear-gradient(135deg, #24A15D 0%, #175C3A 100%)
+
+  醫師（深藍）：
+    .clinical-gradient background: linear-gradient(135deg, #1A5276 0%, #2980B9 100%)
+
+  保險（深海藍）：
+    .hero-navy         background: linear-gradient(135deg, #292E4C 0%, #3D446A 100%)
+    .turquoise-gradient background: linear-gradient(135deg, #1DD3B0 0%, #17A890 100%)
+
+  管理員（紫）：
+    .purple-gradient   background: linear-gradient(135deg, #7B61FF 0%, #6C47FF 100%)
+
+────────────────────────────────────────────────────────────────
+用途
+────────────────────────────────────────────────────────────────
+  - 主要 CTA 按鈕背景
+  - Modal header 背景
+  - KPI 圖示背景色（使用 bg-primary 純色）
+  - 病患頁 Sidebar 上方條紋（absolute top-0 h-2 rounded-t-[40px]）
+  - 卡片 hover 時 bg-primary
+
+================================================================
+8. 動畫規格
+================================================================
+
+────────────────────────────────────────────────────────────────
+fadeIn（元素進場）
+────────────────────────────────────────────────────────────────
+  class: .animate-fade-in
+  duration: 0.6s
+  easing: ease-out
+  from: opacity: 0, translateY(10px)
+  to:   opacity: 1, translateY(0)
+  用途: Tab 切換內容、Modal 內容、列表項目載入
+
+────────────────────────────────────────────────────────────────
+Vue Transition — fade（快速淡入淡出）
+────────────────────────────────────────────────────────────────
+  name="fade"
+  .fade-enter-active / .fade-leave-active: transition: opacity 0.3s ease
+  .fade-enter-from / .fade-leave-to: opacity: 0
+  用途: Modal、Toast、Dropdown、行動版 Overlay
+
+────────────────────────────────────────────────────────────────
+Vue Transition — slide-next / slide-prev（輪播）
+────────────────────────────────────────────────────────────────
+  duration: 0.45s ease
+  position: absolute; inset: 0; width: 100%; height: 100%
+  slide-next-enter-from:  translateX(100%)
+  slide-next-leave-to:    translateX(-100%)
+  slide-prev-enter-from:  translateX(-100%)
+  slide-prev-leave-to:    translateX(100%)
+  用途: 登入頁背景圖片輪播（每 4 秒自動切換）
+
+────────────────────────────────────────────────────────────────
+card-hover（卡片 hover 上浮）
+────────────────────────────────────────────────────────────────
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+  hover: transform: translateY(-8px)
+         box-shadow: 0 20px 40px -10px rgba(36, 161, 93, 0.15)
+  用途: 病患頁藥物卡片、登入頁演示帳號卡
+
+────────────────────────────────────────────────────────────────
+按鈕 hover / active
+────────────────────────────────────────────────────────────────
+  hover:scale-[1.01] / hover:scale-[1.02] / hover:scale-105
+  active:scale-[0.98] / active:scale-95
+  transition-all（含 duration 預設 150ms）
+
+────────────────────────────────────────────────────────────────
+Sidebar 選單項目 hover（管理員）
+────────────────────────────────────────────────────────────────
+  hover: background: #EDE9FE; color: #7B61FF; transform: translateX(5px)
+
+────────────────────────────────────────────────────────────────
+pulse-live（狀態點脈衝動畫）
+────────────────────────────────────────────────────────────────
+  duration: 2s infinite
+  0%:   scale(0.95), box-shadow 0 0 0 0 rgba(danger, 0.7)
+  70%:  scale(1),    box-shadow 0 0 0 8px rgba(danger, 0)
+  100%: scale(0.95), box-shadow 0 0 0 0 rgba(danger, 0)
+  用途: HAPI FHIR Server Online 指示燈
+
+────────────────────────────────────────────────────────────────
+scanning-line（D3 圖譜掃描線）
+────────────────────────────────────────────────────────────────
+  width: 100%; height: 2px
+  background: linear-gradient(90deg, transparent, #2DD4BF, transparent)
+  animation: scan 4s linear infinite
+  from: top: 0%; to: top: 100%
+  opacity: 0.3
+  用途: 醫師頁 D3 網狀圖背景動畫
+
+────────────────────────────────────────────────────────────────
+animate-spin（載入 Spinner）
+────────────────────────────────────────────────────────────────
+  Tailwind 內建：animation: spin 1s linear infinite
+  用途: 登入按鈕載入、按鈕 disabled loading 狀態
+  樣式: w-4/5/6 h-4/5/6，border-4，border-t-transparent，rounded-full
+
+════════════════════════════════════════════════════════════════
+9. 排版結構
+════════════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────────
+整體 Layout（登入頁以外）
+────────────────────────────────────────────────────────────────
+
+  ┌──────────┬──────────────────────────────────────────┐
+  │          │  [行動版 Header]（lg:hidden）             │
+  │ SIDEBAR  │──────────────────────────────────────────│
+  │  w-72    │                                          │
+  │  fixed   │         MAIN CONTENT                     │
+  │  dark bg │         flex-1  overflow-y-auto          │
+  │          │         bg-bgMain                        │
+  │          │                                          │
+  └──────────┴──────────────────────────────────────────┘
+
+  Sidebar：fixed 定位，z-[70]，h-screen，overflow-y-auto
+  Main：   margin-left 由 flex-1 自動處理（desktop）
+           行動版：main 全寬，sidebar 疊加於上方（translate-x-full 隱藏）
+
+────────────────────────────────────────────────────────────────
+登入頁 Layout
+────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────┬──────────────────────┐
+  │  LEFT HERO PANEL    │   RIGHT LOGIN FORM   │
+  │  w-1/2              │   w-1/2              │
+  │  hidden lg:flex     │   bg-white           │
+  │  full-bg carousel   │   overflow-y-auto    │
+  │  + overlay + text   │   max-w-md centered  │
+  └─────────────────────┴──────────────────────┘
+
+────────────────────────────────────────────────────────────────
+Sidebar 結構（垂直三區）
+────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────┐
+  │  LOGO + 品牌名稱 / X鈕  │  ← border-b border-white/5 p-6
+  ├─────────────────────────┤
+  │  NAV / 病患列表         │  ← flex-1 overflow-y-auto py-4
+  │  （可捲動）             │
+  ├─────────────────────────┤
+  │  使用者資訊 + 登出      │  ← mt-auto border-t border-white/5 p-6
+  └─────────────────────────┘
+
+────────────────────────────────────────────────────────────────
+行動版 Header 結構
+────────────────────────────────────────────────────────────────
+
+  [ 漢堡選單 ]  [ 頁面標題 / 病患名 ]  [ 使用者 Avatar / 鈴鐺 ]
+  sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b shadow-sm
+
+────────────────────────────────────────────────────────────────
+主內容 Section 間距
+────────────────────────────────────────────────────────────────
+
+  ・Section 頂部 padding：p-8（32px）
+  ・Section 間距：space-y-8 / space-y-6
+  ・卡片 Grid：grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
+
+════════════════════════════════════════════════════════════════
+10. 元件規格
+════════════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────────
+KPI 統計卡
+────────────────────────────────────────────────────────────────
+  外觀：  bg-white p-6 rounded-[24px] shadow-premium
+  Hover： hover:bg-primary（變深色）group-hover:text-white
+  圖示：  w-12 h-12 rounded-xl 主題色背景
+  數值：  text-3xl font-black
+  Label： text-[11px] font-black uppercase tracking-widest text-slate-400
+  趨勢：  text-[10px] font-bold text-slate-400
+
+────────────────────────────────────────────────────────────────
+主要 CTA 按鈕
+────────────────────────────────────────────────────────────────
+  外觀：  主漸層背景 text-white font-black py-4 px-10 rounded-2xl
+  效果：  shadow-xl hover:scale-[1.01] active:scale-[0.98] transition-all
+  Loading：左側 spinner SVG（w-5 h-5 animate-spin），文字改「驗證中...」
+  Disabled：disabled:opacity-50 disabled:cursor-not-allowed
+
+────────────────────────────────────────────────────────────────
+次要按鈕
+────────────────────────────────────────────────────────────────
+  外觀：  text-slate-400 hover:text-slate-600 font-black uppercase tracking-widest
+  或：    border border-主題色 text-主題色 hover:bg-主題色/10
+
+────────────────────────────────────────────────────────────────
+表單輸入框
+────────────────────────────────────────────────────────────────
+  外觀：  bg-bgMain border-2 border-transparent rounded-2xl py-4 px-6
+  Focus： focus:border-primary/20 focus:bg-white transition-all outline-none
+  字型：  font-bold text-slate-800（輸入值）
+
+────────────────────────────────────────────────────────────────
+Badge / 狀態標籤
+────────────────────────────────────────────────────────────────
+  外觀：  px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+  顏色：
+    success  = bg-success/10 text-success border border-success/20
+    danger   = bg-danger/10  text-danger  border border-danger/20
+    warning  = bg-warning/10 text-warning border border-warning/20
+    角色標籤 = 各主題色的 bg-*/100 text-*/600
+
+────────────────────────────────────────────────────────────────
+Toast 通知
+────────────────────────────────────────────────────────────────
+  位置：  fixed bottom-10 right-10 z-[300]
+  外觀：  bg-slate-900 text-white px-8 py-5 rounded-3xl shadow-2xl
+          border border-white/10 flex items-center gap-4
+  圖示：  w-10 h-10 bg-success rounded-full（成功打勾圖示）
+  標題：  font-black text-sm uppercase tracking-widest
+  副文：  text-xs text-slate-400
+  消失：  3 秒後自動 showToast = false
+  動畫：  Vue fade transition
+
+────────────────────────────────────────────────────────────────
+Modal（彈出視窗）
+────────────────────────────────────────────────────────────────
+  遮罩：  fixed inset-0 z-[250] flex items-center justify-center p-4
+          遮罩層 bg-slate-950/80 backdrop-blur-md（點擊關閉）
+  卡片：  bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden
+  Header：主題漸層背景 p-8 text-white（含標題 + X 關閉按鈕）
+  Body：  p-8 space-y-6
+  Footer：p-8 bg-slate-50 flex gap-4 border-t border-slate-100
+
+────────────────────────────────────────────────────────────────
+Dropdown（下拉選單 / 通知面板）
+────────────────────────────────────────────────────────────────
+  定位：  absolute right-0 top-full mt-2 z-50
+  外觀：  w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden
+  Header：px-6 py-4 border-b border-slate-100 flex justify-between
+  列表：  max-h-72 overflow-y-auto
+  項目：  flex gap-4 items-start px-6 py-4 hover:bg-slate-50 border-b border-slate-50 last:border-0
+  關閉：  click-outside（document.addEventListener）+ @click.stop 容器
+
+────────────────────────────────────────────────────────────────
+Tab 導覽
+────────────────────────────────────────────────────────────────
+  容器：  flex gap-1 bg-slate-100 rounded-2xl p-1.5
+  非啟用：px-5 py-2.5 rounded-xl font-black text-sm text-slate-400 hover:text-title
+  啟用：  px-5 py-2.5 rounded-xl font-black text-sm bg-white text-primary shadow-sm
+
+────────────────────────────────────────────────────────────────
+Sidebar 導覽項目
+────────────────────────────────────────────────────────────────
+  一般：  flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400
+          hover:bg-white/5 font-bold text-sm transition-all
+  啟用：  bg-rgba(主題色, 0.15) text-主題色 border-r-4 border-主題色
+
+────────────────────────────────────────────────────────────────
+進度條
+────────────────────────────────────────────────────────────────
+  軌道：  w-full bg-slate-100 rounded-full h-2
+  填滿：  h-2 bg-主題色 rounded-full transition-all duration-700
+
+────────────────────────────────────────────────────────────────
+玻璃擬態（Glass Morphism）
+────────────────────────────────────────────────────────────────
+  .glass  background: rgba(255, 255, 255, 0.20)
+          backdrop-filter: blur(12px)
+          border: 1px solid rgba(255, 255, 255, 0.30)
+  用途：  特殊 badge、登入頁 feature 列表
+
+────────────────────────────────────────────────────────────────
+自訂 Checkbox（病患提醒）
+────────────────────────────────────────────────────────────────
+  尺寸：  24px × 24px
+  圓角：  8px
+  邊框：  2px solid #E5E7EB（未勾選）
+  勾選：  background-color: #24A15D; border-color: #24A15D
+  過渡：  transition: all 0.2s
+
+════════════════════════════════════════════════════════════════
+11. 響應式斷點
+════════════════════════════════════════════════════════════════
+
+Tailwind CSS 預設斷點：
+  sm:   640px   — 小型平板（少量使用）
+  md:   768px   — 平板（Grid 從 1 欄變 2 欄）
+  lg:   1024px  — 筆電（Sidebar 顯示、行動版 Header 隱藏）
+  xl:   1280px  — 桌機（進階佈局、3/4 欄 Grid）
+
+主要響應行為：
+  < lg：Sidebar 隱藏（-translate-x-full），行動版 Header 顯示
+  ≥ lg：Sidebar 常駐（lg:translate-x-0），行動版 Header 隱藏（lg:hidden）
+
+  Grid 欄數：
+    grid-cols-1 → md:grid-cols-2 → lg:grid-cols-3 → xl:grid-cols-4
+
+  Flex 方向：
+    flex-col → lg:flex-row（卡片並排）
+
+  文字大小：
+    部分使用 sm:text-* 調整小螢幕字級
+
+════════════════════════════════════════════════════════════════
+12. 捲軸樣式
+════════════════════════════════════════════════════════════════
+
+全站統一自訂捲軸（WebKit）：
+  ::-webkit-scrollbar         { width: 6px; }
+  ::-webkit-scrollbar-track   { background: transparent; }
+  ::-webkit-scrollbar-thumb   { background: #E5E7EB; border-radius: 10px; }
+
+效果：細長（6px）、圓角、淺灰色、透明軌道，視覺極簡。
+
+================================================================
+附錄：色票速查表
+================================================================
+
+  顏色名稱           HEX        用途
+  ─────────────────────────────────────────────────────────────
+  綠 primary         #24A15D    病患/登入 主色
+  綠 deep            #175C3A    病患/登入 漸層底
+  藍 primary         #1A5276    醫師 主色
+  藍 accent/Teal     #2DD4BF    醫師 高亮、Sidebar active
+  深藍 sidebar       #0F172A    醫師/病患 Sidebar 背景
+  海藍 navy          #292E4C    保險 Sidebar 背景
+  綠松 turquoise     #1DD3B0    保險 高亮、CTA
+  紫 primary         #7B61FF    管理員 主色
+  紫 deep            #6C47FF    管理員 漸層底
+  成功綠             #22C55E    全站 success
+  警告黃             #F59E0B    全站 warning
+  危險紅             #EF4444    全站 danger
+  頁面背景（綠）     #F8FAF9    登入/病患 bg
+  頁面背景（藍）     #F8FAFC    醫師 bg
+  頁面背景（灰藍）   #F5F4F5    保險 bg
+  頁面背景（紫灰）   #F6F7FB    管理員 bg
+  卡片白             #FFFFFF    全站卡片底色
+  標題（深）        #1C2B24    綠色主題標題
+  標題（深藍）      #1E1B4B    紫色主題標題
+  內容灰             #4B5563    全站內容文字
+  輔助灰             #9CA3AF    全站輔助文字
+
+================================================================
+文件結束
+================================================================

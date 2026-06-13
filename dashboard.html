@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>醫師整合工作站 | MedSafe-Chain</title>
+    <link rel="icon" type="image/png" href="images/LOGO.png">
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -71,9 +72,7 @@
         <aside :class="['w-72 fixed lg:static h-screen bg-sidebar flex flex-col shrink-0 z-[70] transition-transform duration-300 shadow-2xl', showMobileMenu ? 'translate-x-0' : '-translate-x-full lg:translate-x-0']">
             <div class="p-6 border-b border-white/5 text-center flex justify-between lg:justify-center items-center">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 clinical-gradient rounded-xl flex items-center justify-center shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                    </div>
+                    <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain" alt="MedSafe-Chain">
                     <span class="text-xl font-black text-white tracking-tighter">MedSafe <span class="text-accent">AI</span></span>
                 </div>
                 <button @click="showMobileMenu = false" class="lg:hidden p-2 text-slate-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
@@ -424,10 +423,10 @@
             created() {
                 this._charts = {};
             },
-            mounted() { 
-                this.initCharts(); 
+            mounted() {
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
+                this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
                 if (this.recentPatients && this.recentPatients.length > 0) {
                     const fp = this.recentPatients[0]; this.selectedPatient = fp;
                     this.$nextTick(() => { this.initD3Container(); this.loadScenario(fp.name === '劉建國' ? 'A' : 'B'); });
@@ -439,6 +438,12 @@
             },
             methods: {
                 logout() { localStorage.removeItem('demo_user'); window.location.href = 'login.html'; },
+                scrollTo(selector) {
+                    this.$nextTick(() => {
+                        const el = document.querySelector(selector);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                },
                 switchToPatient(p) {
                     this.selectedPatient = p; this.triggerToast('同步成功', `載入 ${p.name} 的雲端資料`);
                     this.$nextTick(() => {

@@ -1,7 +1,7 @@
 # MedSafe-Chain 跨醫院多重用藥衝突與副作用網頁預警系統
 
 ## 隊伍資訊
-- 隊伍名稱：（待填入）
+- 隊伍名稱：漂亮北極熊
 - 作品名稱：MedSafe-Chain 跨醫院多重用藥衝突與副作用網頁預警系統
 - 主題領域：醫療資訊 / 長期照護
 - 核心 FHIR Resources：MedicationRequest、Bundle、Patient

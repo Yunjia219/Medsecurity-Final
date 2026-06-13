@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InsurTech 管理中心 | MedSafe-Chain</title>
+    <link rel="icon" type="image/png" href="images/LOGO.png">
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -59,9 +60,7 @@
             <div class="h-full flex flex-col">
                 <div class="flex items-center justify-between mb-12 px-2">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 turquoise-gradient rounded-xl flex items-center justify-center shadow-glow shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        </div>
+                        <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe-Chain">
                         <span class="text-xl font-extrabold tracking-tight truncate">MedSafe <span class="text-turquoise">保險端</span></span>
                     </div>
                     <button @click="showMobileMenu = false" class="lg:hidden p-2 text-white/40 hover:text-turquoise"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
@@ -114,7 +113,8 @@
                         </button>
                     </div>
 
-                    <section class="hero-navy rounded-[40px] p-8 md:p-12 text-white relative overflow-hidden shadow-premium text-left">
+                    <section class="hero-navy rounded-[40px] p-8 md:p-12 text-white relative overflow-hidden shadow-premium text-left" style="background-image: url('images/in.png'); background-size: cover; background-position: center;">
+                        <div class="absolute inset-0 bg-navy/80 rounded-[40px]"></div>
                         <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 items-center text-left">
                             <div class="text-left">
                                 <div class="inline-flex items-center gap-2 bg-turquoise text-navy px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 shadow-glow">AI Underwriting Core</div>
@@ -327,7 +327,10 @@
                     </div>
                     <div class="p-8 md:p-10 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-4 shrink-0">
                         <button @click="showRiskDetailModal = false" class="px-10 py-5 font-black text-slate-400 uppercase text-xs order-2 sm:order-1 transition-colors hover:text-navy">Dismiss</button>
-                        <button class="px-10 py-5 bg-navy text-white font-black rounded-[24px] shadow-xl hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest order-1 sm:order-2">啟動個案關懷</button>
+                        <button @click="activateCareCase()" :disabled="activatingCare" class="px-10 py-5 bg-navy text-white font-black rounded-[24px] shadow-xl hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest order-1 sm:order-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 flex items-center gap-2">
+                            <svg v-if="activatingCare" class="animate-spin h-4 w-4 text-white shrink-0" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            {{ activatingCare ? '處理中...' : '啟動個案關懷' }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -362,6 +365,7 @@
                 return {
                     user, activeMenu: 'Dashboard', showRiskDetailModal: false, showToast: false, toastTitle: '', selectedRiskPatient: {},
                     showMobileMenu: false,
+                    activatingCare: false,
                     menuItems: [
                         { name: 'Dashboard', label: '總覽儀表板', icon: Icons.Dashboard },
                         { name: 'Policy', label: '保單大數據', icon: Icons.Policy },
@@ -438,6 +442,16 @@
                 destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
                 viewRiskDetail(id) { this.selectedRiskPatient = this.riskDetails[id]; this.showRiskDetailModal = true; },
                 triggerToast(t) { this.toastTitle = t; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
+                activateCareCase() {
+                    if (this.activatingCare) return;
+                    this.activatingCare = true;
+                    setTimeout(() => {
+                        this.activatingCare = false;
+                        this.showRiskDetailModal = false;
+                        const name = this.selectedRiskPatient.name || '該保戶';
+                        this.triggerToast(`個案關懷已啟動：${name}`);
+                    }, 1200);
+                },
                 initCharts() {
                     this.destroyCharts();
                     const hEl = document.getElementById('heroAreaChart'); 
