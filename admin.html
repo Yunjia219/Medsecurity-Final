@@ -541,7 +541,9 @@
                             id: u.username, name: u.name, role: u.role,
                             roleName: roleNames[u.role] || u.role,
                             email: u.username + '@medsafe.com',
-                            hospital: 'N/A', status: 'active', statusName: '正常'
+                            hospital: 'N/A',
+                            status: u.status || 'active',
+                            statusName: u.status === 'disabled' ? '停用' : '正常'
                         }));
                     }
                 } catch(e) {
