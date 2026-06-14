@@ -156,10 +156,46 @@ window.mockData = {
 
   // 全域藥品清單
   allMedications: [
-    { id: 1, name: 'Warfarin', zhName: '華法林', category: '抗凝血劑', dosage: '5mg', unit: '錠', stock: 1200, price: 15, status: '正常', location: 'A-01' },
-    { id: 2, name: 'Aspirin', zhName: '阿斯匹靈', category: '非類固醇消炎藥', dosage: '100mg', unit: '錠', stock: 2500, price: 5, status: '正常', location: 'A-02' },
-    { id: 3, name: 'Metformin', zhName: '二甲雙胍', category: '降血糖藥', dosage: '500mg', unit: '錠', stock: 3000, price: 8, status: '正常', location: 'B-01' },
-    { id: 4, name: 'Lisinopril', zhName: '賴諾普利', category: '降血壓藥', dosage: '10mg', unit: '錠', stock: 1500, price: 12, status: '正常', location: 'B-02' }
+    // 抗凝血劑
+    { id: 1,  name: 'Warfarin',       zhName: '華法林',       category: '抗凝血劑',         dosage: '5mg',    unit: '錠', stock: 1200, price: 15,  status: '正常', location: 'A-01' },
+    { id: 2,  name: 'Clopidogrel',    zhName: '氯吡格雷',     category: '抗血小板藥',       dosage: '75mg',   unit: '錠', stock: 900,  price: 45,  status: '正常', location: 'A-03' },
+    { id: 3,  name: 'Rivaroxaban',    zhName: '利伐沙班',     category: '抗凝血劑',         dosage: '20mg',   unit: '錠', stock: 600,  price: 120, status: '正常', location: 'A-04' },
+    // 非類固醇消炎藥 / 止痛藥
+    { id: 4,  name: 'Aspirin',        zhName: '阿斯匹靈',     category: '非類固醇消炎藥',   dosage: '100mg',  unit: '錠', stock: 2500, price: 5,   status: '正常', location: 'A-02' },
+    { id: 5,  name: 'Ibuprofen',      zhName: '布洛芬',       category: '非類固醇消炎藥',   dosage: '400mg',  unit: '錠', stock: 1800, price: 8,   status: '正常', location: 'A-05' },
+    { id: 6,  name: 'Acetaminophen',  zhName: '乙醯胺酚',     category: '止痛退燒藥',       dosage: '500mg',  unit: '錠', stock: 5000, price: 3,   status: '正常', location: 'A-06' },
+    // 降血糖藥
+    { id: 7,  name: 'Metformin',      zhName: '二甲雙胍',     category: '降血糖藥',         dosage: '500mg',  unit: '錠', stock: 3000, price: 8,   status: '正常', location: 'B-01' },
+    { id: 8,  name: 'Glipizide',      zhName: '格列吡嗪',     category: '降血糖藥',         dosage: '5mg',    unit: '錠', stock: 1200, price: 18,  status: '正常', location: 'B-02' },
+    { id: 9,  name: 'Insulin Glargine', zhName: '長效胰島素', category: '胰島素',           dosage: '100U/mL', unit: '支', stock: 400,  price: 380, status: '正常', location: 'B-03' },
+    { id: 10, name: 'Sitagliptin',    zhName: '西他列汀',     category: '降血糖藥',         dosage: '100mg',  unit: '錠', stock: 800,  price: 85,  status: '正常', location: 'B-04' },
+    // 降血壓藥
+    { id: 11, name: 'Lisinopril',     zhName: '賴諾普利',     category: '降血壓藥',         dosage: '10mg',   unit: '錠', stock: 1500, price: 12,  status: '正常', location: 'C-01' },
+    { id: 12, name: 'Amlodipine',     zhName: '氨氯地平',     category: '鈣離子阻斷劑',     dosage: '5mg',    unit: '錠', stock: 2000, price: 22,  status: '正常', location: 'C-02' },
+    { id: 13, name: 'Metoprolol',     zhName: '美托洛爾',     category: '乙型阻斷劑',       dosage: '50mg',   unit: '錠', stock: 1600, price: 16,  status: '正常', location: 'C-03' },
+    { id: 14, name: 'Valsartan',      zhName: '纈沙坦',       category: '降血壓藥',         dosage: '80mg',   unit: '錠', stock: 1100, price: 35,  status: '正常', location: 'C-04' },
+    { id: 15, name: 'Furosemide',     zhName: '呋塞米',       category: '利尿劑',           dosage: '40mg',   unit: '錠', stock: 900,  price: 6,   status: '正常', location: 'C-05' },
+    // 降血脂藥
+    { id: 16, name: 'Atorvastatin',   zhName: '阿托伐他汀',   category: '降血脂藥',         dosage: '20mg',   unit: '錠', stock: 2200, price: 28,  status: '正常', location: 'D-01' },
+    { id: 17, name: 'Rosuvastatin',   zhName: '瑞舒伐他汀',   category: '降血脂藥',         dosage: '10mg',   unit: '錠', stock: 1800, price: 42,  status: '正常', location: 'D-02' },
+    // 心臟用藥
+    { id: 18, name: 'Amiodarone',     zhName: '胺碘酮',       category: '抗心律不整藥',     dosage: '200mg',  unit: '錠', stock: 500,  price: 65,  status: '正常', location: 'D-03' },
+    { id: 19, name: 'Digoxin',        zhName: '地高辛',       category: '強心劑',           dosage: '0.25mg', unit: '錠', stock: 700,  price: 12,  status: '正常', location: 'D-04' },
+    { id: 20, name: 'Spironolactone', zhName: '螺內酯',       category: '保鉀利尿劑',       dosage: '25mg',   unit: '錠', stock: 850,  price: 10,  status: '正常', location: 'D-05' },
+    // 腸胃藥
+    { id: 21, name: 'Omeprazole',     zhName: '奧美拉唑',     category: '質子幫浦抑制劑',   dosage: '20mg',   unit: '膠囊', stock: 3500, price: 18, status: '正常', location: 'E-01' },
+    { id: 22, name: 'Pantoprazole',   zhName: '潘托拉唑',     category: '質子幫浦抑制劑',   dosage: '40mg',   unit: '錠', stock: 2000, price: 22,  status: '正常', location: 'E-02' },
+    // 骨科 / 痛風
+    { id: 23, name: 'Allopurinol',    zhName: '別嘌醇',       category: '降尿酸藥',         dosage: '100mg',  unit: '錠', stock: 1300, price: 8,   status: '正常', location: 'F-01' },
+    { id: 24, name: 'Colchicine',     zhName: '秋水仙素',     category: '痛風用藥',         dosage: '0.5mg',  unit: '錠', stock: 600,  price: 25,  status: '注意', location: 'F-02' },
+    { id: 25, name: 'Alendronate',    zhName: '阿崙膦酸',     category: '骨質疏鬆用藥',     dosage: '70mg',   unit: '錠', stock: 400,  price: 55,  status: '正常', location: 'F-03' },
+    // 神經精神科
+    { id: 26, name: 'Fluoxetine',     zhName: '氟西汀',       category: '抗憂鬱藥',         dosage: '20mg',   unit: '膠囊', stock: 700, price: 35,  status: '正常', location: 'G-01' },
+    { id: 27, name: 'Lorazepam',      zhName: '勞拉西泮',     category: '鎮靜安眠藥',       dosage: '1mg',    unit: '錠', stock: 500,  price: 12,  status: '管制', location: 'G-02' },
+    { id: 28, name: 'Donepezil',      zhName: '多奈哌齊',     category: '失智症用藥',       dosage: '5mg',    unit: '錠', stock: 350,  price: 95,  status: '正常', location: 'G-03' },
+    // 甲狀腺 / 其他
+    { id: 29, name: 'Levothyroxine',  zhName: '左旋甲狀腺素', category: '甲狀腺用藥',       dosage: '50mcg',  unit: '錠', stock: 900,  price: 15,  status: '正常', location: 'H-01' },
+    { id: 30, name: 'Calcium Carbonate', zhName: '碳酸鈣',   category: '鈣質補充劑',       dosage: '500mg',  unit: '錠', stock: 2800, price: 4,   status: '正常', location: 'H-02' }
   ],
 
   // -------------------------------------------------------------------
