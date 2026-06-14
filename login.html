@@ -174,9 +174,9 @@
 
                 <div class="mt-6 text-center">
                     <div class="flex justify-center gap-8">
-                        <div class="text-center"><div class="text-lg font-black text-title">4.5k+</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Users</div></div>
-                        <div class="text-center"><div class="text-lg font-black text-title">12k+</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">DDI Rules</div></div>
-                        <div class="text-center"><div class="text-lg font-black text-title">100%</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Secured</div></div>
+                        <div class="text-center"><div class="text-lg font-black text-title">{{ formatStat(statsCounters[0], 0) }}</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Users</div></div>
+                        <div class="text-center"><div class="text-lg font-black text-title">{{ formatStat(statsCounters[1], 1) }}</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">DDI Rules</div></div>
+                        <div class="text-center"><div class="text-lg font-black text-title">{{ formatStat(statsCounters[2], 2) }}</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Secured</div></div>
                     </div>
                 </div>
             </div>
@@ -192,6 +192,7 @@
             data() {
                 return {
                     username: '', password: '', error: '', loading: false,
+                    statsCounters: [0, 0, 0],
                     demoUsers: [
                         { username: 'admin',       role: 'admin',     name: '王大明主任' },
                         { username: 'doctor',      role: 'doctor',    name: '李曉美醫師' },
@@ -206,11 +207,30 @@
             },
             mounted() {
                 this._carouselTimer = setInterval(() => { this.carouselNext(); }, 4000);
+                this.animateStats();
             },
             unmounted() {
                 clearInterval(this._carouselTimer);
             },
             methods: {
+                animateStats() {
+                    const targets = [4500, 12000, 100];
+                    const duration = 1800;
+                    const start = performance.now();
+                    const tick = (now) => {
+                        const t = Math.min((now - start) / duration, 1);
+                        const eased = 1 - Math.pow(1 - t, 3);
+                        targets.forEach((target, i) => { this.statsCounters[i] = target * eased; });
+                        if (t < 1) requestAnimationFrame(tick);
+                        else targets.forEach((target, i) => { this.statsCounters[i] = target; });
+                    };
+                    requestAnimationFrame(tick);
+                },
+                formatStat(value, index) {
+                    if (index === 0) return (value / 1000).toFixed(1) + 'k+';
+                    if (index === 1) return Math.floor(value / 1000) + 'k+';
+                    return Math.floor(value) + '%';
+                },
                 carouselNext() {
                     this.carouselDir = 'next';
                     this.carouselIndex = (this.carouselIndex + 1) % this.carouselImages.length;
