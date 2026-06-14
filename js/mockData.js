@@ -1,4 +1,29 @@
 window.mockData = {
+
+  // DDI 規則庫（seed 至 Firestore ddi_rules collection）
+  ddiRules: [
+    { drugA: 'Warfarin',     drugB: 'Aspirin',       severity: '極高風險', effect: '雙重抗凝血，顯著增加胃腸道及顱內出血風險，需嚴密監測 INR 值。',          cssClass: 'bg-red-100 text-danger' },
+    { drugA: 'Warfarin',     drugB: 'Amiodarone',    severity: '極高風險', effect: 'Amiodarone 抑制 CYP2C9，使 Warfarin 血中濃度大幅升高，易致嚴重出血。',   cssClass: 'bg-red-100 text-danger' },
+    { drugA: 'Warfarin',     drugB: 'Ibuprofen',     severity: '高風險',   effect: 'NSAIDs 抑制血小板並刺激胃黏膜，合用增加消化道出血風險。',               cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Warfarin',     drugB: 'Fluoxetine',    severity: '高風險',   effect: 'SSRI 抑制 CYP2C9，使 Warfarin 效果增強，出血風險上升，需調整劑量。',     cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Warfarin',     drugB: 'Omeprazole',    severity: '中等風險', effect: 'Omeprazole 抑制 CYP2C19，可能使 Warfarin 血中濃度輕度升高，需監測 INR。', cssClass: 'bg-yellow-100 text-yellow-700' },
+    { drugA: 'Aspirin',      drugB: 'Clopidogrel',   severity: '高風險',   effect: '雙重抗血小板療法顯著增加出血風險，僅在特定心血管適應症下使用。',         cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Rivaroxaban',  drugB: 'Aspirin',       severity: '極高風險', effect: '新型口服抗凝血劑合併抗血小板藥物，大出血風險極高，避免常規合用。',       cssClass: 'bg-red-100 text-danger' },
+    { drugA: 'Metformin',    drugB: 'Furosemide',    severity: '中等風險', effect: '利尿劑可能加重腎功能負擔，增加 Metformin 蓄積及乳酸中毒風險。',         cssClass: 'bg-yellow-100 text-yellow-700' },
+    { drugA: 'Glipizide',    drugB: 'Fluoxetine',    severity: '高風險',   effect: 'SSRI 可能增強磺醯尿素類降血糖效果，導致嚴重低血糖，需加強血糖監測。',   cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Digoxin',      drugB: 'Amiodarone',    severity: '極高風險', effect: 'Amiodarone 使 Digoxin 血中濃度升高 50-100%，易發生洋地黃中毒（心律不整、噁心）。', cssClass: 'bg-red-100 text-danger' },
+    { drugA: 'Digoxin',      drugB: 'Furosemide',    severity: '高風險',   effect: '利尿劑引起低鉀血症，低鉀狀態使心肌對 Digoxin 毒性敏感度增加。',         cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Metoprolol',   drugB: 'Amiodarone',    severity: '高風險',   effect: '兩者皆減慢心跳傳導，合用可能引起嚴重心跳過慢或心搏停止。',             cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Lisinopril',   drugB: 'Spironolactone',severity: '高風險',   effect: 'ACE 抑制劑合併保鉀利尿劑易造成高鉀血症，嚴重時可引起致命性心律不整。', cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Atorvastatin', drugB: 'Amiodarone',    severity: '高風險',   effect: 'Amiodarone 抑制 CYP3A4，使 Statin 血中濃度上升，橫紋肌溶解症風險增加。', cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Colchicine',   drugB: 'Atorvastatin',  severity: '高風險',   effect: '兩者皆可能引起肌肉毒性，合用時橫紋肌溶解症風險顯著升高。',             cssClass: 'bg-orange-100 text-warning' },
+    { drugA: 'Fluoxetine',   drugB: 'Lorazepam',     severity: '中等風險', effect: 'SSRI 可能增強苯二氮平類鎮靜效果，導致過度嗜睡與認知功能下降。',         cssClass: 'bg-yellow-100 text-yellow-700' },
+    { drugA: 'Levothyroxine',drugB: 'Calcium Carbonate', severity: '中等風險', effect: '鈣片與甲狀腺素結合形成不溶性複合物，降低 Levothyroxine 吸收率，需間隔 4 小時服用。', cssClass: 'bg-yellow-100 text-yellow-700' },
+    { drugA: 'Metoprolol',   drugB: 'Valsartan',     severity: '中等風險', effect: '乙型阻斷劑合併 ARB 可能造成血壓過低，老年患者需特別監測站立性低血壓。', cssClass: 'bg-yellow-100 text-yellow-700' },
+    { drugA: 'Alendronate',  drugB: 'Calcium Carbonate', severity: '中等風險', effect: '鈣片會干擾雙磷酸鹽吸收，Alendronate 需空腹服用，至少間隔 30 分鐘再補鈣。', cssClass: 'bg-yellow-100 text-yellow-700' },
+    { drugA: 'Donepezil',    drugB: 'Lorazepam',     severity: '高風險',   effect: '膽鹼酯酶抑制劑的認知改善效果可能被 BZD 的中樞抑制作用拮抗，失智症患者應避免合用。', cssClass: 'bg-orange-100 text-warning' }
+  ],
+
   // 測試帳號
   users: [
     { username: 'admin', password: '123', role: 'admin', name: '王大明主任' },

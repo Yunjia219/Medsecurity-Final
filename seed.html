@@ -31,17 +31,29 @@
       <h1 class="text-2xl font-black text-gray-900 mb-2">Firestore 資料初始化</h1>
       <p class="text-gray-500 text-sm mb-8">將 mockData.js 的所有資料 seed 進 Firestore Collections。</p>
 
-      <!-- Seed Button -->
-      <button @click="seedAll"
-              :disabled="seeding || done"
-              :class="['w-full py-4 rounded-xl font-bold text-sm transition-all',
-                       done ? 'bg-green-100 text-green-700 cursor-default' :
-                       seeding ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
-                       'bg-green-600 text-white hover:bg-green-700']">
-        <span v-if="done">✅ Seed 完成</span>
-        <span v-else-if="seeding">⏳ 寫入中...</span>
-        <span v-else>開始 Seed Database</span>
-      </button>
+      <!-- Seed Buttons -->
+      <div class="flex flex-col gap-3">
+        <button @click="seedAll"
+                :disabled="seeding || done"
+                :class="['w-full py-4 rounded-xl font-bold text-sm transition-all',
+                         done ? 'bg-green-100 text-green-700 cursor-default' :
+                         seeding ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
+                         'bg-green-600 text-white hover:bg-green-700']">
+          <span v-if="done">✅ Seed 完成</span>
+          <span v-else-if="seeding">⏳ 寫入中...</span>
+          <span v-else>開始 Seed Database（全部）</span>
+        </button>
+        <button @click="seedDdiRules"
+                :disabled="seedingDdi || ddiDone"
+                :class="['w-full py-4 rounded-xl font-bold text-sm transition-all',
+                         ddiDone ? 'bg-blue-100 text-blue-700 cursor-default' :
+                         seedingDdi ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
+                         'bg-blue-600 text-white hover:bg-blue-700']">
+          <span v-if="ddiDone">✅ DDI 規則已寫入</span>
+          <span v-else-if="seedingDdi">⏳ 寫入中...</span>
+          <span v-else>僅 Seed DDI 規則（20 條）</span>
+        </button>
+      </div>
 
       <!-- Error -->
       <div v-if="errorMsg" class="mt-4 bg-red-50 text-red-700 text-xs font-bold p-4 rounded-xl border border-red-100">
@@ -77,6 +89,8 @@
         return {
           seeding: false,
           done: false,
+          seedingDdi: false,
+          ddiDone: false,
           errorMsg: '',
           logs: []
         };
@@ -142,6 +156,17 @@
             this.logs[this.logs.length - 1].status = 'done';
             this.logs[this.logs.length - 1].msg = 'medication_inventory/main — 完成';
 
+            // 8. DDI Rules
+            this.addLog('正在寫入 ddi_rules...', 'pending');
+            const batch = window.db.batch();
+            for (const rule of md.ddiRules) {
+              const ref = window.db.collection('ddi_rules').doc();
+              batch.set(ref, rule);
+            }
+            await batch.commit();
+            this.logs[this.logs.length - 1].status = 'done';
+            this.logs[this.logs.length - 1].msg = `ddi_rules/ — ${md.ddiRules.length} 條規則已寫入`;
+
             this.done = true;
           } catch (e) {
             this.errorMsg = e.message || '寫入失敗，請確認 Firebase 設定是否正確';
@@ -150,6 +175,26 @@
             }
           } finally {
             this.seeding = false;
+          }
+        },
+
+        async seedDdiRules() {
+          this.seedingDdi = true;
+          this.errorMsg = '';
+          try {
+            const rules = window.mockData.ddiRules;
+            const batch = window.db.batch();
+            for (const rule of rules) {
+              const ref = window.db.collection('ddi_rules').doc();
+              batch.set(ref, rule);
+            }
+            await batch.commit();
+            this.ddiDone = true;
+            this.addLog(`ddi_rules/ — ${rules.length} 條 DDI 規則已寫入`, 'done');
+          } catch(e) {
+            this.errorMsg = e.message || 'DDI 規則寫入失敗，請確認 Firestore 規則允許 ddi_rules 寫入';
+          } finally {
+            this.seedingDdi = false;
           }
         }
       }
