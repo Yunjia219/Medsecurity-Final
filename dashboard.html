@@ -217,7 +217,7 @@
                                 </div>
                             </div>
                             
-                            <button @click="showPrescriptionModal = true" class="w-full py-4 clinical-gradient text-white font-black rounded-3xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm mt-auto">
+                            <button @click="showPrescriptionModal = true; drugSearch = ''; newRx = { drugName: '', dosage: '', instruction: '' }; aiCheckStatus = 'idle'" class="w-full py-4 clinical-gradient text-white font-black rounded-3xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm mt-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                                 開立雲端處方
                             </button>
@@ -346,9 +346,36 @@
                     
                     <div class="p-8 space-y-6">
                         <div class="grid grid-cols-2 gap-6">
-                            <div>
+                            <!-- 藥品搜尋下拉 -->
+                            <div class="relative">
                                 <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 px-1">藥品名稱</label>
-                                <input v-model="newRx.drugName" type="text" placeholder="輸入藥名..." class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-slate-800 focus:border-primary/20 focus:bg-white transition-all outline-none">
+                                <input
+                                    v-model="drugSearch"
+                                    @focus="showDrugDropdown = true"
+                                    @blur="setTimeout(() => showDrugDropdown = false, 150)"
+                                    type="text"
+                                    placeholder="搜尋藥名或類別..."
+                                    class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-slate-800 focus:border-primary/20 focus:bg-white transition-all outline-none"
+                                >
+                                <!-- Dropdown -->
+                                <div v-if="showDrugDropdown && filteredMedications.length > 0"
+                                     class="absolute z-50 top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+                                    <div
+                                        v-for="med in filteredMedications" :key="med.id"
+                                        @mousedown="selectDrug(med)"
+                                        class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 cursor-pointer transition-colors group"
+                                    >
+                                        <div>
+                                            <div class="text-sm font-black text-slate-800 group-hover:text-primary transition-colors">{{ med.name }}</div>
+                                            <div class="text-xs text-slate-400 font-bold">{{ med.zhName }} · {{ med.category }}</div>
+                                        </div>
+                                        <div class="text-xs font-black text-primary bg-primary/10 px-3 py-1 rounded-xl shrink-0">{{ med.dosage }}</div>
+                                    </div>
+                                </div>
+                                <div v-if="showDrugDropdown && filteredMedications.length === 0"
+                                     class="absolute z-50 top-full mt-2 w-full bg-white rounded-2xl shadow-xl border border-slate-100 px-5 py-4 text-xs text-slate-400 font-bold">
+                                    找不到符合藥品
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 px-1">劑量</label>
@@ -425,7 +452,10 @@
                     showPrescriptionModal: false,
                     newRx: { drugName: '', dosage: '', instruction: '' },
                     aiCheckStatus: 'idle',
-                    kpis: []
+                    kpis: [],
+                    medicationList: [],
+                    drugSearch: '',
+                    showDrugDropdown: false
                 }
             },
             computed: {
@@ -435,6 +465,13 @@
                     if (this.selectedPatient && this.selectedPatient.name === '劉建國') return data.nodes.filter(n => data.scenarios.A.includes(n.id));
                     if (this.selectedPatient) return data.nodes.filter(n => data.scenarios.B.includes(n.id));
                     return [];
+                },
+                filteredMedications() {
+                    const q = this.drugSearch.toLowerCase();
+                    if (!q) return this.medicationList.slice(0, 8);
+                    return this.medicationList.filter(m =>
+                        m.name.toLowerCase().includes(q) || m.zhName.includes(q) || m.category.includes(q)
+                    ).slice(0, 8);
                 }
             },
             async created() {
@@ -443,10 +480,12 @@
                 try { this.maintenanceMode = await DbService.getMaintenanceMode(); } catch(e) {}
                 if (this.maintenanceMode) return;
                 try {
-                    const [docData, graphData] = await Promise.all([
+                    const [docData, graphData, medList] = await Promise.all([
                         DbService.getDoctorData(),
-                        DbService.getGraphData()
+                        DbService.getGraphData(),
+                        DbService.getMedicationInventory()
                     ]);
+                    this.medicationList = medList || [];
                     if (docData) {
                         this.stats = docData.stats;
                         this.recentPatients = docData.recentPatients;
@@ -514,6 +553,13 @@
                         'Atorvastatin': { card: 'bg-teal-50 border-teal-100', bar: 'bg-teal-500', text: 'text-teal-700', dot: 'bg-teal-400' }
                     };
                     return themes[name] || { card: 'bg-slate-50 border-slate-100', bar: 'bg-slate-400', text: 'text-slate-600', dot: 'bg-slate-300' };
+                },
+                selectDrug(med) {
+                    this.newRx.drugName = `${med.name} ${med.zhName}`;
+                    this.newRx.dosage = med.dosage;
+                    this.drugSearch = `${med.name} ${med.zhName}`;
+                    this.showDrugDropdown = false;
+                    this.aiCheckStatus = 'idle';
                 },
                 startAiCheck() { this.aiCheckStatus = 'checking'; setTimeout(() => this.aiCheckStatus = 'risk', 2000); },
                 async submitPrescription() {
