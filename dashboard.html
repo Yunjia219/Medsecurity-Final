@@ -294,11 +294,12 @@
                         <div class="lg:w-[30%] bg-white p-8 rounded-[40px] shadow-premium border border-slate-200 flex flex-col">
                             <h3 class="text-xl font-black text-slate-800 mb-8 flex items-center gap-3"><span class="w-1.5 h-6 bg-primary rounded-full"></span> 區塊鏈存證歷史</h3>
                             <div class="flex-1 space-y-8 pl-4 border-l-2 border-slate-100 ml-2 overflow-y-auto pr-2">
-                                <div v-for="n in 5" :key="n" class="relative group">
+                                <div v-if="blockchainHistory.length === 0" class="text-xs text-slate-400 italic text-center py-8">尚無上鏈記錄<br>開立第一筆處方後將自動出現</div>
+                                <div v-for="(record, i) in blockchainHistory" :key="i" class="relative group">
                                     <div class="absolute -left-[19px] top-1 w-4 h-4 rounded-full bg-white border-4 border-primary shadow-sm group-hover:scale-125 transition-all"></div>
-                                    <div class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-tighter">2025-05-{{ 24-n }} • Verified</div>
+                                    <div class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-tighter">{{ record.date }} • Verified</div>
                                     <div class="text-sm font-bold text-slate-800 group-hover:text-primary transition-colors leading-snug">FHIR MedicationRequest 上鏈完成</div>
-                                    <p class="text-[10px] text-slate-500 mt-2 font-mono truncate">TX: 0x8f2d...{{ n }}c7a</p>
+                                    <p class="text-[10px] text-slate-500 mt-2 font-mono truncate">TX: {{ record.txHash }}</p>
                                 </div>
                             </div>
                             <div class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between opacity-50 text-[9px] font-black text-slate-400 uppercase">
@@ -416,6 +417,7 @@
                     loading: true,
                     maintenanceMode: false,
                     user: getCurrentUser(),
+                    blockchainHistory: [],
                     stats: {}, recentPatients: [],
                     selectedPatient: null, activeScenario: null, graphConflicts: [],
                     showFullScreenGraph: false, showToast: false, showMobileMenu: false,
@@ -462,20 +464,22 @@
                     }
                 } catch (e) {
                     console.error('Firestore load error:', e);
-                } finally {
-                    this.loading = false;
-                    this.$nextTick(() => {
-                        setTimeout(() => {
-                            this.initCharts();
-                            if (this.recentPatients && this.recentPatients.length > 0) {
-                                const fp = this.recentPatients[0];
-                                this.selectedPatient = fp;
-                                this.initD3Container();
-                                this.loadScenario(fp.name === '劉建國' ? 'A' : 'B');
-                            }
-                        }, 50);
-                    });
                 }
+                try {
+                    this.blockchainHistory = await DbService.getBlockchainHistory();
+                } catch(e) {}
+                this.loading = false;
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        this.initCharts();
+                        if (this.recentPatients && this.recentPatients.length > 0) {
+                            const fp = this.recentPatients[0];
+                            this.selectedPatient = fp;
+                            this.initD3Container();
+                            this.loadScenario(fp.name === '劉建國' ? 'A' : 'B');
+                        }
+                    }, 50);
+                });
             },
             mounted() {
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
@@ -530,6 +534,24 @@
                             await DbService.addMedicationToPatient(username, newMed);
                         } catch (e) {
                             console.error('處方寫入失敗', e);
+                        }
+                        // 產生區塊鏈存證記錄
+                        const bytes = crypto.getRandomValues(new Uint8Array(8));
+                        const hex = Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+                        const txHash = `0x${hex.slice(0,8)}...${hex.slice(-4)}`;
+                        const record = {
+                            timestamp: Date.now(),
+                            date: new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' }),
+                            txHash,
+                            patientName: this.selectedPatient.name,
+                            drugName: this.newRx.drugName,
+                            fhirResource: 'MedicationRequest'
+                        };
+                        try {
+                            await DbService.addBlockchainRecord(record);
+                            this.blockchainHistory.unshift(record);
+                        } catch (e) {
+                            console.error('區塊鏈存證失敗', e);
                         }
                     }
                     this.showPrescriptionModal = false;

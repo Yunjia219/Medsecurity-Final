@@ -88,5 +88,18 @@ window.DbService = {
 
   async setMaintenanceMode(enabled) {
     await window.db.collection('admin_data').doc('main').update({ maintenanceMode: enabled });
+  },
+
+  // --- Blockchain Records ---
+  async addBlockchainRecord(record) {
+    await window.db.collection('blockchain_records').add(record);
+  },
+
+  async getBlockchainHistory() {
+    const snap = await window.db.collection('blockchain_records')
+      .orderBy('timestamp', 'desc')
+      .limit(10)
+      .get();
+    return snap.docs.map(d => d.data());
   }
 };
