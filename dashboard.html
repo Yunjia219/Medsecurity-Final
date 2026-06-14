@@ -359,7 +359,7 @@
                                 >
                                 <!-- Dropdown -->
                                 <div v-if="showDrugDropdown && filteredMedications.length > 0"
-                                     class="absolute z-50 top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+                                     class="absolute z-50 top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-y-auto max-h-64">
                                     <div
                                         v-for="med in filteredMedications" :key="med.id"
                                         @mousedown="selectDrug(med)"
@@ -468,10 +468,10 @@
                 },
                 filteredMedications() {
                     const q = this.drugSearch.toLowerCase();
-                    if (!q) return this.medicationList.slice(0, 8);
+                    if (!q) return this.medicationList;
                     return this.medicationList.filter(m =>
                         m.name.toLowerCase().includes(q) || m.zhName.includes(q) || m.category.includes(q)
-                    ).slice(0, 8);
+                    );
                 }
             },
             async created() {
