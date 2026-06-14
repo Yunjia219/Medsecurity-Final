@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -63,6 +65,21 @@
 </head>
 <body class="overflow-hidden">
     <div id="app" v-cloak class="flex h-screen w-screen overflow-hidden relative">
+        <!-- Maintenance Mode Screen -->
+        <div v-if="maintenanceMode" class="fixed inset-0 z-[9999] bg-[#0f172a] flex flex-col items-center justify-center gap-8 text-white">
+            <div class="w-20 h-20 rounded-3xl bg-red-500/20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <div class="text-center">
+                <div class="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mb-3">MedSafe-Chain</div>
+                <h1 class="text-4xl font-black mb-3">系統維護中</h1>
+                <p class="text-slate-400 text-sm max-w-md leading-relaxed">系統目前正在進行維護升級，暫時無法提供服務。<br>請稍後再試，或聯繫系統管理員取得協助。</p>
+            </div>
+            <div class="px-6 py-4 bg-white/5 rounded-2xl border border-white/10 text-center">
+                <div class="text-xs text-slate-400 mb-1">聯繫管理員</div>
+                <div class="text-sm font-bold">admin@medsafe-chain.tw</div>
+            </div>
+        </div>
         <!-- Mobile Sidebar Overlay -->
         <transition name="fade">
             <div v-if="showMobileMenu" @click="showMobileMenu = false" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[60] lg:hidden"></div>
@@ -380,8 +397,9 @@
         </transition>
     </div>
 
-    <!-- Data Injection -->
-    <script src="js/mockData.js"></script>
+    <!-- Firebase + Services -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
     <script src="js/auth.js"></script>
     <script>
         const { createApp, markRaw } = Vue;
@@ -394,43 +412,74 @@
 
         createApp({
             data() {
-                const user = getCurrentUser();
-                const docData = window.mockData.doctor;
                 return {
-                    user, stats: docData.stats, recentPatients: docData.recentPatients,
+                    loading: true,
+                    maintenanceMode: false,
+                    user: getCurrentUser(),
+                    stats: {}, recentPatients: [],
                     selectedPatient: null, activeScenario: null, graphConflicts: [],
                     showFullScreenGraph: false, showToast: false, showMobileMenu: false,
                     toastTitle: '系統通知', toastMessage: '同步成功',
                     showPrescriptionModal: false,
                     newRx: { drugName: '', dosage: '', instruction: '' },
                     aiCheckStatus: 'idle',
-                    kpis: [
-                        { label: '總收治病患', value: docData.stats.totalPatients, icon: Icons.Users, bg: 'bg-primary', trend: '+12% 上月' },
-                        { label: '待核簽處方', value: docData.stats.activePrescriptions, icon: Icons.Clipboard, bg: 'bg-accent', trend: '負載正常' },
-                        { label: '交互作用預警', value: docData.stats.conflictAlerts, icon: Icons.Shield, bg: 'bg-danger', trend: '需立即審閱' },
-                        { label: '用藥安全指數', value: docData.stats.safetyRate + '%', icon: Icons.Chart, bg: 'bg-success', trend: '優於平均' },
-                    ]
+                    kpis: []
                 }
             },
             computed: {
                 currentMeds() {
-                    const data = window.mockData.graphData;
+                    const data = this._graphData;
+                    if (!data) return [];
                     if (this.selectedPatient && this.selectedPatient.name === '劉建國') return data.nodes.filter(n => data.scenarios.A.includes(n.id));
                     if (this.selectedPatient) return data.nodes.filter(n => data.scenarios.B.includes(n.id));
                     return [];
                 }
             },
-            created() {
+            async created() {
                 this._charts = {};
+                this._graphData = null;
+                try { this.maintenanceMode = await DbService.getMaintenanceMode(); } catch(e) {}
+                if (this.maintenanceMode) return;
+                try {
+                    const [docData, graphData] = await Promise.all([
+                        DbService.getDoctorData(),
+                        DbService.getGraphData()
+                    ]);
+                    if (docData) {
+                        this.stats = docData.stats;
+                        this.recentPatients = docData.recentPatients;
+                        this._prescriptionsByMonth = docData.prescriptionsByMonth;
+                        this._categoryDistribution = docData.categoryDistribution;
+                        this.kpis = [
+                            { label: '總收治病患', value: docData.stats.totalPatients, icon: Icons.Users, bg: 'bg-primary', trend: '+12% 上月' },
+                            { label: '待核簽處方', value: docData.stats.activePrescriptions, icon: Icons.Clipboard, bg: 'bg-accent', trend: '負載正常' },
+                            { label: '交互作用預警', value: docData.stats.conflictAlerts, icon: Icons.Shield, bg: 'bg-danger', trend: '需立即審閱' },
+                            { label: '用藥安全指數', value: docData.stats.safetyRate + '%', icon: Icons.Chart, bg: 'bg-success', trend: '優於平均' },
+                        ];
+                    }
+                    if (graphData) {
+                        this._graphData = graphData;
+                    }
+                } catch (e) {
+                    console.error('Firestore load error:', e);
+                } finally {
+                    this.loading = false;
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            this.initCharts();
+                            if (this.recentPatients && this.recentPatients.length > 0) {
+                                const fp = this.recentPatients[0];
+                                this.selectedPatient = fp;
+                                this.initD3Container();
+                                this.loadScenario(fp.name === '劉建國' ? 'A' : 'B');
+                            }
+                        }, 50);
+                    });
+                }
             },
             mounted() {
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
-                this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
-                if (this.recentPatients && this.recentPatients.length > 0) {
-                    const fp = this.recentPatients[0]; this.selectedPatient = fp;
-                    this.$nextTick(() => { this.initD3Container(); this.loadScenario(fp.name === '劉建國' ? 'A' : 'B'); });
-                }
             },
             unmounted() {
                 window.removeEventListener('resize', this._resizeHandler);
@@ -463,9 +512,30 @@
                     return themes[name] || { card: 'bg-slate-50 border-slate-100', bar: 'bg-slate-400', text: 'text-slate-600', dot: 'bg-slate-300' };
                 },
                 startAiCheck() { this.aiCheckStatus = 'checking'; setTimeout(() => this.aiCheckStatus = 'risk', 2000); },
-                submitPrescription() {
-                    this.showPrescriptionModal = false; this.triggerToast('開立成功', '處方已同步至 HAPI FHIR 與區塊鏈');
-                    this.newRx = { drugName: '', dosage: '', instruction: '' }; this.aiCheckStatus = 'idle';
+                async submitPrescription() {
+                    if (this.selectedPatient && this.newRx.drugName) {
+                        const newMed = {
+                            id: Date.now(),
+                            name: this.newRx.drugName,
+                            zhName: this.newRx.drugName,
+                            dosage: this.newRx.dosage,
+                            freq: this.newRx.instruction,
+                            category: '處方用藥',
+                            status: '待確認',
+                            color: 'warning',
+                            icon: 'clock'
+                        };
+                        const username = this.selectedPatient.id ? this.selectedPatient.id.toLowerCase() : 'patient01';
+                        try {
+                            await DbService.addMedicationToPatient(username, newMed);
+                        } catch (e) {
+                            console.error('處方寫入失敗', e);
+                        }
+                    }
+                    this.showPrescriptionModal = false;
+                    this.triggerToast('開立成功', '處方已同步至 HAPI FHIR 與區塊鏈');
+                    this.newRx = { drugName: '', dosage: '', instruction: '' };
+                    this.aiCheckStatus = 'idle';
                 },
                 triggerToast(t, m) { this.toastTitle = t; this.toastMessage = m; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
                 toggleFullScreenGraph() {
@@ -473,7 +543,7 @@
                     setTimeout(() => { this.initD3Container(this.showFullScreenGraph ? "ddi-full-network-container" : "ddi-network-container"); if (this.activeScenario) this.loadScenario(this.activeScenario); }, 300);
                 },
                 loadScenario(type) {
-                    this.activeScenario = type; const data = window.mockData.graphData; const activeIds = data.scenarios[type];
+                    this.activeScenario = type; const data = this._graphData; if (!data) return; const activeIds = data.scenarios[type];
                     const nodes = data.nodes.filter(n => activeIds.includes(n.id)).map(d => ({ ...d }));
                     const conflicts = data.links.filter(l => activeIds.includes(l.source) && activeIds.includes(l.target));
                     this.graphConflicts = conflicts; let links = [];
@@ -489,7 +559,8 @@
                 destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
                 initCharts() {
                     this.destroyCharts();
-                    const d = window.mockData.doctor;
+                    const prescriptionsByMonth = this._prescriptionsByMonth || [];
+                    const categoryDistribution = this._categoryDistribution || [];
                     const mainTrendEl = document.getElementById('mainTrendChart');
                     if (mainTrendEl) {
                         this._charts.mainTrend = echarts.init(mainTrendEl);
@@ -499,7 +570,7 @@
                             yAxis: { type: 'value' },
                             series: [{
                                 name: '處方量',
-                                data: d.prescriptionsByMonth,
+                                data: prescriptionsByMonth,
                                 type: 'bar',
                                 itemStyle: { color: '#1A5276', borderRadius: [6, 6, 0, 0] }
                             }]
@@ -514,7 +585,7 @@
                                 name: '藥物類別',
                                 type: 'pie',
                                 radius: ['50%', '70%'],
-                                data: d.categoryDistribution.map((item, idx) => ({
+                                data: categoryDistribution.map((item, idx) => ({
                                     value: item.value,
                                     name: item.label,
                                     itemStyle: { color: ['#1A5276', '#2DD4BF', '#94A3B8', '#E2E8F0', '#CBD5E1'][idx] }

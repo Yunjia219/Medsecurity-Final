@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -66,6 +68,21 @@
 </head>
 <body class="overflow-x-hidden">
     <div id="app" v-cloak class="flex min-h-screen relative overflow-x-hidden text-left">
+        <!-- Maintenance Mode Screen -->
+        <div v-if="maintenanceMode" class="fixed inset-0 z-[9999] bg-[#0f172a] flex flex-col items-center justify-center gap-8 text-white">
+            <div class="w-20 h-20 rounded-3xl bg-red-500/20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <div class="text-center">
+                <div class="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mb-3">MedSafe-Chain</div>
+                <h1 class="text-4xl font-black mb-3">系統維護中</h1>
+                <p class="text-slate-400 text-sm max-w-md leading-relaxed">系統目前正在進行維護升級，暫時無法提供服務。<br>請稍後再試，或聯繫系統管理員取得協助。</p>
+            </div>
+            <div class="px-6 py-4 bg-white/5 rounded-2xl border border-white/10 text-center">
+                <div class="text-xs text-slate-400 mb-1">聯繫管理員</div>
+                <div class="text-sm font-bold">admin@medsafe-chain.tw</div>
+            </div>
+        </div>
         <!-- Mobile Sidebar Overlay -->
         <transition name="fade">
             <div v-if="showMobileMenu" @click="showMobileMenu = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden"></div>
@@ -198,7 +215,7 @@
                         <div class="space-y-4 text-left">
                             <div v-for="(reminder, i) in reminders" :key="i" 
                                  class="flex items-center gap-6 p-5 rounded-2xl border-2 transition-all cursor-pointer group text-left"
-                                 @click="reminder.completed = !reminder.completed"
+                                 @click="toggleReminder(i)"
                                  :class="reminder.completed ? 'bg-mint/30 border-primary/10 shadow-sm' : 'bg-bgMain border-transparent hover:bg-white hover:border-slate-100 hover:shadow-md'">
                                 <div class="custom-checkbox flex-shrink-0 flex items-center justify-center transition-transform group-active:scale-90"
                                      :class="{ 'checked shadow-lg': reminder.completed }">
@@ -615,8 +632,9 @@
         </transition>
     </div>
 
-    <!-- Data Injection -->
-    <script src="js/mockData.js"></script>
+    <!-- Firebase + Services -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
     <script src="js/auth.js"></script>
     <script>
         const { createApp, markRaw } = Vue;
@@ -633,15 +651,15 @@
 
         createApp({
             data() {
-                const user = JSON.parse(localStorage.getItem('demo_user')) || { name: '測試患者' };
-                const patientData = window.mockData.patient;
                 return {
-                    profile: patientData.profile,
-                    stats: patientData.stats,
-                    medications: patientData.medications,
-                    ddiAlerts: patientData.ddiAlerts,
-                    aiInsights: patientData.aiInsights,
-                    reminders: patientData.reminders,
+                    loading: true,
+                    maintenanceMode: false,
+                    profile: {},
+                    stats: {},
+                    medications: [],
+                    ddiAlerts: [],
+                    aiInsights: [],
+                    reminders: [],
                     showInsightsModal: false,
                     syncing: false,
                     chatMessages: [],
@@ -677,11 +695,32 @@
                     return this.reminders.filter(r => r.completed).length;
                 }
             },
-            created() {
+            async created() {
                 this._charts = {};
+                try { this.maintenanceMode = await DbService.getMaintenanceMode(); } catch(e) {}
+                if (this.maintenanceMode) return;
+                const user = getCurrentUser();
+                const username = (user && user.username) ? user.username : 'patient01';
+                try {
+                    const data = await DbService.getPatientData(username);
+                    if (data) {
+                        this.profile = data.profile;
+                        this.stats = data.stats;
+                        this.medications = data.medications;
+                        this.ddiAlerts = data.ddiAlerts;
+                        this.aiInsights = data.aiInsights;
+                        this.reminders = data.reminders;
+                        this._safetyTrend = data.safetyTrend;
+                        this._medicationCategories = data.medicationCategories;
+                    }
+                } catch (e) {
+                    console.error('Firestore load error:', e);
+                } finally {
+                    this.loading = false;
+                    this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
+                }
             },
             mounted() {
-                this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
                 this._notifClickHandler = () => { this.showNotifDropdown = false; };
@@ -813,10 +852,22 @@
                     setTimeout(() => this.showToast = false, 3000);
                 },
                 destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
+                async toggleReminder(index) {
+                    this.reminders[index].completed = !this.reminders[index].completed;
+                    const user = getCurrentUser();
+                    const username = (user && user.username) ? user.username : 'patient01';
+                    try {
+                        await DbService.updateReminders(username, this.reminders);
+                    } catch (e) {
+                        this.reminders[index].completed = !this.reminders[index].completed;
+                        this.triggerToast('同步失敗', '無法更新雲端記錄，請稍後再試');
+                    }
+                },
                 initCharts() {
                     this.destroyCharts();
-                    const patientData = window.mockData.patient;
-                    
+                    const safetyTrend = this._safetyTrend || [];
+                    const medicationCategories = this._medicationCategories || [];
+
                     const trendEl = document.getElementById('safetyTrendChart');
                     if (trendEl) {
                         this._charts.trend = echarts.init(trendEl);
@@ -826,7 +877,7 @@
                             yAxis: { type: 'value', min: 70, show: false },
                             series: [{
                                 name: '安全評分',
-                                data: patientData.safetyTrend,
+                                data: safetyTrend,
                                 type: 'line',
                                 smooth: true,
                                 itemStyle: { color: '#24A15D' },
@@ -848,7 +899,7 @@
                                 radius: ['70%', '85%'],
                                 avoidLabelOverlap: false,
                                 label: { show: false },
-                                data: patientData.medicationCategories.map((c, i) => ({
+                                data: medicationCategories.map((c, i) => ({
                                     value: c.value,
                                     name: c.label,
                                     itemStyle: { color: ['#24A15D', '#3BB77E', '#175C3A', '#EAF7F0'][i] }

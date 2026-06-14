@@ -7,6 +7,8 @@
     <link rel="icon" type="image/png" href="images/LOGO.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -165,7 +167,7 @@
                                 <svg class="h-3 w-3 text-slate-300 group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                             </div>
                             <div class="text-sm font-black text-title">{{ u.name }}</div>
-                            <div class="text-[10px] font-bold text-slate-400 mt-0.5">{{ u.username }} / {{ u.password }}</div>
+                            <div class="text-[10px] font-bold text-slate-400 mt-0.5">{{ u.username }} / 123</div>
                         </div>
                     </div>
                 </div>
@@ -181,14 +183,21 @@
         </div>
     </div>
 
-    <script src="js/mockData.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         const { createApp } = Vue;
         createApp({
             data() {
                 return {
                     username: '', password: '', error: '', loading: false,
-                    demoUsers: window.mockData.users,
+                    demoUsers: [
+                        { username: 'admin',       role: 'admin',     name: '王大明主任' },
+                        { username: 'doctor',      role: 'doctor',    name: '李曉美醫師' },
+                        { username: 'patient01',   role: 'patient',   name: '王大明' },
+                        { username: 'insurance01', role: 'insurance', name: '國泰核保員' }
+                    ],
                     carouselIndex: 0,
                     carouselDir: 'next',
                     carouselImages: ['images/slide1.png', 'images/slide2.png', 'images/slide3.png'],
@@ -216,7 +225,7 @@
                 },
                 autoFill(user) {
                     this.username = user.username;
-                    this.password = user.password;
+                    this.password = '123';
                     this.error = '';
                 },
                 getRoleClass(role) {
@@ -228,12 +237,12 @@
                     };
                     return classes[role] || 'bg-slate-100 text-slate-600';
                 },
-                login() {
+                async login() {
                     this.error = '';
                     if (!this.username || !this.password) { this.error = '請輸入帳號密碼'; return; }
                     this.loading = true;
-                    setTimeout(() => {
-                        const user = this.demoUsers.find(u => u.username === this.username && u.password === this.password);
+                    try {
+                        const user = await loginWithFirestore(this.username, this.password);
                         if (user) {
                             localStorage.setItem('demo_user', JSON.stringify(user));
                             const routes = { admin: 'admin.html', doctor: 'dashboard.html', patient: 'patient.html', insurance: 'insurance.html' };
@@ -242,7 +251,10 @@
                             this.error = '帳號或密碼錯誤';
                             this.loading = false;
                         }
-                    }, 800);
+                    } catch (e) {
+                        this.error = '連線失敗，請確認網路或 Firebase 設定';
+                        this.loading = false;
+                    }
                 }
             }
         }).mount('#app');

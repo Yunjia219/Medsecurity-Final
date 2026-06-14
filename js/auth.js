@@ -18,3 +18,11 @@ function logout() {
 function getCurrentUser() {
   return JSON.parse(localStorage.getItem('demo_user') || 'null');
 }
+
+// Firestore 驗證登入（需先載入 firebase-config.js 與 db-service.js）
+async function loginWithFirestore(username, password) {
+  const hash = await DbService.hashPassword(password);
+  const userData = await DbService.getUserByUsername(username);
+  if (!userData || userData.passwordHash !== hash) return null;
+  return { username, role: userData.role, name: userData.name };
+}

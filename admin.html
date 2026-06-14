@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -325,12 +327,41 @@
                                 <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-danger shadow-sm shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
                                 <div><h4 class="text-base font-black text-danger uppercase italic tracking-tighter text-left">系統維護模式 (Global Maintenance)</h4><p class="text-xs font-bold text-slate-500 mt-1 text-left">啟用後全網 (醫師、患者端) 將顯示維護中介面，僅管理員可存取</p></div>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" v-model="systemSettings.isMaintenanceMode" class="sr-only peer"><div class="w-16 h-9 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-danger after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-7 after:w-7 after:transition-all shadow-inner border border-slate-300"></div></label>
+                            <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" v-model="systemSettings.isMaintenanceMode" @change="toggleMaintenanceMode" class="sr-only peer"><div class="w-16 h-9 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-danger after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-7 after:w-7 after:transition-all shadow-inner border border-slate-300"></div></label>
                         </div>
                     </div>
                 </div>
             </transition>
         </main>
+
+        <!-- ADD RULE MODAL -->
+        <transition name="fade">
+            <div v-if="showAddRuleModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showAddRuleModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in text-left">
+                    <div class="purple-gradient p-10 text-white relative">
+                        <h3 class="text-2xl font-black italic tracking-tighter uppercase relative z-10">New DDI Rule</h3>
+                        <p class="opacity-70 text-[10px] font-black uppercase mt-1 tracking-widest relative z-10">Drug Interaction Knowledge Base</p>
+                    </div>
+                    <div class="p-10 space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">藥品 A</label><input v-model="newRule.drugA" type="text" placeholder="如 Warfarin" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">藥品 B</label><input v-model="newRule.drugB" type="text" placeholder="如 Aspirin" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                        </div>
+                        <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">風險等級</label>
+                            <select v-model="newRule.severity" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all">
+                                <option>極高風險</option><option>高風險</option><option>中風險</option><option>低風險</option>
+                            </select>
+                        </div>
+                        <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">交互作用描述</label><textarea v-model="newRule.effect" rows="3" placeholder="描述此藥物組合的臨床風險..." class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></textarea></div>
+                    </div>
+                    <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
+                        <button @click="showAddRuleModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Cancel</button>
+                        <button @click="saveRule" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Save to Database</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
 
         <!-- ADD USER MODAL -->
         <transition name="fade">
@@ -394,15 +425,15 @@
         </transition>
     </div>
 
-    <!-- Data Injection -->
-    <script src="js/mockData.js"></script>
+    <!-- Firebase + Services -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
     <script src="js/auth.js"></script>
     <script>
         const { createApp, markRaw } = Vue;
         createApp({
             data() {
                 const user = getCurrentUser();
-                const adminData = window.mockData.admin;
                 const Icons = {
                     Dashboard: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>` }),
                     Rules: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` }),
@@ -434,9 +465,11 @@
                         { id: 'U003', name: '張主任', role: 'admin', roleName: '管理員', email: 'boss@medsafe.com', hospital: '馬偕醫院', status: 'active', statusName: '正常' },
                     ],
                     ruleSearch: '', ruleSeverityFilter: 'all', userSearch: '', userRoleFilter: 'all',
-                    showNotifications: false, showAddRuleModal: false, showAddUserModal: false, 
+                    showNotifications: false, showAddRuleModal: false, showAddUserModal: false,
                     showEditUserModal: false, showToast: false,
-                    toastTitle: '', newUser: { name: '', role: 'doctor', email: '', hospital: '' },
+                    toastTitle: '',
+                    newRule: { drugA: '', drugB: '', severity: '高風險', effect: '' },
+                    newUser: { name: '', role: 'doctor', email: '', hospital: '' },
                     editingUser: {},
                     // 系統設置相關
                     systemSettings: {
@@ -473,11 +506,38 @@
                 },
                 currentPage() { return 1; }, totalRules() { return 1245; }, pageSize() { return 5; }, totalPages() { return 249; }, paginationRange() { return [1,2,3,4,5]; }
             },
-            created() {
+            async created() {
                 this._charts = {};
+                try {
+                    const data = await DbService.getAdminData();
+                    if (data && data.stats) {
+                        const s = data.stats;
+                        this.kpis[0].value = s.totalDdiRules;
+                        this.kpis[1].value = s.aiAnalyticsCount;
+                        this.kpis[2].value = s.todayApiCalls;
+                        this.kpis[3].value = s.blockchainSyncAmount;
+                        this._aiTrendData = data.aiTrendData;
+                        this._ddiRiskLevels = data.ddiRiskLevels;
+                        this._medicationCategories = data.medicationCategories;
+                        this._blockchainSyncTrend = data.blockchainSyncTrend;
+                        if (data.maintenanceMode !== undefined) {
+                            this.systemSettings.isMaintenanceMode = data.maintenanceMode;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Firestore admin data error:', e);
+                }
+                try {
+                    const rules = await DbService.getDdiRules();
+                    if (rules && rules.length > 0) {
+                        this.mockRules = rules;
+                    }
+                } catch (e) {
+                    console.error('Firestore DDI rules error:', e);
+                }
             },
-            mounted() { 
-                this.initCharts();
+            mounted() {
+                this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
                 window.addEventListener('click', this.handleOutsideClick);
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
@@ -509,7 +569,44 @@
                 logout() { localStorage.removeItem('demo_user'); window.location.href = 'login.html'; },
                 toggleNotifications() { this.showNotifications = !this.showNotifications; },
                 markAllAsRead() { this.notifications.forEach(n => n.read = true); },
-                deleteRule(id) { confirm('確定刪除規則 #' + id + '？') && this.triggerToast('已刪除', '規則已移出資料庫'); },
+                async saveRule() {
+                    if (!this.newRule.drugA || !this.newRule.drugB || !this.newRule.effect) {
+                        alert('請填寫藥品A、藥品B 與交互作用描述');
+                        return;
+                    }
+                    const severityClassMap = {
+                        '極高風險': 'bg-red-100 text-danger border-red-200',
+                        '高風險': 'bg-orange-100 text-warning border-orange-200',
+                        '中風險': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                        '低風險': 'bg-green-100 text-green-700 border-green-200'
+                    };
+                    const rule = {
+                        drugA: this.newRule.drugA,
+                        drugB: this.newRule.drugB,
+                        severity: this.newRule.severity,
+                        effect: this.newRule.effect,
+                        severityClass: severityClassMap[this.newRule.severity] || 'bg-slate-100 text-slate-600 border-slate-200'
+                    };
+                    try {
+                        const id = await DbService.addDdiRule(rule);
+                        this.mockRules.push({ id, ...rule });
+                        this.newRule = { drugA: '', drugB: '', severity: '高風險', effect: '' };
+                        this.showAddRuleModal = false;
+                        this.triggerToast('新增成功', '規則已儲存至資料庫');
+                    } catch (e) {
+                        alert('儲存失敗：' + (e.message || e));
+                    }
+                },
+                async deleteRule(id) {
+                    if (!confirm('確定刪除規則？')) return;
+                    try {
+                        await DbService.deleteDdiRule(String(id));
+                        this.mockRules = this.mockRules.filter(r => r.id !== id && r.id !== String(id));
+                        this.triggerToast('已刪除', '規則已從資料庫移除');
+                    } catch (e) {
+                        this.triggerToast('刪除失敗', '請稍後再試');
+                    }
+                },
                 
                 // 用戶管理方法
                 editUser(user) {
@@ -544,10 +641,25 @@
                     this.triggerToast('設置已儲存', '系統核心參數已更新並同步至所有節點');
                 },
 
+                async toggleMaintenanceMode() {
+                    const enabled = this.systemSettings.isMaintenanceMode;
+                    try {
+                        await DbService.setMaintenanceMode(enabled);
+                        const label = enabled ? '已啟用' : '已關閉';
+                        this.triggerToast('維護模式' + label, enabled ? '全站（醫師、患者、保險端）已進入維護狀態' : '全站已恢復正常運作');
+                    } catch (e) {
+                        console.error('維護模式設定失敗', e);
+                        this.systemSettings.isMaintenanceMode = !enabled;
+                        this.triggerToast('設定失敗', '請確認 Firestore 寫入規則已開放 admin_data');
+                    }
+                },
+
                 triggerToast(t, m) { this.toastTitle = t; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
                 goToPage(p) {},
                 initCharts() {
                     this.destroyCharts();
+                    const aiTrend = this._aiTrendData || [450, 590, 820, 710, 950, 1100, 1280];
+                    const medCats = this._medicationCategories || [];
                     const trendEl = document.getElementById('aiTrendChart');
                     if (trendEl) {
                         this._charts.trend = echarts.init(trendEl);
@@ -557,7 +669,7 @@
                             yAxis: { type: 'value' },
                             series: [{
                                 name: 'AI 分析趨勢',
-                                data: [450, 590, 820, 710, 950, 1100, 1280],
+                                data: aiTrend,
                                 type: 'line',
                                 smooth: true,
                                 itemStyle: { color: '#7B61FF' },
@@ -568,18 +680,22 @@
                     const catEl = document.getElementById('categoryChart');
                     if (catEl) {
                         this._charts.category = echarts.init(catEl);
+                        const colors = ['#7B61FF', '#8B5CF6', '#A78BFA', '#C4B5FD', '#DDD6FE'];
+                        const catData = medCats.length > 0
+                            ? medCats.map((c, i) => ({ value: c.value, name: c.label, itemStyle: { color: colors[i % colors.length] } }))
+                            : [
+                                { value: 40, name: '心血管', itemStyle: { color: '#7B61FF' } },
+                                { value: 30, name: '神經系統', itemStyle: { color: '#8B5CF6' } },
+                                { value: 20, name: '消化道', itemStyle: { color: '#A78BFA' } },
+                                { value: 10, name: '其他', itemStyle: { color: '#C4B5FD' } }
+                            ];
                         this._charts.category.setOption({
                             tooltip: { trigger: 'item' },
                             series: [{
                                 name: '藥物類別',
                                 type: 'pie',
                                 radius: ['60%', '80%'],
-                                data: [
-                                    { value: 40, name: 'A', itemStyle: { color: '#7B61FF' } },
-                                    { value: 30, name: 'B', itemStyle: { color: '#8B5CF6' } },
-                                    { value: 20, name: 'C', itemStyle: { color: '#A78BFA' } },
-                                    { value: 10, name: 'D', itemStyle: { color: '#C4B5FD' } }
-                                ]
+                                data: catData
                             }]
                         });
                     }
