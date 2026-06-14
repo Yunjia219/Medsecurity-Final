@@ -101,5 +101,21 @@ window.DbService = {
       .limit(10)
       .get();
     return snap.docs.map(d => d.data());
+  },
+
+  // --- User Management ---
+  async getAllUsers() {
+    const snap = await window.db.collection('users').get();
+    return snap.docs.map(d => ({ username: d.id, ...d.data() }));
+  },
+
+  async createUser(username, password, name, role) {
+    const hash = await this.hashPassword(password);
+    await window.db.collection('users').doc(username).set({ passwordHash: hash, role, name });
+  },
+
+  // --- Care Cases (Insurance) ---
+  async addCareCase(record) {
+    await window.db.collection('care_cases').add(record);
   }
 };

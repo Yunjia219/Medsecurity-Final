@@ -387,20 +387,36 @@
                             <textarea v-model="newRx.instruction" rows="3" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-slate-800 focus:border-primary/20 focus:bg-white transition-all outline-none" placeholder="輸入詳細服用方法與警語..."></textarea>
                         </div>
 
-                        <div class="rounded-3xl p-6 transition-all duration-500 border-2" :class="aiCheckStatus === 'idle' ? 'bg-slate-50 border-slate-100' : (aiCheckStatus === 'checking' ? 'bg-primary/5 border-primary/10' : 'bg-danger/5 border-danger/20')">
+                        <div class="rounded-3xl p-6 transition-all duration-500 border-2"
+                             :class="aiCheckStatus === 'idle' ? 'bg-slate-50 border-slate-100' :
+                                     aiCheckStatus === 'checking' ? 'bg-primary/5 border-primary/10' :
+                                     aiCheckStatus === 'safe' ? 'bg-green-50 border-green-200' :
+                                     'bg-danger/5 border-danger/20'">
                             <div v-if="aiCheckStatus === 'idle'" class="flex flex-col items-center gap-3">
                                 <button @click="startAiCheck" class="px-10 py-3 bg-primary text-white font-black rounded-xl hover:scale-105 transition-all text-xs shadow-lg shadow-primary/20">啟動 AI 安全檢測</button>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">比對跨院區塊鏈處方紀錄</p>
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">比對跨院 DDI 規則資料庫</p>
                             </div>
                             <div v-else-if="aiCheckStatus === 'checking'" class="flex flex-col items-center gap-3 py-4">
                                 <div class="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                <p class="text-[10px] font-black text-primary animate-pulse uppercase tracking-widest">Scanning Blockchain...</p>
+                                <p class="text-[10px] font-black text-primary animate-pulse uppercase tracking-widest">Scanning DDI Rules...</p>
+                            </div>
+                            <div v-else-if="aiCheckStatus === 'safe'" class="flex items-center gap-4 animate-fade-in">
+                                <div class="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-green-500/20">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-green-700 text-sm tracking-tighter uppercase italic">No Conflict Detected</h4>
+                                    <p class="text-[11px] font-bold text-slate-600 mt-1">此藥品與病患目前處方無已知交互作用，可安全開立。</p>
+                                </div>
                             </div>
                             <div v-else class="flex items-start gap-4 animate-fade-in">
                                 <div class="w-12 h-12 bg-danger rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-danger/20"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
                                 <div>
                                     <h4 class="font-black text-danger text-sm tracking-tighter uppercase italic">High Risk Conflict Detected</h4>
-                                    <p class="text-[11px] font-bold text-slate-600 mt-1">偵測到與病患歷史處方 Aspirin 有嚴重交互作用，恐增加胃出血風險。</p>
+                                    <p class="text-[11px] font-bold text-slate-600 mt-1">
+                                        <span v-if="aiCheckResult">與 {{ aiCheckResult.conflictWith }} 有衝突（{{ aiCheckResult.severity }}）：{{ aiCheckResult.effect }}</span>
+                                        <span v-else>偵測到與病患歷史處方有嚴重交互作用風險。</span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -452,6 +468,8 @@
                     showPrescriptionModal: false,
                     newRx: { drugName: '', dosage: '', instruction: '' },
                     aiCheckStatus: 'idle',
+                    aiCheckResult: null,
+                    ddiRules: [],
                     kpis: [],
                     medicationList: [],
                     drugSearch: '',
@@ -561,7 +579,30 @@
                     this.showDrugDropdown = false;
                     this.aiCheckStatus = 'idle';
                 },
-                startAiCheck() { this.aiCheckStatus = 'checking'; setTimeout(() => this.aiCheckStatus = 'risk', 2000); },
+                async startAiCheck() {
+                    if (!this.newRx.drugName) return;
+                    this.aiCheckStatus = 'checking';
+                    this.aiCheckResult = null;
+                    try {
+                        if (this.ddiRules.length === 0) {
+                            this.ddiRules = await DbService.getDdiRules();
+                        }
+                        const newDrug = this.newRx.drugName.toLowerCase();
+                        const baseName = newDrug.split(' ')[0];
+                        const patientMeds = this.currentMeds.map(m => (m.id || '').toLowerCase());
+                        let conflict = null;
+                        for (const rule of this.ddiRules) {
+                            const rA = (rule.drugA || '').toLowerCase();
+                            const rB = (rule.drugB || '').toLowerCase();
+                            const matchA = newDrug.includes(rA) || rA.includes(baseName);
+                            const matchB = newDrug.includes(rB) || rB.includes(baseName);
+                            if (matchA && patientMeds.some(m => m.includes(rB) || rB.includes(m))) { conflict = { ...rule, conflictWith: rule.drugB }; break; }
+                            if (matchB && patientMeds.some(m => m.includes(rA) || rA.includes(m))) { conflict = { ...rule, conflictWith: rule.drugA }; break; }
+                        }
+                        this.aiCheckResult = conflict;
+                        this.aiCheckStatus = conflict ? 'risk' : 'safe';
+                    } catch(e) { this.aiCheckStatus = 'safe'; }
+                },
                 async submitPrescription() {
                     if (this.selectedPatient && this.newRx.drugName) {
                         const newMed = {

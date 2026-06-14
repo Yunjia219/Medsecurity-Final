@@ -382,7 +382,7 @@
                     </div>
                     <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
                         <button @click="showAddUserModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Cancel</button>
-                        <button @click="triggerToast('帳號已創建', '新用戶權限已同步至區塊鏈節點'); showAddUserModal = false;" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Create Account</button>
+                        <button @click="createUser" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Create Account</button>
                     </div>
                 </div>
             </div>
@@ -529,11 +529,23 @@
                 }
                 try {
                     const rules = await DbService.getDdiRules();
-                    if (rules && rules.length > 0) {
-                        this.mockRules = rules;
-                    }
+                    if (rules && rules.length > 0) this.mockRules = rules;
                 } catch (e) {
                     console.error('Firestore DDI rules error:', e);
+                }
+                try {
+                    const roleNames = { doctor: '醫師', patient: '患者', insurance: '保險人員', admin: '管理員' };
+                    const users = await DbService.getAllUsers();
+                    if (users && users.length > 0) {
+                        this.mockUsers = users.map(u => ({
+                            id: u.username, name: u.name, role: u.role,
+                            roleName: roleNames[u.role] || u.role,
+                            email: u.username + '@medsafe.com',
+                            hospital: 'N/A', status: 'active', statusName: '正常'
+                        }));
+                    }
+                } catch(e) {
+                    console.error('Firestore users error:', e);
                 }
             },
             mounted() {
@@ -630,13 +642,46 @@
                 },
 
                 // 系統設置方法
-                testFhirConnection() {
+                async testFhirConnection() {
                     this.isTestingConnection = true;
-                    setTimeout(() => {
+                    try {
+                        const start = Date.now();
+                        const res = await fetch(this.systemSettings.fhirUrl + '/metadata', { method: 'GET' });
+                        const ms = Date.now() - start;
+                        if (res.ok) {
+                            this.triggerToast('連線成功', `HAPI FHIR Server 響應正常 (延遲 ${ms}ms)`);
+                        } else {
+                            this.triggerToast('連線異常', `Server 回傳 HTTP ${res.status}`);
+                        }
+                    } catch(e) {
+                        this.triggerToast('連線失敗', '無法連線至 FHIR Server，請確認 URL 設定');
+                    } finally {
                         this.isTestingConnection = false;
-                        this.triggerToast('連線成功', 'HAPI FHIR Server 響應正常 (延遲 42ms)');
-                    }, 2000);
+                    }
                 },
+                async createUser() {
+                    if (!this.newUser.name || !this.newUser.email) {
+                        this.triggerToast('請填寫必填欄位', '姓名與 Email 為必填');
+                        return;
+                    }
+                    const username = this.newUser.email.split('@')[0].toLowerCase();
+                    const roleNames = { doctor: '醫師', patient: '患者', insurance: '保險人員', admin: '管理員' };
+                    try {
+                        await DbService.createUser(username, '123', this.newUser.name, this.newUser.role);
+                        this.mockUsers.push({
+                            id: username, name: this.newUser.name, role: this.newUser.role,
+                            roleName: roleNames[this.newUser.role] || this.newUser.role,
+                            email: this.newUser.email, hospital: this.newUser.hospital || 'N/A',
+                            status: 'active', statusName: '正常'
+                        });
+                        this.showAddUserModal = false;
+                        this.newUser = { name: '', role: 'doctor', email: '', hospital: '' };
+                        this.triggerToast('帳號已創建', `${username} 已寫入 Firestore，預設密碼 123`);
+                    } catch(e) {
+                        this.triggerToast('創建失敗', e.message || '請確認 Firestore 規則');
+                    }
+                },
+
                 saveSystemSettings() {
                     this.triggerToast('設置已儲存', '系統核心參數已更新並同步至所有節點');
                 },

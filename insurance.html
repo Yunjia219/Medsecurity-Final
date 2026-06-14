@@ -479,15 +479,27 @@
                 destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
                 viewRiskDetail(id) { this.selectedRiskPatient = this.riskDetails[id]; this.showRiskDetailModal = true; },
                 triggerToast(t) { this.toastTitle = t; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
-                activateCareCase() {
+                async activateCareCase() {
                     if (this.activatingCare) return;
                     this.activatingCare = true;
-                    setTimeout(() => {
+                    const patient = this.selectedRiskPatient;
+                    try {
+                        await DbService.addCareCase({
+                            patientId: patient.id || '',
+                            patientName: patient.name || '未知保戶',
+                            riskScore: patient.score || 0,
+                            activatedAt: Date.now(),
+                            activatedDate: new Date().toLocaleDateString('zh-TW'),
+                            status: '處理中',
+                            assignee: this.user ? this.user.name : '保險核保員'
+                        });
+                        this.triggerToast(`個案關懷已啟動：${patient.name || '保戶'}`, '記錄已寫入 Firestore，待社工指派');
+                    } catch(e) {
+                        this.triggerToast('啟動失敗', '請確認 Firestore 寫入規則已開放 care_cases');
+                    } finally {
                         this.activatingCare = false;
                         this.showRiskDetailModal = false;
-                        const name = this.selectedRiskPatient.name || '該保戶';
-                        this.triggerToast(`個案關懷已啟動：${name}`);
-                    }, 1200);
+                    }
                 },
                 initCharts() {
                     this.destroyCharts();
