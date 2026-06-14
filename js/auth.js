@@ -24,5 +24,6 @@ async function loginWithFirestore(username, password) {
   const hash = await DbService.hashPassword(password);
   const userData = await DbService.getUserByUsername(username);
   if (!userData || userData.passwordHash !== hash) return null;
+  if (userData.status === 'disabled') return { disabled: true };
   return { username, role: userData.role, name: userData.name };
 }

@@ -635,10 +635,17 @@
                         this.triggerToast('資料已更新', `用戶 ${this.editingUser.name} 的權限已修改`);
                     }
                 },
-                toggleUserStatus(user) {
-                    user.status = user.status === 'active' ? 'disabled' : 'active';
-                    user.statusName = user.status === 'active' ? '正常' : '停用';
-                    this.triggerToast('狀態變更', `用戶 ${user.name} 帳號目前已${user.statusName}`);
+                async toggleUserStatus(user) {
+                    const newStatus = user.status === 'active' ? 'disabled' : 'active';
+                    try {
+                        await window.db.collection('users').doc(user.id).update({ status: newStatus });
+                        user.status = newStatus;
+                        user.statusName = newStatus === 'active' ? '正常' : '停用';
+                        const label = newStatus === 'active' ? '已恢復正常' : '已停用，該帳號無法登入';
+                        this.triggerToast('狀態變更', `${user.name} ${label}`);
+                    } catch(e) {
+                        this.triggerToast('變更失敗', '請確認 Firestore 規則允許寫入 users');
+                    }
                 },
 
                 // 系統設置方法

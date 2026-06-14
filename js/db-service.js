@@ -111,7 +111,7 @@ window.DbService = {
 
   async createUser(username, password, name, role) {
     const hash = await this.hashPassword(password);
-    await window.db.collection('users').doc(username).set({ passwordHash: hash, role, name });
+    await window.db.collection('users').doc(username).set({ passwordHash: hash, role, name, status: 'active' });
   },
 
   // --- Care Cases (Insurance) ---

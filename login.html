@@ -243,7 +243,10 @@
                     this.loading = true;
                     try {
                         const user = await loginWithFirestore(this.username, this.password);
-                        if (user) {
+                        if (user && user.disabled) {
+                            this.error = '此帳號已被停用，請聯繫系統管理員';
+                            this.loading = false;
+                        } else if (user) {
                             localStorage.setItem('demo_user', JSON.stringify(user));
                             const routes = { admin: 'admin.html', doctor: 'dashboard.html', patient: 'patient.html', insurance: 'insurance.html' };
                             window.location.href = routes[user.role] || 'index.html';
