@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人健康中心 | MedSafe-Chain</title>
+    <title>個人健康中心 | MedSafe</title>
     <link rel="icon" type="image/png" href="images/LOGO.png">
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -76,7 +76,7 @@
             <div class="h-full flex flex-col">
                 <div class="flex items-center justify-between mb-12 px-2">
                     <div class="flex items-center gap-3">
-                        <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe-Chain">
+                        <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe">
                         <span class="text-xl font-extrabold text-title tracking-tight truncate">MedSafe <span class="text-primary">患者端</span></span>
                     </div>
                     <button @click="showMobileMenu = false" class="lg:hidden p-2 text-slate-400 hover:text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
@@ -401,7 +401,7 @@
                             </div>
                             <div class="text-left text-left">
                                 <h3 class="text-2xl md:text-4xl font-black text-title italic tracking-tighter text-left">My Med-Cabinet</h3>
-                                <p class="text-primary font-black text-xs md:text-sm uppercase tracking-widest mt-1 text-left">目前共有 {{ medications.length }} 項區塊鏈存證處方</p>
+                                <p class="text-primary font-black text-xs md:text-sm uppercase tracking-widest mt-1 text-left">目前共有 {{ medications.length }} 項安全存證處方</p>
                             </div>
                         </div>
                         <button @click="showAllMedsModal = false" class="text-slate-400 hover:text-danger transition-colors p-3 bg-white rounded-full shadow-sm shrink-0">
@@ -525,7 +525,7 @@
                             </div>
                             <div class="space-y-4 text-left text-left">
                                 <h4 class="text-[11px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-3 text-left text-left">
-                                    <div class="w-2 h-2 bg-primary rounded-full shrink-0"></div> 區塊鏈校驗元數據
+                                    <div class="w-2 h-2 bg-primary rounded-full shrink-0"></div> FHIR 校驗元數據
                                 </h4>
                                 <div class="bg-bgMain p-6 rounded-[32px] font-mono text-[10px] text-lightText border border-slate-100/50 leading-loose text-left text-left">
                                     <div class="flex justify-between border-b border-white pb-2 mb-2 text-left"><span>Resource-ID:</span> <span class="text-slate-600 font-black">fhir-rx-warfarin-001</span></div>
@@ -662,7 +662,7 @@
                     notifications: [
                         { title: 'AI 分析完成', content: '您的最新跨院處方箋已完成安全性比對，無重大風險。', time: '10 分鐘前', icon: Icons.AI, bg: 'bg-primary' },
                         { title: '用藥提醒', content: '該服用「二甲雙胍 (500mg)」了，建議飯後服用。', time: '1 小時前', icon: Icons.Reminder, bg: 'bg-golden' },
-                        { title: '區塊鏈同步成功', content: '您的電子病歷存取權限已成功在連網節點更新。', time: '3 小時前', icon: Icons.System, bg: 'bg-indigo-500' }
+                        { title: '資料同步成功', content: '您的電子病歷存取權限已成功在連網節點更新。', time: '3 小時前', icon: Icons.System, bg: 'bg-indigo-500' }
                     ],
                     detailedInsights: [
                         { title: '用藥遵從度極佳', content: '您過去 30 天的準時服藥率達到 98%，這對於心血管疾病的長期管理至關重要。', icon: Icons.Safety, bg: 'bg-primary/10 text-primary', tag: 'High Compliance' },
@@ -862,3 +862,4 @@
     </script>
 </body>
 </html>
+

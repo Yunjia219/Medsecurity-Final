@@ -17,7 +17,7 @@ window.mockData = {
       totalDdiRules: 12450,
       aiAnalyticsCount: 8920,
       todayApiCalls: 15620,
-      blockchainSyncAmount: '2.4 TB'
+      dataStorageAmount: '2.4 TB'
     },
     aiTrendData: [450, 590, 820, 710, 950, 1100, 1280],
     ddiRiskLevels: [120, 85, 45, 10],
@@ -28,17 +28,17 @@ window.mockData = {
       { label: '抗感染', value: 150 },
       { label: '內分泌', value: 80 }
     ],
-    blockchainSyncTrend: [120, 150, 180, 160, 210, 240, 280],
+    dataSyncTrend: [120, 150, 180, 160, 210, 240, 280],
     logs: [
       { time: '10:24:15', user: '李醫師', action: 'AI 交互分析完成', type: 'ai', status: '成功' },
       { time: '09:45:02', user: '系統', action: '新 DDI 規則更新', type: 'rule', status: '成功' },
-      { time: '08:30:00', user: '系統', action: 'Blockchain Sync 成功', type: 'blockchain', status: '成功' },
+      { time: '08:30:00', user: '系統', action: '資料同步成功', type: 'network', status: '成功' },
       { time: '07:15:22', user: '系統', action: '保險資料同步完成', type: 'insurance', status: '成功' }
     ],
     systemStatus: {
       apiHealth: 98,
       aiEngine: 95,
-      blockchain: 100,
+      secureNetwork: 100,
       database: 92
     }
   },
@@ -130,7 +130,7 @@ window.mockData = {
       aiRiskAnalysis: 3420,
       premiumDiscounts: '$2.4M',
       coverageHealth: 94.2,
-      blockchainVerification: '100%'
+      securityVerification: '100%'
     },
     claimsTrend: [65, 59, 80, 81, 56, 55, 72],
     riskRadar: [85, 90, 70, 80, 75],

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedSafe-Chain | 智慧醫療管理中心</title>
+    <title>MedSafe | 智慧醫療管理中心</title>
     <link rel="icon" type="image/png" href="images/LOGO.png">
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -77,7 +77,7 @@
             <div class="h-full glass rounded-3xl flex flex-col p-6 shadow-premium text-left">
                 <div class="flex items-center justify-between gap-3 px-2 mb-10">
                     <div class="flex items-center gap-3">
-                        <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe-Chain">
+                        <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe">
                         <span class="text-xl font-extrabold text-title tracking-tight truncate">MedSafe <span class="text-primary">管理端</span></span>
                     </div>
                     <button @click="showMobileMenu = false" class="lg:hidden p-2 text-lightText hover:text-primary transition-colors rounded-xl">
@@ -351,7 +351,7 @@
                     </div>
                     <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
                         <button @click="showAddUserModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Cancel</button>
-                        <button @click="triggerToast('帳號已創建', '新用戶權限已同步至區塊鏈節點'); showAddUserModal = false;" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Create Account</button>
+                        <button @click="triggerToast('帳號已創建', '新用戶權限已同步至安全管理系統'); showAddUserModal = false;" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Create Account</button>
                     </div>
                 </div>
             </div>
@@ -404,7 +404,7 @@
                 const user = getCurrentUser();
                 const adminData = window.mockData.admin;
                 const Icons = {
-                    Dashboard: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>` }),
+                    Dashboard: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>` }),
                     Rules: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` }),
                     Users: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>` }),
                     Settings: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>` })
@@ -422,7 +422,7 @@
                         { label: 'DDI 規則總數', value: 12450, icon: Icons.Rules, trend: 12.5, colorClass: 'purple-gradient' },
                         { label: 'AI 分析次數', value: 8920, icon: Icons.Users, trend: 8.2, colorClass: 'bg-neon' },
                         { label: '今日 API 請求', value: 15620, icon: Icons.Settings, trend: -1.2, colorClass: 'bg-deep' },
-                        { label: '區塊鏈存證', value: '2.4 TB', icon: Icons.Dashboard, trend: 15.0, colorClass: 'purple-gradient' },
+                        { label: '資料存儲總量', value: '2.4 TB', icon: Icons.Dashboard, trend: 15.0, colorClass: 'purple-gradient' },
                     ],
                     mockRules: [
                         { id: 1024, drugA: 'Warfarin', drugB: 'Aspirin', severity: '極高風險', severityClass: 'bg-red-100 text-danger border-red-200', effect: '增加出血風險，需監控 INR 指標。' },
@@ -451,7 +451,7 @@
                     isTestingConnection: false,
                     notifications: [
                         { id: 1, title: '系統安全警告', content: '偵測到異常的 FHIR 資源存取。', time: '5 分鐘前', read: false },
-                        { id: 2, title: '區塊鏈同步完成', content: '全院處方存證已與區域節點同步。', time: '12 分鐘前', read: false },
+                        { id: 2, title: '系統資料同步完成', content: '全院處方存證已與區域節點同步。', time: '12 分鐘前', read: false },
                     ]
                 }
             },
