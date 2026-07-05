@@ -7,6 +7,9 @@
     <link rel="icon" type="image/png" href="images/LOGO.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -51,12 +54,22 @@
         .slide-next-leave-to    { transform: translateX(-100%); }
         .slide-prev-enter-from  { transform: translateX(-100%); }
         .slide-prev-leave-to    { transform: translateX(100%); }
+
+        .slide-left-enter-active, .slide-left-leave-active,
+        .slide-right-enter-active, .slide-right-leave-active { transition: transform 0.3s ease, opacity 0.3s ease; }
+        .slide-left-enter-from  { transform: translateX(28px); opacity: 0; }
+        .slide-left-leave-to    { transform: translateX(-28px); opacity: 0; }
+        .slide-right-enter-from { transform: translateX(-28px); opacity: 0; }
+        .slide-right-leave-to   { transform: translateX(28px); opacity: 0; }
+
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
-<body class="min-h-screen flex">
-    <div id="app" v-cloak class="flex w-full">
+<body class="h-screen overflow-hidden flex">
+    <div id="app" v-cloak class="flex w-full h-full">
         <!-- Left: Full-background Carousel Hero -->
-        <div class="hidden lg:flex w-1/2 relative text-white overflow-hidden">
+        <div class="hidden lg:flex w-1/2 relative text-white overflow-hidden h-full">
             <!-- Carousel background images -->
             <transition :name="carouselDir === 'next' ? 'slide-next' : 'slide-prev'">
                 <img :key="carouselIndex"
@@ -70,21 +83,21 @@
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
             <!-- Content -->
-            <div class="relative z-10 flex flex-col justify-between h-full w-full p-16">
+            <div class="relative z-10 flex flex-col justify-between h-full w-full p-10">
                 <!-- Top: branding + text -->
                 <div class="max-w-xl">
                     <!-- Brand -->
-                    <div class="mb-12 flex items-center gap-3">
-                        <img src="images/LOGO.png" class="w-12 h-12 rounded-2xl object-contain" alt="MedSafe">
-                        <span class="text-3xl font-black tracking-tighter text-green-300">MedSafe</span>
+                    <div class="mb-6 flex items-center gap-3">
+                        <img src="images/LOGO.png" class="w-10 h-10 rounded-2xl object-contain" alt="MedSafe">
+                        <span class="text-2xl font-black tracking-tighter text-green-300">MedSafe</span>
                     </div>
                     <!-- Headline -->
-                    <h1 class="text-6xl font-black leading-tight mb-8">
+                    <h1 class="text-5xl font-black leading-tight mb-4">
                         <span class="text-green-400 text-glow-green">智慧醫療</span><br>
                         <span class="text-green-50 text-glow-white">守護您的用藥安全。</span>
                     </h1>
                     <!-- Subtitle -->
-                    <p class="text-base text-green-100/70 leading-relaxed mb-12 border-l-2 border-green-500/50 pl-4">透過 FHIR 整合與 AI 即時檢測，跨院用藥不再充滿未知風險。</p>
+                    <p class="text-sm text-green-100/70 leading-relaxed mb-6 border-l-2 border-green-500/50 pl-4">透過 FHIR 整合與 AI 即時檢測，跨院用藥不再充滿未知風險。</p>
                     <!-- Features -->
                     <div class="space-y-4">
                         <div class="flex items-center gap-4 bg-green-500/10 border border-green-400/20 rounded-2xl px-5 py-3">
@@ -123,44 +136,88 @@
         </div>
 
         <!-- Right: Login Section -->
-        <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-20 bg-white overflow-y-auto">
-            <div class="w-full max-w-md py-10">
-                <div class="mb-10 text-center lg:text-left">
-                    <h2 class="text-4xl font-black text-title mb-4">歡迎回來</h2>
-                    <p class="text-content">請輸入帳號密碼，或選擇下方快速登入。</p>
+        <div class="w-full lg:w-1/2 flex items-center justify-center px-8 sm:px-16 py-6 bg-white overflow-y-auto h-full">
+            <div class="w-full max-w-md">
+                <div class="flex gap-2 mb-5 bg-bgMain rounded-2xl p-1">
+                    <button type="button" @click="switchMode('login')"
+                            :class="['flex-1 py-2 rounded-xl text-sm font-black transition-all', mode === 'login' ? 'bg-white text-primary shadow-sm' : 'text-lightText']">登入</button>
+                    <button type="button" @click="switchMode('register')"
+                            :class="['flex-1 py-2 rounded-xl text-sm font-black transition-all', mode === 'register' ? 'bg-white text-primary shadow-sm' : 'text-lightText']">註冊新帳號</button>
                 </div>
 
-                <form @submit.prevent="login" class="space-y-6">
+                <div class="overflow-hidden">
+                <transition :name="slideDir" mode="out-in">
+                <div :key="mode">
+                <div class="mb-5 text-center lg:text-left">
+                    <h2 class="text-3xl font-black text-title mb-2">{{ mode === 'login' ? '歡迎回來' : '建立病患帳號' }}</h2>
+                    <p class="text-sm text-content">{{ mode === 'login' ? '請輸入帳號密碼，或選擇下方快速登入。' : '註冊後將以「患者」身分登入個人健康中心。' }}</p>
+                </div>
+
+                <form v-if="mode === 'login'" @submit.prevent="login" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-bold text-title mb-2">帳號</label>
-                        <input type="text" v-model="username" placeholder="請輸入帳號" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-4 px-6 outline-none transition-all font-medium">
+                        <label class="block text-sm font-bold text-title mb-1.5">帳號</label>
+                        <input type="text" v-model="username" placeholder="請輸入帳號" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-3 px-5 outline-none transition-all font-medium">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-title mb-2">密碼</label>
-                        <input type="password" v-model="password" placeholder="••••••••" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-4 px-6 outline-none transition-all font-medium">
+                        <label class="block text-sm font-bold text-title mb-1.5">密碼</label>
+                        <input type="password" v-model="password" placeholder="••••••••" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-3 px-5 outline-none transition-all font-medium">
                     </div>
 
-                    <div v-if="error" class="bg-red-50 text-danger text-xs font-bold p-4 rounded-xl border border-red-100">{{ error }}</div>
+                    <div v-if="error" class="bg-red-50 text-danger text-xs font-bold p-3 rounded-xl border border-red-100">{{ error }}</div>
 
-                    <button type="submit" :disabled="loading" class="w-full hero-gradient text-white font-black py-4 rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-3">
+                    <button type="submit" :disabled="loading" class="w-full hero-gradient text-white font-black py-3.5 rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-3">
                         <svg v-if="loading" class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         {{ loading ? '驗證中...' : '登入系統' }}
                     </button>
                 </form>
 
+                <form v-else @submit.prevent="register" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-title mb-1.5">姓名</label>
+                        <input type="text" v-model="regName" placeholder="請輸入真實姓名" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-3 px-5 outline-none transition-all font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-title mb-1.5">帳號</label>
+                        <input type="text" v-model="regUsername" placeholder="英數字、底線，3-20 字元" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-3 px-5 outline-none transition-all font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-title mb-1.5">密碼</label>
+                        <input type="password" v-model="regPassword" placeholder="至少 6 碼" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-3 px-5 outline-none transition-all font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-title mb-1.5">確認密碼</label>
+                        <input type="password" v-model="regPasswordConfirm" placeholder="再輸入一次密碼" class="w-full bg-bgMain border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-3 px-5 outline-none transition-all font-medium">
+                    </div>
+
+                    <label class="flex items-start gap-2.5 select-none cursor-pointer">
+                        <input type="checkbox" v-model="agreeTerms" class="mt-0.5 h-4 w-4 rounded border-2 border-slate-300 text-primary focus:ring-primary/30 cursor-pointer">
+                        <span class="text-xs font-bold text-content leading-relaxed">
+                            我已閱讀並同意
+                            <button type="button" @click.stop="showTermsModal = true" class="text-primary underline underline-offset-2 hover:text-primary/80">《使用者條款》</button>
+                        </span>
+                    </label>
+
+                    <div v-if="error" class="bg-red-50 text-danger text-xs font-bold p-3 rounded-xl border border-red-100">{{ error }}</div>
+
+                    <button type="submit" :disabled="loading" class="w-full hero-gradient text-white font-black py-3.5 rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-3">
+                        <svg v-if="loading" class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        {{ loading ? '註冊中...' : '註冊並登入' }}
+                    </button>
+                </form>
+
                 <!-- Demo Accounts Section -->
-                <div class="mt-12">
-                    <div class="flex items-center gap-4 mb-6">
+                <div v-if="mode === 'login'" class="mt-6">
+                    <div class="flex items-center gap-4 mb-4">
                         <div class="flex-1 h-px bg-slate-100"></div>
                         <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">演示帳號快速登入</span>
                         <div class="flex-1 h-px bg-slate-100"></div>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div v-for="u in demoUsers" :key="u.username" 
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div v-for="u in demoUsers" :key="u.username"
                              @click="autoFill(u)"
-                             class="demo-card p-4 bg-slate-50 rounded-2xl border-2 border-transparent transition-all cursor-pointer group">
-                            <div class="flex justify-between items-start mb-2">
+                             class="demo-card p-3 bg-slate-50 rounded-2xl border-2 border-transparent transition-all cursor-pointer group">
+                            <div class="flex justify-between items-start mb-1.5">
                                 <span :class="getRoleClass(u.role)" class="text-[8px] font-black px-1.5 py-0.5 rounded uppercase">{{ u.role }}</span>
                                 <svg class="h-3 w-3 text-slate-300 group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                             </div>
@@ -169,26 +226,59 @@
                         </div>
                     </div>
                 </div>
+                </div>
+                </transition>
+                </div>
 
-                <div class="mt-16 text-center">
+                <div class="mt-6 text-center">
                     <div class="flex justify-center gap-8">
-                        <div class="text-center"><div class="text-xl font-black text-title">4.5k+</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Users</div></div>
-                        <div class="text-center"><div class="text-xl font-black text-title">12k+</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">DDI Rules</div></div>
-                        <div class="text-center"><div class="text-xl font-black text-title">100%</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Secured</div></div>
+                        <div class="text-center"><div class="text-lg font-black text-title">4.5k+</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Users</div></div>
+                        <div class="text-center"><div class="text-lg font-black text-title">12k+</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">DDI Rules</div></div>
+                        <div class="text-center"><div class="text-lg font-black text-title">100%</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Secured</div></div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Terms of Service Modal -->
+        <transition name="fade">
+        <div v-if="showTermsModal" @click.self="showTermsModal = false" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                    <h3 class="text-lg font-black text-title">MedSafe 使用者條款</h3>
+                    <button type="button" @click="showTermsModal = false" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                </div>
+                <div class="px-6 py-4 overflow-y-auto space-y-3 text-xs font-medium text-content leading-relaxed">
+                    <p><strong class="text-title">1. 服務說明</strong><br>MedSafe 智慧醫療系統（以下稱「本平台」）提供病歷管理、用藥安全提醒、跨機構資料查詢等功能，供已註冊之病患、醫事人員、保險與管理端使用者使用。</p>
+                    <p><strong class="text-title">2. 帳號註冊與安全</strong><br>使用者應提供真實、正確之個人資料，並妥善保管帳號密碼。因帳號密碼保管不當所生之損害，本平台不負相關責任。</p>
+                    <p><strong class="text-title">3. 個人健康資料之蒐集與使用</strong><br>本平台將依據醫療法、個人資料保護法等相關法規，僅於提供醫療照護、用藥安全比對及必要之系統管理目的範圍內，蒐集、處理及利用使用者之健康資料，不會提供予無關第三方。</p>
+                    <p><strong class="text-title">4. 使用者義務</strong><br>使用者不得利用本平台從事違法行為、上傳虛假醫療資訊，或嘗試未經授權存取他人帳號與資料。</p>
+                    <p><strong class="text-title">5. 服務變更與中止</strong><br>本平台得因系統維護、法規調整或其他必要原因，變更或暫停部分服務，並將以合理方式通知使用者。</p>
+                    <p><strong class="text-title">6. 條款修改</strong><br>本條款如有修改，將於本平台公告後生效；使用者於修改後繼續使用本服務，視為同意修改後之條款內容。</p>
+                    <p class="text-lightText">本條款為本次競賽專案示範文字，僅供功能展示使用，不代表實際法律文件。</p>
+                </div>
+                <div class="px-6 py-4 border-t border-slate-100">
+                    <button type="button" @click="showTermsModal = false" class="w-full hero-gradient text-white font-black py-3 rounded-2xl">我已閱讀，關閉視窗</button>
+                </div>
+            </div>
+        </div>
+        </transition>
     </div>
 
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/mockData.js"></script>
     <script>
         const { createApp } = Vue;
         createApp({
             data() {
                 return {
+                    mode: 'login',
+                    slideDir: 'slide-left',
                     username: '', password: '', error: '', loading: false,
-                    demoUsers: window.mockData.users,
+                    regName: '', regUsername: '', regPassword: '', regPasswordConfirm: '', agreeTerms: false, showTermsModal: false,
+                    demoUsers: window.mockData.users.filter(u => u.role !== 'patient' || u.username === 'patient01'),
                     carouselIndex: 0,
                     carouselDir: 'next',
                     carouselImages: ['images/slide1.png', 'images/slide2.png', 'images/slide3.png'],
@@ -202,6 +292,12 @@
                 clearInterval(this._carouselTimer);
             },
             methods: {
+                switchMode(m) {
+                    if (m === this.mode) return;
+                    this.slideDir = m === 'register' ? 'slide-left' : 'slide-right';
+                    this.mode = m;
+                    this.error = '';
+                },
                 carouselNext() {
                     this.carouselDir = 'next';
                     this.carouselIndex = (this.carouselIndex + 1) % this.carouselImages.length;
@@ -228,13 +324,16 @@
                     };
                     return classes[role] || 'bg-slate-100 text-slate-600';
                 },
-                login() {
+                async login() {
                     this.error = '';
                     if (!this.username || !this.password) { this.error = '請輸入帳號密碼'; return; }
                     this.loading = true;
-                    setTimeout(() => {
-                        const user = this.demoUsers.find(u => u.username === this.username && u.password === this.password);
-                        if (user) {
+                    try {
+                        const user = await loginWithFirebaseAuth(this.username, this.password);
+                        if (user && user.disabled) {
+                            this.error = '此帳號已被停用，請聯繫系統管理員';
+                            this.loading = false;
+                        } else if (user) {
                             localStorage.setItem('demo_user', JSON.stringify(user));
                             const routes = { admin: 'admin.html', doctor: 'dashboard.html', patient: 'patient.html', insurance: 'insurance.html' };
                             window.location.href = routes[user.role] || 'index.html';
@@ -242,7 +341,38 @@
                             this.error = '帳號或密碼錯誤';
                             this.loading = false;
                         }
-                    }, 800);
+                    } catch (e) {
+                        this.error = '連線失敗，請確認網路或 Firebase 設定';
+                        this.loading = false;
+                    }
+                },
+                async register() {
+                    this.error = '';
+                    const name = this.regName.trim();
+                    const username = this.regUsername.trim().toLowerCase();
+                    const password = this.regPassword;
+
+                    if (!name || !username || !password) { this.error = '請完整填寫姓名、帳號與密碼'; return; }
+                    if (!/^[a-z0-9_.]{3,20}$/.test(username)) { this.error = '帳號限英數字、底線與句點，長度 3-20'; return; }
+                    if (password.length < 6) { this.error = '密碼至少需要 6 碼'; return; }
+                    if (password !== this.regPasswordConfirm) { this.error = '兩次輸入的密碼不一致'; return; }
+                    if (!this.agreeTerms) { this.error = '請先閱讀並勾選同意使用者條款'; return; }
+
+                    this.loading = true;
+                    try {
+                        const user = await DbService.registerPatient(username, password, name);
+                        localStorage.setItem('demo_user', JSON.stringify(user));
+                        window.location.href = 'patient.html';
+                    } catch (e) {
+                        if (e.code === 'auth/email-already-in-use') {
+                            this.error = '此帳號已被使用，請換一個帳號';
+                        } else if (e.code === 'permission-denied' || e.message?.includes('insufficient permissions')) {
+                            this.error = '此帳號已被使用，請換一個帳號';
+                        } else {
+                            this.error = '註冊失敗：' + (e.message || e);
+                        }
+                        this.loading = false;
+                    }
                 }
             }
         }).mount('#app');

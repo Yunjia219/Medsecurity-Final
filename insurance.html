@@ -9,6 +9,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -50,6 +53,16 @@
 </head>
 <body class="overflow-x-hidden text-left">
     <div id="app" v-cloak class="flex min-h-screen relative overflow-x-hidden">
+        <!-- Global Maintenance Lock -->
+        <div v-if="maintenanceMode" class="fixed inset-0 z-[999] bg-slate-950 flex items-center justify-center p-8 text-center">
+            <div class="max-w-md">
+                <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-danger/10 flex items-center justify-center text-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h1 class="text-2xl font-black text-white mb-3">系統維護中</h1>
+                <p class="text-sm text-slate-400 leading-relaxed">MedSafe 目前正在進行系統維護，暫停醫師、患者與保險端的存取，請稍後再試。造成不便，敬請見諒。</p>
+            </div>
+        </div>
         <!-- Mobile Sidebar Overlay -->
         <transition name="fade">
             <div v-if="showMobileMenu" @click="showMobileMenu = false" class="fixed inset-0 bg-navy/60 backdrop-blur-sm z-[60] lg:hidden"></div>
@@ -63,7 +76,7 @@
                         <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe">
                         <span class="text-xl font-extrabold tracking-tight truncate">MedSafe <span class="text-turquoise">保險端</span></span>
                     </div>
-                    <button @click="showMobileMenu = false" class="lg:hidden p-2 text-white/40 hover:text-turquoise"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    <button @click="showMobileMenu = false" aria-label="關閉選單" class="lg:hidden p-2 text-white/40 hover:text-turquoise"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                 </div>
 
                 <nav class="flex-1 space-y-1">
@@ -88,7 +101,7 @@
             <!-- Header -->
             <header class="flex items-center justify-between sticky top-0 z-30 bg-bgMain/80 backdrop-blur-md pb-4 pt-2">
                 <div class="flex items-center gap-4">
-                    <button @click="showMobileMenu = true" class="lg:hidden p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-navy hover:text-turquoise transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
+                    <button @click="showMobileMenu = true" aria-label="開啟選單" class="lg:hidden p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-navy hover:text-turquoise transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
                     <div class="text-left"><h2 class="text-xl md:text-3xl font-black text-navy italic tracking-tighter uppercase">{{ activeMenu }} Module</h2><p class="text-[9px] md:text-[10px] font-black text-turquoise uppercase tracking-[0.2em] pl-1">Clinical Intelligence Center</p></div>
                 </div>
                 <div class="flex items-center gap-3 md:gap-6 bg-white p-2 md:p-2.5 rounded-3xl shadow-premium border border-white">
@@ -122,7 +135,7 @@
                                 <div class="grid grid-cols-3 gap-4 md:gap-8 border-t border-white/10 pt-8">
                                     <div class="text-left"><div class="text-xl md:text-3xl font-black text-white">94.2%</div><div class="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-60">Safety Rate</div></div>
                                     <div class="text-left border-l border-white/10 pl-4 md:pl-8"><div class="text-xl md:text-3xl font-black text-golden">892</div><div class="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-60">Claims/D</div></div>
-                                    <div class="text-left border-l border-white/10 pl-4 md:pl-8"><div class="text-xl md:text-3xl font-black text-turquoise">$2.4M</div><div class="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-60">Discounts</div></div>
+                                    <div class="text-left border-l border-white/10 pl-4 md:pl-8"><div class="text-xl md:text-3xl font-black text-turquoise">NT$ 2.4M</div><div class="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-60">Discounts</div></div>
                                 </div>
                             </div>
                             <div id="heroAreaChart" class="h-48 md:h-64 bg-white/5 rounded-[32px] md:rounded-[40px] border border-white/10 p-6 md:p-8 backdrop-blur-sm text-left"></div>
@@ -157,6 +170,7 @@
                             <h2 class="text-2xl md:text-4xl font-black text-navy mb-2 italic uppercase">Policy Analytics</h2>
                             <p class="text-lightText font-bold text-xs md:text-sm">全網險種分佈佔比與承保動態監控</p>
                         </div>
+                        <button @click="openAddPolicyModal" class="px-6 py-3 bg-navy text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-turquoise transition-all shadow-sm">+ 新增保單</button>
                     </div>
                     <div class="bg-white p-6 md:p-10 rounded-[32px] md:rounded-[40px] shadow-premium border border-white text-left overflow-hidden">
                         <h3 class="text-lg md:text-xl font-black text-navy mb-8 flex items-center gap-3"><span class="w-1.5 h-6 bg-turquoise rounded-full"></span> 承保清單日誌</h3>
@@ -165,6 +179,7 @@
                                 <thead>
                                     <tr class="text-[10px] font-black uppercase text-slate-400 border-b border-gray-100 text-left">
                                         <th class="pb-6 px-4">保單編號</th>
+                                        <th class="pb-6">保戶</th>
                                         <th class="pb-6">險種名稱</th>
                                         <th class="pb-6">合規保額</th>
                                         <th class="pb-6 text-right pr-4">Security Code</th>
@@ -173,6 +188,7 @@
                                 <tbody class="divide-y divide-gray-50">
                                     <tr v-for="p in recentPolicies" :key="p.id" class="group hover:bg-slate-50 transition-colors">
                                         <td class="py-6 px-4 font-mono text-xs font-bold text-navy">#{{ p.id }}</td>
+                                        <td class="py-6 font-bold text-content text-sm">{{ p.customer || '—' }}</td>
                                         <td class="py-6 font-black text-title text-sm">{{ p.name }}</td>
                                         <td class="py-6 font-black text-turquoise">{{ p.amount }}</td>
                                         <td class="py-6 text-right pr-4"><span class="text-[9px] font-mono bg-bgMain px-3 py-1.5 rounded-lg text-lightText group-hover:text-primary transition-colors">{{ p.hash }}</span></td>
@@ -223,6 +239,33 @@
                             <p class="text-lightText font-bold text-xs md:text-sm">AI 自動化理賠流程監控與安全核驗</p>
                         </div>
                     </div>
+
+                    <div class="bg-white p-6 md:p-10 rounded-[32px] md:rounded-[40px] shadow-premium border border-white">
+                        <div class="flex justify-between items-center mb-8">
+                            <h3 class="text-lg md:text-xl font-black text-navy flex items-center gap-3"><span class="w-1.5 h-6 bg-golden rounded-full"></span> 保戶理賠申請</h3>
+                            <button @click="openAddClaimModal" class="px-5 py-3 bg-navy text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-turquoise transition-all">+ 新增理賠案件</button>
+                        </div>
+                        <div v-if="submittedClaims.length === 0" class="text-center text-lightText font-bold py-10 text-sm">尚無理賠申請</div>
+                        <div v-else class="space-y-6">
+                            <div v-for="c in submittedClaims" :key="c.id" class="p-5 md:p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div class="overflow-hidden">
+                                        <div class="font-black text-navy truncate">{{ c.customer }} · {{ c.amount }}</div>
+                                        <div class="text-[10px] font-bold text-lightText uppercase tracking-widest mt-1">{{ c.time }}</div>
+                                        <div v-if="c.description" class="text-xs text-content mt-2">{{ c.description }}</div>
+                                    </div>
+                                    <div class="flex items-center gap-3 shrink-0">
+                                        <span :class="['px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest', c.statusClass]">{{ c.status }}</span>
+                                        <template v-if="c.status === '審核中'">
+                                            <button @click="decideClaim(c, true)" class="px-4 py-2 bg-turquoise text-white rounded-xl text-[10px] font-black uppercase">核准</button>
+                                            <button @click="decideClaim(c, false)" class="px-4 py-2 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase">拒絕</button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="bg-white p-6 md:p-10 rounded-[32px] md:rounded-[40px] shadow-premium border border-white">
                         <h3 class="text-lg md:text-xl font-black text-navy mb-8 flex items-center gap-3"><span class="w-1.5 h-6 bg-turquoise rounded-full"></span> 實時理賠追蹤</h3>
                         <div class="space-y-6">
@@ -242,6 +285,40 @@
                                         <div class="h-full bg-turquoise rounded-full transition-all duration-1000" :style="{ width: claim.progress + '%' }"></div>
                                     </div>
                                     <div class="text-xs font-black text-navy">{{ claim.progress }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 個案關懷管理 -->
+                <div v-else-if="activeMenu === 'CareCases'" key="carecases" class="space-y-8 animate-fade-in text-left">
+                    <div class="flex justify-between items-end mb-4">
+                        <div class="text-left">
+                            <h2 class="text-2xl md:text-4xl font-black text-navy mb-2 italic uppercase">Care Case Management</h2>
+                            <p class="text-lightText font-bold text-xs md:text-sm">追蹤所有已啟動的個案關懷處理進度</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 md:p-10 rounded-[32px] md:rounded-[40px] shadow-premium border border-white">
+                        <div v-if="careCases.length === 0" class="text-center text-lightText font-bold py-16 text-sm">尚無啟動中的個案關懷</div>
+                        <div v-else class="space-y-6">
+                            <div v-for="c in careCases" :key="c.id" class="p-5 md:p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 md:w-12 md:h-12 turquoise-gradient rounded-2xl flex items-center justify-center font-black text-white shrink-0">{{ (c.patientName || '?')[0] }}</div>
+                                        <div class="overflow-hidden">
+                                            <div class="font-black text-navy truncate">{{ c.patientName }} ({{ c.patientId }})</div>
+                                            <div class="text-[10px] font-bold text-lightText uppercase tracking-widest">{{ c.activatedDate }} · 承辦：{{ c.assignee }} · Safety Score {{ c.riskScore }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 shrink-0">
+                                        <span :class="['px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest', careCaseStatusClass(c.status)]">{{ c.status }}</span>
+                                        <select :value="c.status" @change="updateCaseStatus(c, $event.target.value)" class="bg-white border-2 border-slate-200 rounded-xl py-2 px-3 text-xs font-bold outline-none">
+                                            <option value="處理中">處理中</option>
+                                            <option value="追蹤中">追蹤中</option>
+                                            <option value="已結案">已結案</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -307,12 +384,12 @@
 
         <!-- Risk Detail Modal (Mobile Friendly) -->
         <transition name="fade">
-            <div v-if="showRiskDetailModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div v-if="showRiskDetailModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-navy/90 backdrop-blur-xl" @click="showRiskDetailModal = false"></div>
                 <div class="bg-white rounded-[40px] md:rounded-[50px] w-full max-w-2xl max-h-[90vh] shadow-2xl relative z-10 overflow-hidden border border-white animate-fade-in flex flex-col text-left">
                     <div class="bg-red-600 p-8 md:p-12 text-white shrink-0 relative">
                         <h3 class="text-2xl md:text-3xl font-black italic uppercase">Clinical Analysis Report</h3>
-                        <button @click="showRiskDetailModal = false" class="absolute top-8 right-8 text-white/50 hover:text-white transition-colors p-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        <button @click="showRiskDetailModal = false" aria-label="關閉" class="absolute top-8 right-8 text-white/50 hover:text-white transition-colors p-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                     </div>
                     <div class="p-8 md:p-12 space-y-8 overflow-y-auto flex-1">
                         <div class="flex items-center gap-6 md:gap-8 pb-8 border-b border-slate-50">
@@ -336,6 +413,50 @@
             </div>
         </transition>
 
+        <!-- Add Claim Modal -->
+        <transition name="fade">
+            <div v-if="showAddClaimModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-navy/80 backdrop-blur-md" @click="showAddClaimModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-md shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in text-left">
+                    <div class="p-8">
+                        <h3 class="text-xl font-black text-navy mb-6 italic uppercase">新增理賠案件</h3>
+                        <div class="space-y-4">
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">保戶姓名</label><input v-model="newClaim.customer" type="text" class="w-full bg-slate-50 rounded-2xl py-3 px-5 font-bold outline-none"></div>
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">理賠金額 (NT$)</label><input v-model="newClaim.amount" type="number" min="0" class="w-full bg-slate-50 rounded-2xl py-3 px-5 font-bold outline-none"></div>
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">說明</label><textarea v-model="newClaim.description" rows="3" class="w-full bg-slate-50 rounded-2xl py-3 px-5 font-bold outline-none"></textarea></div>
+                            <div v-if="newClaimError" class="bg-red-50 text-danger text-xs font-bold p-3 rounded-xl">{{ newClaimError }}</div>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-slate-50 flex gap-4 border-t border-slate-100">
+                        <button @click="showAddClaimModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">取消</button>
+                        <button @click="submitNewClaim" class="flex-[2] bg-navy text-white font-black rounded-2xl text-xs uppercase tracking-widest py-4">送出申請</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Add Policy Modal -->
+        <transition name="fade">
+            <div v-if="showAddPolicyModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-navy/80 backdrop-blur-md" @click="showAddPolicyModal = false"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-md shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in text-left">
+                    <div class="p-8">
+                        <h3 class="text-xl font-black text-navy mb-6 italic uppercase">新增保單</h3>
+                        <div class="space-y-4">
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">保戶姓名</label><input v-model="newPolicy.customer" type="text" class="w-full bg-slate-50 rounded-2xl py-3 px-5 font-bold outline-none"></div>
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">險種名稱</label><input v-model="newPolicy.planName" type="text" class="w-full bg-slate-50 rounded-2xl py-3 px-5 font-bold outline-none"></div>
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">保額 (NT$)</label><input v-model="newPolicy.amount" type="number" min="0" class="w-full bg-slate-50 rounded-2xl py-3 px-5 font-bold outline-none"></div>
+                            <div v-if="newPolicyError" class="bg-red-50 text-danger text-xs font-bold p-3 rounded-xl">{{ newPolicyError }}</div>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-slate-50 flex gap-4 border-t border-slate-100">
+                        <button @click="showAddPolicyModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">取消</button>
+                        <button @click="submitNewPolicy" class="flex-[2] bg-navy text-white font-black rounded-2xl text-xs uppercase tracking-widest py-4">建立保單</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
         <!-- Global Toast -->
         <transition name="fade">
             <div v-if="showToast" class="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[200] bg-slate-900 text-white px-6 py-4 md:px-8 md:py-5 rounded-[24px] md:rounded-[32px] shadow-2xl border border-white/10 flex items-center gap-4 animate-fade-in text-left">
@@ -346,6 +467,8 @@
     </div>
 
     <!-- Data Injection -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
     <script src="js/mockData.js"></script>
     <script src="js/auth.js"></script>
     <script>
@@ -357,19 +480,22 @@
             Risk: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>` }),
             AI: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>` }),
             Customers: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>` }),
+            CareCase: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 10-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>` }),
         };
         createApp({
             data() {
-                const user = getCurrentUser();
+                const user = requireRole('insurance') || { name: '訪客核保員' };
                 const insData = window.mockData.insurance;
                 return {
                     user, activeMenu: 'Dashboard', showRiskDetailModal: false, showToast: false, toastTitle: '', selectedRiskPatient: {},
                     showMobileMenu: false,
+                    maintenanceMode: false,
                     activatingCare: false,
                     menuItems: [
                         { name: 'Dashboard', label: '總覽儀表板', icon: Icons.Dashboard },
                         { name: 'Policy', label: '保單大數據', icon: Icons.Policy },
                         { name: 'Claims', label: '理賠自動化', icon: Icons.Claims },
+                        { name: 'CareCases', label: '個案關懷管理', icon: Icons.CareCase },
                         { name: 'Risk', label: '動態風險評估', icon: Icons.Risk },
                         { name: 'AI', label: 'AI 核保建議', icon: Icons.AI },
                         { name: 'Customers', label: '保戶目錄', icon: Icons.Customers },
@@ -382,18 +508,26 @@
                     claims: insData.claimsTracking,
                     coverageGaps: insData.coverageGaps,
                     recentPolicies: [
-                        { id: 'POL-9921', name: '智慧健康險 (L1)', amount: '$120,000', hash: '0x7d...f3a1' },
-                        { id: 'POL-9922', name: '智慧健康險 (L2)', amount: '$150,000', hash: '0x7d...f3a2' },
-                        { id: 'POL-9923', name: '長照防護專案', amount: '$300,000', hash: '0x7d...f3a3' },
+                        { id: 'POL-9921', customer: '—', name: '智慧健康險 (L1)', amount: 'NT$ 120,000', hash: '0x7d...f3a1' },
+                        { id: 'POL-9922', customer: '—', name: '智慧健康險 (L2)', amount: 'NT$ 150,000', hash: '0x7d...f3a2' },
+                        { id: 'POL-9923', customer: '—', name: '長照防護專案', amount: 'NT$ 300,000', hash: '0x7d...f3a3' },
                     ],
+                    showAddPolicyModal: false,
+                    newPolicy: { customer: '', planName: '', amount: '' },
+                    newPolicyError: '',
+                    submittedClaims: [],
+                    showAddClaimModal: false,
+                    newClaim: { customer: '', amount: '', description: '' },
+                    newClaimError: '',
+                    careCases: [],
                     customerSearch: '', customerSort: 'score',
                     topSafeUsers: [
-                        { name: '王大明', score: 98, discount: '$2,500', policies: 3, age: 72, id: 'P-001' },
-                        { name: '陳小美', score: 97, discount: '$2,300', policies: 2, age: 65, id: 'P-002' },
-                        { name: '李國華', score: 96, discount: '$2,100', policies: 4, age: 68, id: 'P-003' },
-                        { name: '張健', score: 92, discount: '$1,800', policies: 2, age: 70, id: 'P-004' },
-                        { name: '劉美玲', score: 90, discount: '$1,500', policies: 3, age: 75, id: 'P-005' },
-                        { name: '林志豪', score: 88, discount: '$1,200', policies: 1, age: 62, id: 'P-006' }
+                        { name: '王大明', score: 98, discount: 'NT$ 2,500', policies: 3, age: 72, id: 'P-001' },
+                        { name: '陳小美', score: 97, discount: 'NT$ 2,300', policies: 2, age: 65, id: 'P-002' },
+                        { name: '李國華', score: 96, discount: 'NT$ 2,100', policies: 4, age: 68, id: 'P-003' },
+                        { name: '張健', score: 92, discount: 'NT$ 1,800', policies: 2, age: 70, id: 'P-004' },
+                        { name: '劉美玲', score: 90, discount: 'NT$ 1,500', policies: 3, age: 75, id: 'P-005' },
+                        { name: '林志豪', score: 88, discount: 'NT$ 1,200', policies: 1, age: 62, id: 'P-006' }
                     ],
                     riskDetails: {
                         'P-001': { name: '王大明', id: 'P-001', score: 98, alert: 'SAFE', reason: '用藥遵從度極高，無重大交互作用紀錄', recommendation: '建議提供續保費率 10% 優惠' },
@@ -413,20 +547,74 @@
                     return list;
                 }
             },
-            created() {
+            async created() {
                 this._charts = {};
+                await waitForAuthReady();
+                try {
+                    this.maintenanceMode = await DbService.getMaintenanceMode();
+                } catch (e) {}
+                if (this.maintenanceMode) return;
+                try {
+                    const data = await DbService.getInsuranceData();
+                    if (data) {
+                        const s = data.stats;
+                        this.kpis = [
+                            { label: 'Active Policies', value: s.activePolicies.toLocaleString(), icon: Icons.Policy, trend: 12.5, bg: 'turquoise-gradient', color: 'bg-turquoise', progress: 85 },
+                            { label: 'AI Risk Analysis', value: s.aiRiskAnalysis.toLocaleString(), icon: Icons.AI, trend: 24.1, bg: 'bg-navy', color: 'bg-turquoise', progress: 62 },
+                            { label: 'Coverage Health', value: s.coverageHealth + '%', icon: Icons.Risk, trend: 4.2, bg: 'turquoise-gradient', color: 'bg-navy', progress: 94 },
+                        ];
+                        this.claims = data.claimsTracking;
+                        this.coverageGaps = data.coverageGaps;
+                    }
+                } catch (e) {
+                    console.error('Firestore load error:', e);
+                }
+                try {
+                    // 保戶目錄／AI 核保建議改讀真實病患資料，取代寫死的假保戶清單
+                    const patients = await DbService.getAllPatients();
+                    if (patients && patients.length > 0) {
+                        const mapped = patients.map(p => this.mapPatientToCustomer(p));
+                        this.topSafeUsers = mapped;
+                        this.riskDetails = Object.fromEntries(mapped.map(m => [m.id, m]));
+                    }
+                } catch (e) {
+                    console.error('Firestore patients error:', e);
+                }
+                try {
+                    this.careCases = await DbService.getCareCases();
+                } catch (e) {
+                    console.error('Firestore care cases error:', e);
+                }
+                try {
+                    const realClaims = await DbService.getClaims();
+                    if (realClaims) this.submittedClaims = realClaims;
+                } catch (e) {
+                    console.error('Firestore claims error:', e);
+                }
+                try {
+                    const realPolicies = await DbService.getPolicies();
+                    if (realPolicies && realPolicies.length > 0) this.recentPolicies = realPolicies;
+                } catch (e) {
+                    console.error('Firestore policies error:', e);
+                }
+                this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
             },
-            mounted() { 
-                this.initCharts();
+            mounted() {
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
+                this._escHandler = (e) => {
+                    if (e.key !== 'Escape') return;
+                    this.showRiskDetailModal = this.showAddClaimModal = this.showAddPolicyModal = false;
+                };
+                document.addEventListener('keydown', this._escHandler);
             },
             unmounted() {
                 window.removeEventListener('resize', this._resizeHandler);
+                document.removeEventListener('keydown', this._escHandler);
                 this.destroyCharts();
             },
             methods: {
-                logout() { localStorage.removeItem('demo_user'); window.location.href = 'login.html'; },
+                logout() { logout(); },
                 switchMenu(m) { 
                     const isAlreadyDashboard = this.activeMenu === 'Dashboard' && m === 'Dashboard';
                     this.activeMenu = m; 
@@ -442,15 +630,131 @@
                 destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
                 viewRiskDetail(id) { this.selectedRiskPatient = this.riskDetails[id]; this.showRiskDetailModal = true; },
                 triggerToast(t) { this.toastTitle = t; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
-                activateCareCase() {
+                async activateCareCase() {
                     if (this.activatingCare) return;
                     this.activatingCare = true;
-                    setTimeout(() => {
+                    const patient = this.selectedRiskPatient;
+                    try {
+                        const record = {
+                            patientId: patient.id || '',
+                            patientName: patient.name || '未知保戶',
+                            riskScore: patient.score || 0,
+                            activatedAt: Date.now(),
+                            activatedDate: new Date().toLocaleDateString('zh-TW'),
+                            status: '處理中',
+                            assignee: this.user ? this.user.name : '保險核保員'
+                        };
+                        await DbService.addCareCase(record);
+                        this.careCases.unshift(record);
+                    } catch (e) {
+                        console.error('Firestore care case error:', e);
+                    } finally {
                         this.activatingCare = false;
                         this.showRiskDetailModal = false;
-                        const name = this.selectedRiskPatient.name || '該保戶';
+                        const name = patient.name || '該保戶';
                         this.triggerToast(`個案關懷已啟動：${name}`);
-                    }, 1200);
+                    }
+                },
+                mapPatientToCustomer(p) {
+                    const score = (p.stats && p.stats.safetyScore) || 0;
+                    const alerts = (p.ddiAlerts || []).length;
+                    let recommendation;
+                    if (alerts > 0) recommendation = `偵測到 ${alerts} 筆用藥交互作用警示，建議先安排個案關懷再評估續保費率。`;
+                    else if (score >= 95) recommendation = '用藥安全紀錄優異，建議提供續保費率優惠。';
+                    else if (score >= 85) recommendation = '整體風險適中，維持現行保費即可。';
+                    else recommendation = '建議加強用藥遵從度追蹤，暫緩調整保費。';
+                    return {
+                        id: p.username,
+                        name: (p.profile && p.profile.name) || p.username,
+                        age: (p.profile && p.profile.age) || '-',
+                        score,
+                        policies: 1,
+                        discount: 'NT$ ' + (score * 25).toLocaleString(),
+                        reason: (p.profile && p.profile.healthSummary) || '尚無健康摘要資料',
+                        recommendation
+                    };
+                },
+                careCaseStatusClass(status) {
+                    const map = { '處理中': 'text-yellow-600 bg-yellow-50', '追蹤中': 'text-indigo-500 bg-indigo-50', '已結案': 'text-turquoise bg-turquoise/10' };
+                    return map[status] || 'text-gray-500 bg-gray-50';
+                },
+                async updateCaseStatus(c, newStatus) {
+                    const prev = c.status;
+                    c.status = newStatus;
+                    try {
+                        await DbService.updateCareCaseStatus(c.id, newStatus);
+                        this.triggerToast(`${c.patientName} 的個案狀態已更新為「${newStatus}」`);
+                    } catch (e) {
+                        c.status = prev;
+                        this.triggerToast('狀態更新失敗，請稍後再試');
+                    }
+                },
+                openAddClaimModal() {
+                    this.newClaim = { customer: '', amount: '', description: '' };
+                    this.newClaimError = '';
+                    this.showAddClaimModal = true;
+                },
+                async submitNewClaim() {
+                    if (!this.newClaim.customer.trim() || !this.newClaim.amount) {
+                        this.newClaimError = '保戶姓名與金額為必填欄位';
+                        return;
+                    }
+                    const record = {
+                        customer: this.newClaim.customer.trim(),
+                        amount: 'NT$ ' + Number(this.newClaim.amount).toLocaleString(),
+                        description: this.newClaim.description.trim(),
+                        status: '審核中',
+                        statusClass: 'text-yellow-600 bg-yellow-50',
+                        progress: 50,
+                        submittedAt: Date.now(),
+                        time: new Date().toLocaleString('zh-TW')
+                    };
+                    try {
+                        const id = await DbService.submitClaim(record);
+                        this.submittedClaims.unshift({ id, ...record });
+                        this.showAddClaimModal = false;
+                        this.triggerToast('理賠案件已送出');
+                    } catch (e) {
+                        this.newClaimError = '送出失敗：' + (e.message || e);
+                    }
+                },
+                async decideClaim(claim, approved) {
+                    const status = approved ? '已核准' : '已拒絕';
+                    const statusClass = approved ? 'text-turquoise bg-turquoise/10' : 'text-red-500 bg-red-50';
+                    const progress = approved ? 100 : 0;
+                    try {
+                        await DbService.updateClaimStatus(claim.id, status, progress);
+                        claim.status = status; claim.statusClass = statusClass; claim.progress = progress;
+                        this.triggerToast(`理賠案件已${status}`);
+                    } catch (e) {
+                        this.triggerToast('操作失敗，請稍後再試');
+                    }
+                },
+                openAddPolicyModal() {
+                    this.newPolicy = { customer: '', planName: '', amount: '' };
+                    this.newPolicyError = '';
+                    this.showAddPolicyModal = true;
+                },
+                async submitNewPolicy() {
+                    if (!this.newPolicy.customer.trim() || !this.newPolicy.planName.trim() || !this.newPolicy.amount) {
+                        this.newPolicyError = '保戶、險種與保額為必填欄位';
+                        return;
+                    }
+                    const record = {
+                        customer: this.newPolicy.customer.trim(),
+                        name: this.newPolicy.planName.trim(),
+                        amount: 'NT$ ' + Number(this.newPolicy.amount).toLocaleString(),
+                        hash: 'SEC-' + Math.random().toString(16).slice(2, 8).toUpperCase(),
+                        createdAt: Date.now()
+                    };
+                    try {
+                        const id = await DbService.addPolicy(record);
+                        this.recentPolicies.unshift({ id, ...record });
+                        this.showAddPolicyModal = false;
+                        this.triggerToast('保單已建立');
+                    } catch (e) {
+                        this.newPolicyError = '建立失敗：' + (e.message || e);
+                    }
                 },
                 initCharts() {
                     this.destroyCharts();
@@ -511,4 +815,3 @@
     </script>
 </body>
 </html>
-l>

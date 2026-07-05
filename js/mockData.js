@@ -1,14 +1,25 @@
 window.mockData = {
   // 測試帳號
   users: [
-    { username: 'admin', password: '123', role: 'admin', name: '王大明主任' },
-    { username: 'doctor', password: '123', role: 'doctor', name: '李曉美醫師' },
-    { username: 'patient01', password: '123', role: 'patient', name: '王大明' },
-    { username: 'insurance01', password: '123', role: 'insurance', name: '國泰核保員' }
+    { username: 'admin', password: '123456', role: 'admin', name: '王大明主任' },
+    { username: 'doctor', password: '123456', role: 'doctor', name: '李小美醫師' },
+    { username: 'patient01', password: '123456', role: 'patient', name: '王大明' },
+    { username: 'insurance01', password: '123456', role: 'insurance', name: '國泰核保員' },
+    { username: 'P001', password: '123456', role: 'patient', name: '張小泉' },
+    { username: 'P002', password: '123456', role: 'patient', name: '李大維' },
+    { username: 'P003', password: '123456', role: 'patient', name: '陳美花' },
+    { username: 'P004', password: '123456', role: 'patient', name: '劉建國' }
+  ],
+
+  // DDI 交互規則（供 admin.html 用戶管理頁與 seed.html 使用）
+  ddiRules: [
+    { drugA: 'Warfarin', drugB: 'Aspirin', severity: '極高風險', severityClass: 'bg-red-100 text-danger border-red-200', effect: '增加出血風險，需監控 INR 指標。' },
+    { drugA: 'Metformin', drugB: 'Iodinated', severity: '高風險', severityClass: 'bg-orange-100 text-warning border-orange-200', effect: '可能誘發乳酸中毒，需停藥。' }
   ],
 
   // 管理員端數據
   admin: {
+    maintenanceMode: false,
     stats: {
       totalUsers: 4500,
       totalHospitals: 24,
@@ -30,7 +41,7 @@ window.mockData = {
     ],
     dataSyncTrend: [120, 150, 180, 160, 210, 240, 280],
     logs: [
-      { time: '10:24:15', user: '李醫師', action: 'AI 交互分析完成', type: 'ai', status: '成功' },
+      { time: '10:24:15', user: '李小美醫師', action: 'AI 交互分析完成', type: 'ai', status: '成功' },
       { time: '09:45:02', user: '系統', action: '新 DDI 規則更新', type: 'rule', status: '成功' },
       { time: '08:30:00', user: '系統', action: '資料同步成功', type: 'network', status: '成功' },
       { time: '07:15:22', user: '系統', action: '保險資料同步完成', type: 'insurance', status: '成功' }
@@ -61,6 +72,7 @@ window.mockData = {
       { label: '其他', value: 100 }
     ],
     recentPatients: [
+      { id: 'patient01', name: '王大明', status: '警告', lastCheck: '2025-05-25' },
       { id: 'P004', name: '劉建國', status: '危險', lastCheck: '2025-05-24' },
       { id: 'P001', name: '張小泉', status: '安全', lastCheck: '2025-05-20' },
       { id: 'P002', name: '李大維', status: '警告', lastCheck: '2025-05-22' },
@@ -70,6 +82,8 @@ window.mockData = {
 
   // 患者端數據
   patient: {
+    assignedDoctor: 'doctor',
+    assignedDoctorName: '李小美醫師',
     profile: {
       id: 'patient01',
       name: '王大明',
@@ -94,12 +108,12 @@ window.mockData = {
     ],
     weeklySafetyRate: [98, 95, 99, 92, 94, 96, 92],
     medications: [
-      { id: 1, name: 'Warfarin', zhName: '華法林', dosage: '5mg', freq: '每日一次 (晚)', category: '抗凝血劑', status: '風險', color: 'danger', icon: 'shield-exclamation' },
-      { id: 2, name: 'Aspirin', zhName: '阿斯匹靈', dosage: '100mg', freq: '每日一次 (早)', category: '非類固醇消炎藥', status: '風險', color: 'danger', icon: 'shield-exclamation' },
-      { id: 3, name: 'Metformin', zhName: '二甲雙胍', dosage: '500mg', freq: '每日兩次 (飯後)', category: '降血糖藥', status: '安全', color: 'success', icon: 'check-circle' },
-      { id: 4, name: 'Lisinopril', zhName: '賴諾普利', dosage: '10mg', freq: '每日一次 (早)', category: '降血壓藥', status: '安全', color: 'success', icon: 'check-circle' },
-      { id: 5, name: 'Vitamin D3', zhName: '維生素 D3', dosage: '1000IU', freq: '每日一次', category: '營養補充', status: '安全', color: 'success', icon: 'check-circle' },
-      { id: 6, name: 'Multivitamin', zhName: '綜合維他命', dosage: '1錠', freq: '每日一次', category: '營養補充', status: '安全', color: 'success', icon: 'check-circle' }
+      { id: 1, name: 'Warfarin', zhName: '華法林', dosage: '5mg', freq: '每日一次 (晚)', category: '抗凝血劑', status: '風險', color: 'danger', icon: 'shield-exclamation', hospital: '台大醫院' },
+      { id: 2, name: 'Aspirin', zhName: '阿斯匹靈', dosage: '100mg', freq: '每日一次 (早)', category: '非類固醇消炎藥', status: '風險', color: 'danger', icon: 'shield-exclamation', hospital: '長庚醫院' },
+      { id: 3, name: 'Metformin', zhName: '二甲雙胍', dosage: '500mg', freq: '每日兩次 (飯後)', category: '降血糖藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '榮總醫院' },
+      { id: 4, name: 'Lisinopril', zhName: '賴諾普利', dosage: '10mg', freq: '每日一次 (早)', category: '降血壓藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '台大醫院' },
+      { id: 5, name: 'Vitamin D3', zhName: '維生素 D3', dosage: '1000IU', freq: '每日一次', category: '營養補充', status: '安全', color: 'success', icon: 'check-circle', hospital: '馬偕醫院' },
+      { id: 6, name: 'Multivitamin', zhName: '綜合維他命', dosage: '1錠', freq: '每日一次', category: '營養補充', status: '安全', color: 'success', icon: 'check-circle', hospital: '台大醫院' }
     ],
     ddiAlerts: [
       { 
@@ -107,7 +121,7 @@ window.mockData = {
         drugs: ['Warfarin', 'Aspirin'], 
         severity: '極高風險', 
         message: '同時服用華法林與阿斯匹靈會顯著增加胃腸道出血風險。', 
-        recommendation: '請諮詢李醫師是否需要調整抗血小板藥物劑量。' 
+        recommendation: '請諮詢李小美醫師是否需要調整抗血小板藥物劑量。'
       }
     ],
     aiInsights: [
@@ -122,13 +136,137 @@ window.mockData = {
     ]
   },
 
+  // 其他真實患者帳號（醫師端病患清單 P001-P004，現為可獨立登入的真實帳戶）
+  patients: {
+    P001: {
+      assignedDoctor: 'doctor',
+      assignedDoctorName: '李小美醫師',
+      profile: {
+        id: 'P001', name: '張小泉', age: 68, gender: '女',
+        avatar: 'https://ui-avatars.com/api/?name=張小泉&background=24A15D&color=fff',
+        healthSummary: '目前用藥狀況穩定，無重大交互作用風險。',
+        nextAppointment: '2024-06-20'
+      },
+      stats: { safetyScore: 96, activeMeds: 3, aiChecksToday: 8, lastSync: '10 分鐘前' },
+      medications: [
+        { id: 1, name: 'Metformin', zhName: '二甲雙胍', dosage: '500mg', freq: '每日兩次 (飯後)', category: '降血糖藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '榮總醫院' },
+        { id: 2, name: 'Lisinopril', zhName: '賴諾普利', dosage: '10mg', freq: '每日一次 (早)', category: '降血壓藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '台大醫院' },
+        { id: 3, name: 'Atorvastatin', zhName: '阿托伐他汀', dosage: '20mg', freq: '睡前一次', category: '降血脂藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '馬偕醫院' }
+      ],
+      ddiAlerts: [],
+      aiInsights: [
+        { icon: 'clock', text: '您的用藥規律性優於 90% 的用戶，請繼續保持。' },
+        { icon: 'info-circle', text: '近期血糖控制穩定，建議維持現有飲食習慣。' }
+      ],
+      reminders: [
+        { time: '08:00', text: '服用賴諾普利', completed: true },
+        { time: '12:00', text: '服用二甲雙胍 (飯後)', completed: false },
+        { time: '22:00', text: '服用阿托伐他汀', completed: false }
+      ]
+    },
+    P002: {
+      assignedDoctor: 'doctor',
+      assignedDoctorName: '李小美醫師',
+      profile: {
+        id: 'P002', name: '李大維', age: 75, gender: '男',
+        avatar: 'https://ui-avatars.com/api/?name=李大維&background=24A15D&color=fff',
+        healthSummary: '用藥品項較多，AI 已加強監控潛在交互作用風險。',
+        nextAppointment: '2024-06-18'
+      },
+      stats: { safetyScore: 89, activeMeds: 3, aiChecksToday: 10, lastSync: '25 分鐘前' },
+      medications: [
+        { id: 1, name: 'Metformin', zhName: '二甲雙胍', dosage: '500mg', freq: '每日兩次 (飯後)', category: '降血糖藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '榮總醫院' },
+        { id: 2, name: 'Lisinopril', zhName: '賴諾普利', dosage: '10mg', freq: '每日一次 (早)', category: '降血壓藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '台大醫院' },
+        { id: 3, name: 'Atorvastatin', zhName: '阿托伐他汀', dosage: '20mg', freq: '睡前一次', category: '降血脂藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '馬偕醫院' }
+      ],
+      ddiAlerts: [],
+      aiInsights: [
+        { icon: 'info-circle', text: '您的用藥品項較多，AI 已加強監控交互作用風險。' },
+        { icon: 'calendar-check', text: '建議下次回診時攜帶所有藥物清單供醫師確認。' }
+      ],
+      reminders: [
+        { time: '08:00', text: '服用賴諾普利、阿托伐他汀', completed: false },
+        { time: '12:00', text: '服用二甲雙胍 (飯後)', completed: false },
+        { time: '18:00', text: '服用二甲雙胍 (飯後)', completed: false }
+      ]
+    },
+    P003: {
+      assignedDoctor: 'doctor',
+      assignedDoctorName: '李小美醫師',
+      profile: {
+        id: 'P003', name: '陳美花', age: 70, gender: '女',
+        avatar: 'https://ui-avatars.com/api/?name=陳美花&background=24A15D&color=fff',
+        healthSummary: '目前用藥狀況穩定，無重大交互作用風險。',
+        nextAppointment: '2024-06-22'
+      },
+      stats: { safetyScore: 95, activeMeds: 3, aiChecksToday: 9, lastSync: '18 分鐘前' },
+      medications: [
+        { id: 1, name: 'Metformin', zhName: '二甲雙胍', dosage: '500mg', freq: '每日兩次 (飯後)', category: '降血糖藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '榮總醫院' },
+        { id: 2, name: 'Lisinopril', zhName: '賴諾普利', dosage: '10mg', freq: '每日一次 (早)', category: '降血壓藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '台大醫院' },
+        { id: 3, name: 'Atorvastatin', zhName: '阿托伐他汀', dosage: '20mg', freq: '睡前一次', category: '降血脂藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '馬偕醫院' }
+      ],
+      ddiAlerts: [],
+      aiInsights: [
+        { icon: 'clock', text: '您的用藥規律性優於 88% 的用戶，請繼續保持。' },
+        { icon: 'calendar-check', text: '下次回診已排定，系統已為您備份近期安全日誌。' }
+      ],
+      reminders: [
+        { time: '08:00', text: '服用賴諾普利', completed: true },
+        { time: '12:00', text: '服用二甲雙胍 (飯後)', completed: true },
+        { time: '22:00', text: '服用阿托伐他汀', completed: false }
+      ]
+    },
+    P004: {
+      assignedDoctor: 'doctor',
+      assignedDoctorName: '李小美醫師',
+      profile: {
+        id: 'P004', name: '劉建國', age: 66, gender: '男',
+        avatar: 'https://ui-avatars.com/api/?name=劉建國&background=24A15D&color=fff',
+        healthSummary: '目前用藥狀況需注意，血壓藥與抗凝血劑存在潛在交互作用。',
+        nextAppointment: '2024-06-16'
+      },
+      stats: { safetyScore: 78, activeMeds: 4, aiChecksToday: 14, lastSync: '3 分鐘前' },
+      medications: [
+        { id: 1, name: 'Warfarin', zhName: '華法林', dosage: '5mg', freq: '每日一次 (晚)', category: '抗凝血劑', status: '風險', color: 'danger', icon: 'shield-exclamation', hospital: '台大醫院' },
+        { id: 2, name: 'Aspirin', zhName: '阿斯匹靈', dosage: '100mg', freq: '每日一次 (早)', category: '非類固醇消炎藥', status: '風險', color: 'danger', icon: 'shield-exclamation', hospital: '長庚醫院' },
+        { id: 3, name: 'Amiodarone', zhName: '胺碘酮', dosage: '200mg', freq: '每日一次', category: '抗心律不整藥', status: '風險', color: 'danger', icon: 'shield-exclamation', hospital: '成大醫院' },
+        { id: 4, name: 'Metformin', zhName: '二甲雙胍', dosage: '500mg', freq: '每日兩次 (飯後)', category: '降血糖藥', status: '安全', color: 'success', icon: 'check-circle', hospital: '榮總醫院' }
+      ],
+      ddiAlerts: [
+        {
+          id: 'B001',
+          drugs: ['Warfarin', 'Aspirin'],
+          severity: '極高風險',
+          message: '同時服用華法林與阿斯匹靈會顯著增加胃腸道出血風險。',
+          recommendation: '請諮詢李小美醫師是否需要調整抗血小板藥物劑量。'
+        },
+        {
+          id: 'B002',
+          drugs: ['Warfarin', 'Amiodarone'],
+          severity: '高風險',
+          message: '胺碘酮會顯著提升華法林血中濃度，易導致抗凝效果過強。',
+          recommendation: '建議劑量減半，並密切監測 INR 凝血指標。'
+        }
+      ],
+      aiInsights: [
+        { icon: 'info-circle', text: '偵測到您同時服用華法林與阿斯匹靈，請留意出血徵兆。' },
+        { icon: 'calendar-check', text: '系統已通知主治醫師，建議儘速安排回診。' }
+      ],
+      reminders: [
+        { time: '08:00', text: '服用阿斯匹靈', completed: true },
+        { time: '12:00', text: '服用二甲雙胍 (飯後)', completed: false },
+        { time: '20:00', text: '服用華法林、胺碘酮', completed: false }
+      ]
+    }
+  },
+
   // 保險端數據
   insurance: {
     stats: {
       activePolicies: 12450,
       claimsProcessed: 892,
       aiRiskAnalysis: 3420,
-      premiumDiscounts: '$2.4M',
+      premiumDiscounts: 'NT$ 2.4M',
       coverageHealth: 94.2,
       securityVerification: '100%'
     },
@@ -137,10 +275,10 @@ window.mockData = {
     discountsMonthly: [120000, 150000, 140000, 180000, 160000, 210000, 195000],
     aiPredictionTrend: [25, 22, 18, 15, 12, 10, 8],
     claimsTracking: [
-      { id: 'CLM-8821', customer: '王大明', amount: '$1,200', status: 'Approved', statusClass: 'text-turquoise bg-turquoise/10', time: '2小時前', progress: 100 },
-      { id: 'CLM-8822', customer: '陳小美', amount: '$4,500', status: 'Processing', statusClass: 'text-yellow-500 bg-yellow-50', time: '5小時前', progress: 65 },
-      { id: 'CLM-8823', customer: '李國華', amount: '$850', status: 'AI Reviewing', statusClass: 'text-indigo-500 bg-indigo-50', time: '1天前', progress: 40 },
-      { id: 'CLM-8824', customer: '張健', amount: '$2,300', status: 'Pending Documents', statusClass: 'text-gray-500 bg-gray-50', time: '2天前', progress: 20 },
+      { id: 'CLM-8821', customer: '王大明', amount: 'NT$ 1,200', status: 'Approved', statusClass: 'text-turquoise bg-turquoise/10', time: '2小時前', progress: 100 },
+      { id: 'CLM-8822', customer: '陳小美', amount: 'NT$ 4,500', status: 'Processing', statusClass: 'text-yellow-500 bg-yellow-50', time: '5小時前', progress: 65 },
+      { id: 'CLM-8823', customer: '李國華', amount: 'NT$ 850', status: 'AI Reviewing', statusClass: 'text-indigo-500 bg-indigo-50', time: '1天前', progress: 40 },
+      { id: 'CLM-8824', customer: '張健', amount: 'NT$ 2,300', status: 'Pending Documents', statusClass: 'text-gray-500 bg-gray-50', time: '2天前', progress: 20 },
     ],
     coverageGaps: [
       { type: '心血管疾病額度不足', customerCount: 450, riskLevel: 'High', recommendation: '建議調增 20% 醫療額度' },
@@ -148,9 +286,9 @@ window.mockData = {
       { type: '年長保戶長照缺口', customerCount: 890, riskLevel: 'Medium', recommendation: '推出專屬長照附加條款' }
     ],
     topSafeUsers: [
-      { name: '王大明', score: 98, discount: '$2,500' },
-      { name: '陳小美', score: 97, discount: '$2,300' },
-      { name: '李國華', score: 96, discount: '$2,100' }
+      { name: '王大明', score: 98, discount: 'NT$ 2,500' },
+      { name: '陳小美', score: 97, discount: 'NT$ 2,300' },
+      { name: '李國華', score: 96, discount: 'NT$ 2,100' }
     ]
   },
 

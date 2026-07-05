@@ -10,6 +10,9 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -59,10 +62,23 @@
         .smooth-scroll { scroll-behavior: smooth; }
         .patient-card { transition: all 0.3s ease; }
         .patient-card:hover { transform: translateX(5px); background: rgba(255,255,255,0.05); }
+
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
 <body class="overflow-hidden">
     <div id="app" v-cloak class="flex h-screen w-screen overflow-hidden relative">
+        <!-- Global Maintenance Lock -->
+        <div v-if="maintenanceMode" class="fixed inset-0 z-[999] bg-slate-950 flex items-center justify-center p-8 text-center">
+            <div class="max-w-md">
+                <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-danger/10 flex items-center justify-center text-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h1 class="text-2xl font-black text-white mb-3">系統維護中</h1>
+                <p class="text-sm text-slate-400 leading-relaxed">MedSafe 目前正在進行系統維護，暫停醫師、患者與保險端的存取，請稍後再試。造成不便，敬請見諒。</p>
+            </div>
+        </div>
         <!-- Mobile Sidebar Overlay -->
         <transition name="fade">
             <div v-if="showMobileMenu" @click="showMobileMenu = false" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[60] lg:hidden"></div>
@@ -75,7 +91,7 @@
                     <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain" alt="MedSafe">
                     <span class="text-xl font-black text-white tracking-tighter">MedSafe <span class="text-accent">AI</span></span>
                 </div>
-                <button @click="showMobileMenu = false" class="lg:hidden p-2 text-slate-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                <button @click="showMobileMenu = false" aria-label="關閉選單" class="lg:hidden p-2 text-slate-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
 
             <div class="p-4 border-b border-white/5 lg:hidden">
@@ -119,7 +135,7 @@
             
             <!-- MOBILE HEADER -->
             <div class="lg:hidden sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 flex justify-between items-center shadow-sm">
-                <button @click="showMobileMenu = true" class="p-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                <button @click="showMobileMenu = true" aria-label="開啟選單" class="p-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
                 <div class="text-center">
@@ -138,9 +154,35 @@
                         <h1 class="text-3xl font-black text-slate-900 tracking-tight leading-none mb-4">醫師端總控中心</h1>
                         <p class="text-slate-500 font-bold">全院用藥安全數據即時分析 (伺服器同步中)</p>
                     </div>
-                    <div class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
-                        <div class="w-2 h-2 bg-success rounded-full pulse-live"></div>
-                        <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">HAPI FHIR Server Online</span>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
+                            <div class="w-2 h-2 bg-success rounded-full pulse-live"></div>
+                            <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">HAPI FHIR Server Online</span>
+                        </div>
+                        <div class="relative" @click.stop>
+                            <button @click="toggleNotifDropdown" aria-label="通知" class="relative p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-primary transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                                <span v-if="doctorNotifications.some(n => !n.read)" class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full border-2 border-white pulse-live"></span>
+                            </button>
+                            <transition name="fade">
+                                <div v-if="showNotifDropdown" role="dialog" aria-modal="true" class="absolute right-0 top-full mt-2 w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 z-50 overflow-hidden">
+                                    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                                        <span class="font-black text-slate-800 text-sm">病患訊息通知</span>
+                                    </div>
+                                    <div class="max-h-72 overflow-y-auto">
+                                        <div v-if="doctorNotifications.length === 0" class="px-6 py-8 text-center text-sm font-bold text-slate-300">沒有新通知</div>
+                                        <button v-for="n in doctorNotifications" :key="n.id" @click="openChatFromNotification(n)"
+                                                class="w-full text-left px-6 py-4 hover:bg-slate-50 border-b border-slate-50 last:border-0 flex gap-3 items-start">
+                                            <div v-if="n.critical" class="w-2 h-2 rounded-full bg-danger mt-1.5 shrink-0"></div>
+                                            <div class="min-w-0">
+                                                <div :class="['text-xs truncate', n.critical ? 'font-black text-danger' : 'font-black text-slate-800']">{{ n.title }}</div>
+                                                <div class="text-[11px] text-slate-500 font-bold mt-0.5">{{ n.content }}</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </transition>
+                        </div>
                     </div>
                 </div>
 
@@ -203,6 +245,10 @@
                             <button @click="showPrescriptionModal = true" class="w-full py-4 clinical-gradient text-white font-black rounded-3xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm mt-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                                 開立雲端處方
+                            </button>
+                            <button @click="openChatWithPatient" class="w-full py-3 mt-3 bg-white border-2 border-accent/30 text-primary font-black rounded-3xl hover:bg-accent/10 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8-1.06 0-2.077-.16-3.02-.457L3 21l1.457-4.98A7.96 7.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                與病患對話
                             </button>
                         </div>
 
@@ -296,12 +342,12 @@
 
         <!-- FULLSCREEN MODAL -->
         <transition name="fade">
-            <div v-if="showFullScreenGraph" class="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-10">
+            <div v-if="showFullScreenGraph" role="dialog" aria-modal="true" class="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-10">
                 <div class="absolute inset-0 bg-slate-950/95 backdrop-blur-2xl" @click="toggleFullScreenGraph"></div>
                 <div class="bg-slate-900 w-full h-full md:rounded-[40px] shadow-2xl relative z-10 overflow-hidden flex flex-col border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                     <div class="p-8 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
                         <h3 class="text-xl font-black text-white italic tracking-tighter uppercase">Advanced AI Clinical Analyst Mode</h3>
-                        <button @click="toggleFullScreenGraph" class="text-slate-400 hover:text-white p-2 hover:bg-danger/20 rounded-full transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        <button @click="toggleFullScreenGraph" aria-label="關閉全螢幕分析" class="text-slate-400 hover:text-white p-2 hover:bg-danger/20 rounded-full transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                     </div>
                     <div class="flex-1 relative overflow-hidden grid-bg">
                         <div class="scanning-line"></div>
@@ -313,7 +359,7 @@
 
         <!-- 4. ADD PRESCRIPTION MODAL -->
         <transition name="fade">
-            <div v-if="showPrescriptionModal" class="fixed inset-0 z-[250] flex items-center justify-center p-4">
+            <div v-if="showPrescriptionModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[250] flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showPrescriptionModal = false"></div>
                 <div class="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in">
                     <div class="clinical-gradient p-8 text-white relative">
@@ -322,7 +368,7 @@
                                 <h3 class="text-2xl font-black italic tracking-tighter uppercase">New Prescription</h3>
                                 <p class="text-white/70 text-[10px] font-black uppercase mt-1 tracking-widest">Target: {{ selectedPatient ? selectedPatient.name : 'Unknown' }}</p>
                             </div>
-                            <button @click="showPrescriptionModal = false" class="text-white/50 hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                            <button @click="showPrescriptionModal = false" aria-label="關閉" class="text-white/50 hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                         </div>
                     </div>
                     
@@ -342,20 +388,27 @@
                             <textarea v-model="newRx.instruction" rows="3" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-slate-800 focus:border-primary/20 focus:bg-white transition-all outline-none" placeholder="輸入詳細服用方法與警語..."></textarea>
                         </div>
 
-                        <div class="rounded-3xl p-6 transition-all duration-500 border-2" :class="aiCheckStatus === 'idle' ? 'bg-slate-50 border-slate-100' : (aiCheckStatus === 'checking' ? 'bg-primary/5 border-primary/10' : 'bg-danger/5 border-danger/20')">
+                        <div class="rounded-3xl p-6 transition-all duration-500 border-2" :class="aiCheckStatus === 'idle' ? 'bg-slate-50 border-slate-100' : (aiCheckStatus === 'checking' ? 'bg-primary/5 border-primary/10' : (aiCheckStatus === 'safe' ? 'bg-success/5 border-success/20' : 'bg-danger/5 border-danger/20'))">
                             <div v-if="aiCheckStatus === 'idle'" class="flex flex-col items-center gap-3">
-                                <button @click="startAiCheck" class="px-10 py-3 bg-primary text-white font-black rounded-xl hover:scale-105 transition-all text-xs shadow-lg shadow-primary/20">啟動 AI 安全檢測</button>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">比對跨院 FHIR 處方紀錄</p>
+                                <button @click="startAiCheck" :disabled="!newRx.drugName.trim()" class="px-10 py-3 bg-primary text-white font-black rounded-xl hover:scale-105 transition-all text-xs shadow-lg shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100">啟動 AI 安全檢測</button>
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{{ newRx.drugName.trim() ? '比對跨院 FHIR 處方紀錄' : '請先輸入藥品名稱' }}</p>
                             </div>
                             <div v-else-if="aiCheckStatus === 'checking'" class="flex flex-col items-center gap-3 py-4">
                                 <div class="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                                 <p class="text-[10px] font-black text-primary animate-pulse uppercase tracking-widest">Scanning FHIR Records...</p>
                             </div>
+                            <div v-else-if="aiCheckStatus === 'safe'" class="flex items-start gap-4 animate-fade-in">
+                                <div class="w-12 h-12 bg-success rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-success/20"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg></div>
+                                <div>
+                                    <h4 class="font-black text-success text-sm tracking-tighter uppercase italic">No Conflict Detected</h4>
+                                    <p class="text-[11px] font-bold text-slate-600 mt-1">未與 {{ selectedPatient ? selectedPatient.name : '病患' }} 目前跨院用藥清單偵測到已知交互作用。</p>
+                                </div>
+                            </div>
                             <div v-else class="flex items-start gap-4 animate-fade-in">
                                 <div class="w-12 h-12 bg-danger rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-danger/20"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
                                 <div>
                                     <h4 class="font-black text-danger text-sm tracking-tighter uppercase italic">High Risk Conflict Detected</h4>
-                                    <p class="text-[11px] font-bold text-slate-600 mt-1">偵測到與病患歷史處方 Aspirin 有嚴重交互作用，恐增加胃出血風險。</p>
+                                    <p class="text-[11px] font-bold text-slate-600 mt-1">{{ newRx.drugName }} 與 {{ selectedPatient ? selectedPatient.name : '病患' }} 現有處方存在嚴重交互作用，請謹慎評估。</p>
                                 </div>
                             </div>
                         </div>
@@ -363,9 +416,40 @@
 
                     <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
                         <button @click="showPrescriptionModal = false" class="flex-1 py-4 font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest text-[10px]">Cancel</button>
-                        <button @click="submitPrescription" :disabled="aiCheckStatus === 'checking'" class="flex-[2] py-4 clinical-gradient text-white font-black rounded-3xl shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest text-xs disabled:opacity-50">
+                        <button @click="submitPrescription" :disabled="aiCheckStatus === 'checking' || !newRx.drugName.trim() || !newRx.dosage.trim()" class="flex-[2] py-4 clinical-gradient text-white font-black rounded-3xl shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest text-xs disabled:opacity-50">
                             {{ aiCheckStatus === 'risk' ? '無視 AI 警告並強制同步' : '確認開立並同步 FHIR' }}
                         </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 5. PATIENT CHAT MODAL -->
+        <transition name="fade">
+            <div v-if="showChatModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[260] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showChatModal = false"></div>
+                <div class="bg-slate-900 w-full max-w-lg rounded-[40px] shadow-2xl relative z-10 overflow-hidden border border-white/10 animate-fade-in flex flex-col">
+                    <div class="p-8 flex justify-between items-center border-b border-white/5">
+                        <div>
+                            <h3 class="text-xl font-black text-white italic tracking-tighter uppercase">與 {{ selectedPatient ? selectedPatient.name : '病患' }} 對話</h3>
+                            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">隨時可留言 · 訊息即時送達</p>
+                        </div>
+                        <button @click="showChatModal = false" aria-label="關閉" class="text-slate-400 hover:text-white transition-colors p-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    </div>
+                    <div id="doctor-chat-scroll" class="p-6 space-y-4 max-h-72 overflow-y-auto">
+                        <div v-if="chatMessages.length === 0" class="text-center text-xs font-bold text-slate-500 py-8">尚無對話紀錄，開始輸入以聯繫病患</div>
+                        <template v-for="(msg, i) in chatMessages" :key="i">
+                            <div v-if="msg.from === 'system'" class="text-center">
+                                <span class="inline-block text-[10px] font-bold text-slate-400 bg-white/5 border border-white/10 rounded-full px-4 py-2">{{ msg.text }}</span>
+                            </div>
+                            <div v-else :class="['flex gap-3 items-end', msg.from === 'doctor' ? 'flex-row-reverse' : '']">
+                                <p :class="['text-sm leading-relaxed font-bold px-4 py-3 rounded-2xl max-w-[75%]', msg.from === 'doctor' ? 'text-white bg-primary rounded-tr-sm' : 'text-slate-300 bg-white/5 border border-white/10 rounded-tl-sm']">{{ msg.text }}</p>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="p-4 md:p-6 bg-black/50 border-t border-white/5 flex gap-3 items-center">
+                        <input v-model="chatInput" @keyup.enter="sendDoctorMessage()" type="text" placeholder="輸入回覆訊息..." class="flex-1 bg-white/10 border border-white/15 rounded-2xl px-5 py-3 text-white text-sm placeholder-slate-500 outline-none focus:border-primary/60 transition-colors" />
+                        <button @click="sendDoctorMessage()" :disabled="!chatInput.trim()" class="bg-primary text-white font-black px-7 py-3 rounded-2xl shadow-xl shadow-primary/30 hover:scale-[1.03] active:scale-[0.97] transition-all text-xs uppercase tracking-widest disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed shrink-0">Send</button>
                     </div>
                 </div>
             </div>
@@ -381,8 +465,11 @@
     </div>
 
     <!-- Data Injection -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
     <script src="js/mockData.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/chatStore.js"></script>
     <script>
         const { createApp, markRaw } = Vue;
         const Icons = {
@@ -394,16 +481,22 @@
 
         createApp({
             data() {
-                const user = getCurrentUser();
+                const user = requireRole('doctor') || { name: '訪客醫師' };
                 const docData = window.mockData.doctor;
                 return {
-                    user, stats: docData.stats, recentPatients: docData.recentPatients,
+                    user, maintenanceMode: false, stats: docData.stats, recentPatients: docData.recentPatients,
                     selectedPatient: null, activeScenario: null, graphConflicts: [],
                     showFullScreenGraph: false, showToast: false, showMobileMenu: false,
                     toastTitle: '系統通知', toastMessage: '同步成功',
                     showPrescriptionModal: false,
                     newRx: { drugName: '', dosage: '', instruction: '' },
                     aiCheckStatus: 'idle',
+                    extraPrescriptions: {},
+                    showNotifDropdown: false,
+                    doctorNotifications: [],
+                    showChatModal: false,
+                    chatMessages: [],
+                    chatInput: '',
                     kpis: [
                         { label: '總收治病患', value: docData.stats.totalPatients, icon: Icons.Users, bg: 'bg-primary', trend: '+12% 上月' },
                         { label: '待核簽處方', value: docData.stats.activePrescriptions, icon: Icons.Clipboard, bg: 'bg-accent', trend: '負載正常' },
@@ -414,30 +507,97 @@
             },
             computed: {
                 currentMeds() {
+                    if (!this.selectedPatient) return [];
                     const data = window.mockData.graphData;
-                    if (this.selectedPatient && this.selectedPatient.name === '劉建國') return data.nodes.filter(n => data.scenarios.A.includes(n.id));
-                    if (this.selectedPatient) return data.nodes.filter(n => data.scenarios.B.includes(n.id));
-                    return [];
+                    const base = data.nodes.filter(n => data.scenarios[this.scenarioFor(this.selectedPatient)].includes(n.id));
+                    const extra = this.extraPrescriptions[this.selectedPatient.id] || [];
+                    return [...base, ...extra];
                 }
             },
-            created() {
+            async created() {
                 this._charts = {};
+                await waitForAuthReady();
+                try {
+                    this.maintenanceMode = await DbService.getMaintenanceMode();
+                } catch (e) {}
+                if (this.maintenanceMode) return;
+                try {
+                    const [docData, graphData] = await Promise.all([
+                        DbService.getDoctorData(),
+                        DbService.getGraphData()
+                    ]);
+                    if (docData) {
+                        window.mockData.doctor = docData;
+                        this.stats = docData.stats;
+                        this.recentPatients = docData.recentPatients;
+                        this.kpis = [
+                            { label: '總收治病患', value: docData.stats.totalPatients, icon: Icons.Users, bg: 'bg-primary', trend: '+12% 上月' },
+                            { label: '待核簽處方', value: docData.stats.activePrescriptions, icon: Icons.Clipboard, bg: 'bg-accent', trend: '負載正常' },
+                            { label: '交互作用預警', value: docData.stats.conflictAlerts, icon: Icons.Shield, bg: 'bg-danger', trend: '需立即審閱' },
+                            { label: '用藥安全指數', value: docData.stats.safetyRate + '%', icon: Icons.Chart, bg: 'bg-success', trend: '優於平均' },
+                        ];
+                    }
+                    if (graphData) {
+                        window.mockData.graphData = graphData;
+                    }
+                } catch (e) {
+                    console.error('Firestore load error:', e);
+                }
+                try {
+                    // 查詢真正指派給目前登入醫師的病患，取代寫死的 recentPatients 清單，
+                    // 讓 demo 病患與病患端自助註冊的帳號走同一套資料
+                    const realPatients = await DbService.getPatientsByDoctor(this.user.username);
+                    if (realPatients && realPatients.length > 0) {
+                        this.recentPatients = realPatients.map(p => ({
+                            id: p.username,
+                            name: (p.profile && p.profile.name) || p.username,
+                            status: (p.ddiAlerts && p.ddiAlerts.length > 0)
+                                ? (p.ddiAlerts.some(a => a.severity === '極高風險') ? '危險' : '警告')
+                                : '安全',
+                            lastCheck: (p.stats && p.stats.lastSync) || '-'
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Firestore patients-by-doctor error:', e);
+                }
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        this.initCharts();
+                        if (this.recentPatients && this.recentPatients.length > 0) {
+                            const fp = this.recentPatients[0]; this.selectedPatient = fp;
+                            this.initD3Container(); this.loadScenario(this.scenarioFor(fp));
+                        }
+                    }, 50);
+                });
             },
             mounted() {
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
-                this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
-                if (this.recentPatients && this.recentPatients.length > 0) {
-                    const fp = this.recentPatients[0]; this.selectedPatient = fp;
-                    this.$nextTick(() => { this.initD3Container(); this.loadScenario(fp.name === '劉建國' ? 'A' : 'B'); });
-                }
+                this.loadDoctorNotifications();
+                this._chatUnsub = window.chatStore.onChange((e) => {
+                    if (e.key === 'medsafe_notif_doctor') this.loadDoctorNotifications();
+                    if (this.selectedPatient && e.key === 'medsafe_chat_' + this.selectedPatient.id) {
+                        const msgs = window.chatStore.getMessages(this.selectedPatient.id);
+                        if (msgs.length > this.chatMessages.length) {
+                            msgs.slice(this.chatMessages.length).forEach(m => this.chatMessages.push({ from: m.from, text: m.text }));
+                            if (this.showChatModal) this.$nextTick(() => this.scrollDoctorChat());
+                        }
+                    }
+                });
+                this._escHandler = (e) => {
+                    if (e.key !== 'Escape') return;
+                    this.showPrescriptionModal = this.showChatModal = this.showFullScreenGraph = this.showNotifDropdown = false;
+                };
+                document.addEventListener('keydown', this._escHandler);
             },
             unmounted() {
                 window.removeEventListener('resize', this._resizeHandler);
+                document.removeEventListener('keydown', this._escHandler);
+                if (this._chatUnsub) this._chatUnsub();
                 this.destroyCharts();
             },
             methods: {
-                logout() { localStorage.removeItem('demo_user'); window.location.href = 'login.html'; },
+                logout() { logout(); },
                 scrollTo(selector) {
                     this.$nextTick(() => {
                         const el = document.querySelector(selector);
@@ -448,7 +608,7 @@
                     this.selectedPatient = p; this.triggerToast('同步成功', `載入 ${p.name} 的雲端資料`);
                     this.$nextTick(() => {
                         const el = document.getElementById('patient-station'); if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        this.initD3Container(); this.loadScenario(p.name === '劉建國' ? 'A' : 'B');
+                        this.initD3Container(); this.loadScenario(this.scenarioFor(p));
                     });
                 },
                 getMedTheme(name) {
@@ -462,10 +622,90 @@
                     };
                     return themes[name] || { card: 'bg-slate-50 border-slate-100', bar: 'bg-slate-400', text: 'text-slate-600', dot: 'bg-slate-300' };
                 },
-                startAiCheck() { this.aiCheckStatus = 'checking'; setTimeout(() => this.aiCheckStatus = 'risk', 2000); },
-                submitPrescription() {
-                    this.showPrescriptionModal = false; this.triggerToast('開立成功', '處方已成功同步至 HAPI FHIR 伺服器');
+                scenarioFor(p) { return (p && (p.name === '劉建國' || p.id === 'patient01')) ? 'A' : 'B'; },
+                startAiCheck() {
+                    this.aiCheckStatus = 'checking';
+                    setTimeout(() => {
+                        const drug = this.newRx.drugName.trim().toLowerCase();
+                        const currentNames = this.currentMeds.map(m => (m.name_en || '').toLowerCase());
+                        const conflicts = window.mockData.graphData.links;
+                        const hasConflict = conflicts.some(l => {
+                            const a = l.source.toLowerCase(), b = l.target.toLowerCase();
+                            return (a === drug && currentNames.includes(b)) || (b === drug && currentNames.includes(a));
+                        });
+                        this.aiCheckStatus = hasConflict ? 'risk' : 'safe';
+                    }, 2000);
+                },
+                async submitPrescription() {
+                    const pid = this.selectedPatient.id;
+                    const newMed = {
+                        id: 'rx-' + Date.now(),
+                        name_en: this.newRx.drugName,
+                        name_zh: this.newRx.drugName,
+                        hospital: '本院 (醫師開立)',
+                        conflict: this.aiCheckStatus === 'risk',
+                        dosage: this.newRx.dosage,
+                        freq: this.newRx.instruction || '依醫囑'
+                    };
+                    if (!Array.isArray(this.extraPrescriptions[pid])) this.extraPrescriptions[pid] = [];
+                    this.extraPrescriptions[pid].push(newMed);
+                    this.showPrescriptionModal = false;
+
+                    try { await DbService.addMedicationToPatient(pid, newMed); } catch (e) { /* 非既有 Firestore 病患文件，略過雲端寫入 */ }
+
+                    try {
+                        const res = await fetch('https://hapi.fhir.org/baseR4/MedicationRequest', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/fhir+json' },
+                            body: JSON.stringify({
+                                resourceType: 'MedicationRequest',
+                                status: 'active',
+                                intent: 'order',
+                                subject: { reference: `Patient/${pid}` },
+                                medicationCodeableConcept: { text: this.newRx.drugName },
+                                dosageInstruction: [{ text: `${this.newRx.dosage}，${this.newRx.instruction || ''}` }]
+                            })
+                        });
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        this.triggerToast('開立成功', '處方已成功同步至 HAPI FHIR 伺服器 (MedicationRequest)');
+                    } catch (e) {
+                        this.triggerToast('本地已保留', '處方已加入清單，但同步 FHIR 伺服器失敗，請稍後重試');
+                    }
                     this.newRx = { drugName: '', dosage: '', instruction: '' }; this.aiCheckStatus = 'idle';
+                },
+                loadDoctorNotifications() {
+                    this.doctorNotifications = window.chatStore.getNotifications('doctor');
+                },
+                toggleNotifDropdown() {
+                    this.showNotifDropdown = !this.showNotifDropdown;
+                    if (this.showNotifDropdown) { window.chatStore.markAllRead('doctor'); this.loadDoctorNotifications(); }
+                },
+                openChatFromNotification(n) {
+                    const patient = this.recentPatients.find(p => p.id === n.patientId) || { id: n.patientId, name: n.patientName, status: '警告', lastCheck: '-' };
+                    this.selectedPatient = patient;
+                    window.chatStore.markRead('doctor', n.id);
+                    this.showNotifDropdown = false;
+                    this.loadDoctorNotifications();
+                    this.$nextTick(() => {
+                        const el = document.getElementById('patient-station'); if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        this.initD3Container(); this.loadScenario(this.scenarioFor(patient));
+                        this.openChatWithPatient();
+                    });
+                },
+                openChatWithPatient() {
+                    if (!this.selectedPatient) return;
+                    this.chatMessages = window.chatStore.getMessages(this.selectedPatient.id).map(m => ({ from: m.from, text: m.text }));
+                    this.showChatModal = true;
+                    this.$nextTick(() => this.scrollDoctorChat());
+                },
+                scrollDoctorChat() { const el = document.getElementById('doctor-chat-scroll'); if (el) el.scrollTop = el.scrollHeight; },
+                sendDoctorMessage() {
+                    const msg = this.chatInput.trim();
+                    if (!msg || !this.selectedPatient) return;
+                    window.chatStore.addMessage(this.selectedPatient.id, 'doctor', msg);
+                    this.chatMessages.push({ from: 'doctor', text: msg });
+                    this.chatInput = '';
+                    this.$nextTick(() => this.scrollDoctorChat());
                 },
                 triggerToast(t, m) { this.toastTitle = t; this.toastMessage = m; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
                 toggleFullScreenGraph() {

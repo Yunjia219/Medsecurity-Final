@@ -9,6 +9,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -66,6 +69,16 @@
 </head>
 <body class="overflow-x-hidden">
     <div id="app" v-cloak class="flex min-h-screen relative overflow-x-hidden text-left">
+        <!-- Global Maintenance Lock -->
+        <div v-if="maintenanceMode" class="fixed inset-0 z-[999] bg-slate-950 flex items-center justify-center p-8 text-center">
+            <div class="max-w-md">
+                <div class="w-16 h-16 mx-auto mb-6 rounded-2xl bg-danger/10 flex items-center justify-center text-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h1 class="text-2xl font-black text-white mb-3">系統維護中</h1>
+                <p class="text-sm text-slate-400 leading-relaxed">MedSafe 目前正在進行系統維護，暫停醫師、患者與保險端的存取，請稍後再試。造成不便，敬請見諒。</p>
+            </div>
+        </div>
         <!-- Mobile Sidebar Overlay -->
         <transition name="fade">
             <div v-if="showMobileMenu" @click="showMobileMenu = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden"></div>
@@ -79,7 +92,7 @@
                         <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe">
                         <span class="text-xl font-extrabold text-title tracking-tight truncate">MedSafe <span class="text-primary">患者端</span></span>
                     </div>
-                    <button @click="showMobileMenu = false" class="lg:hidden p-2 text-slate-400 hover:text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    <button @click="showMobileMenu = false" aria-label="關閉選單" class="lg:hidden p-2 text-slate-400 hover:text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                 </div>
 
                 <nav class="flex-1 space-y-2">
@@ -99,12 +112,16 @@
             <!-- Header -->
             <header class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <button @click="showMobileMenu = true" class="lg:hidden p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-primary transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
+                    <button @click="showMobileMenu = true" aria-label="開啟選單" class="lg:hidden p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600 hover:text-primary transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
                     <div class="text-left"><h2 class="text-2xl md:text-4xl font-black text-title italic tracking-tighter uppercase">My Health Hub</h2><p class="text-xs md:text-sm font-bold text-lightText uppercase tracking-widest pl-1">FHIR Personal Health Record</p></div>
                 </div>
                 <div class="flex items-center gap-3 md:gap-6 bg-white p-2 md:p-2.5 rounded-3xl shadow-premium border border-white">
+                    <button @click="openChat" :aria-label="'與' + doctorName + '對話'" class="relative p-2.5 text-lightText hover:text-primary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8-1.06 0-2.077-.16-3.02-.457L3 21l1.457-4.98A7.96 7.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                        <span v-if="unreadChatCount > 0" class="absolute top-2 right-2 min-w-[18px] h-[18px] bg-danger rounded-full border-2 border-white flex items-center justify-center text-[8px] font-black text-white leading-none px-0.5">{{ unreadChatCount }}</span>
+                    </button>
                     <div class="relative hidden sm:block" @click.stop>
-                        <button @click="showNotifDropdown = !showNotifDropdown" class="relative p-2.5 text-lightText hover:text-primary transition-colors">
+                        <button @click="showNotifDropdown = !showNotifDropdown" aria-label="通知" class="relative p-2.5 text-lightText hover:text-primary transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                             <span v-if="notifications.length" class="absolute top-2 right-2 min-w-[18px] h-[18px] bg-danger rounded-full border-2 border-white flex items-center justify-center text-[8px] font-black text-white leading-none px-0.5">{{ notifications.length }}</span>
                         </button>
@@ -198,7 +215,7 @@
                         <div class="space-y-4 text-left">
                             <div v-for="(reminder, i) in reminders" :key="i" 
                                  class="flex items-center gap-6 p-5 rounded-2xl border-2 transition-all cursor-pointer group text-left"
-                                 @click="reminder.completed = !reminder.completed"
+                                 @click="toggleReminder(reminder)"
                                  :class="reminder.completed ? 'bg-mint/30 border-primary/10 shadow-sm' : 'bg-bgMain border-transparent hover:bg-white hover:border-slate-100 hover:shadow-md'">
                                 <div class="custom-checkbox flex-shrink-0 flex items-center justify-center transition-transform group-active:scale-90"
                                      :class="{ 'checked shadow-lg': reminder.completed }">
@@ -332,9 +349,9 @@
                             </div>
                         </div>
                         <div class="w-full lg:w-72 flex flex-col gap-4 text-left">
-                            <button @click="startTelehealth" class="bg-danger text-white font-black py-5 rounded-3xl shadow-xl shadow-danger/30 hover:scale-[1.03] active:scale-[0.97] transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3 text-left">
-                                <div class="w-2 h-2 bg-white rounded-full animate-ping shrink-0 text-left text-left"></div>
-                                立即連線醫師
+                            <button @click="openChat" class="bg-danger text-white font-black py-5 rounded-3xl shadow-xl shadow-danger/30 hover:scale-[1.03] active:scale-[0.97] transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3 text-left">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8-1.06 0-2.077-.16-3.02-.457L3 21l1.457-4.98A7.96 7.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                傳訊息給{{ doctorName }}
                             </button>
                             <button @click="showDdiDetailModal = true" class="bg-bgMain text-title font-black py-5 rounded-3xl hover:bg-slate-100 transition-all text-xs uppercase tracking-widest border border-slate-200 shadow-sm text-left flex justify-center">
                                 了解臨床機轉
@@ -349,7 +366,7 @@
 
         <!-- 1. AI Insights Modal -->
         <transition name="fade">
-            <div v-if="showInsightsModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div v-if="showInsightsModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showInsightsModal = false"></div>
                 <div class="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden animate-fade-in text-left flex flex-col">
                     <div class="hero-gradient p-12 text-white relative shrink-0">
@@ -359,7 +376,7 @@
                                 <div class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] mb-4 text-left">Clinical Intelligence</div>
                                 <h3 class="text-4xl font-black tracking-tighter text-left">用藥健康策略建議</h3>
                             </div>
-                            <button @click="showInsightsModal = false" class="text-white/40 hover:text-white transition-colors p-2 bg-white/10 rounded-full shrink-0">
+                            <button @click="showInsightsModal = false" aria-label="關閉" class="text-white/40 hover:text-white transition-colors p-2 bg-white/10 rounded-full shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
@@ -391,7 +408,7 @@
 
         <!-- 2. Medication Cabinet Modal -->
         <transition name="fade">
-            <div v-if="showAllMedsModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div v-if="showAllMedsModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showAllMedsModal = false"></div>
                 <div class="bg-white rounded-[40px] w-full max-w-4xl max-h-[90vh] shadow-2xl relative z-10 overflow-hidden animate-fade-in flex flex-col text-left text-left">
                     <div class="bg-mint p-8 md:p-12 flex justify-between items-center shrink-0 text-left">
@@ -404,7 +421,7 @@
                                 <p class="text-primary font-black text-xs md:text-sm uppercase tracking-widest mt-1 text-left">目前共有 {{ medications.length }} 項安全存證處方</p>
                             </div>
                         </div>
-                        <button @click="showAllMedsModal = false" class="text-slate-400 hover:text-danger transition-colors p-3 bg-white rounded-full shadow-sm shrink-0">
+                        <button @click="showAllMedsModal = false" aria-label="關閉" class="text-slate-400 hover:text-danger transition-colors p-3 bg-white rounded-full shadow-sm shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
@@ -430,7 +447,7 @@
                                             <div class="text-xs text-content font-bold opacity-60 mt-1 uppercase text-left">{{ med.freq }}</div>
                                         </td>
                                         <td class="py-8 italic font-black text-slate-400 text-sm text-left">
-                                            台大醫院 (模擬節點)
+                                            {{ med.hospital }}
                                         </td>
                                         <td class="py-8 rounded-r-[32px] pr-10 text-right">
                                             <span :class="['px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm shrink-0', med.color === 'danger' ? 'bg-red-50 text-danger border border-red-100' : 'bg-mint text-primary border border-primary/10']">
@@ -446,55 +463,52 @@
             </div>
         </transition>
 
-        <!-- 3. Telehealth Modal -->
+        <!-- 3. Doctor Chat Modal -->
         <transition name="fade">
-            <div v-if="showTelehealthModal" class="fixed inset-0 z-[120] flex items-center justify-center p-4">
-                <div class="absolute inset-0 bg-slate-950/95 backdrop-blur-2xl" @click="closeTelehealth"></div>
+            <div v-if="showChatModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/95 backdrop-blur-2xl" @click="closeChat"></div>
                 <div class="bg-slate-900 w-full max-w-2xl rounded-[50px] shadow-[0_0_80px_rgba(36,161,93,0.3)] relative z-10 overflow-hidden border border-white/10 animate-fade-in flex flex-col text-left">
-                    <div class="p-8 md:p-12 flex flex-col items-center justify-center space-y-10 min-h-[500px] text-center text-left text-left">
-                        <div v-if="telehealthStatus === 'connecting'" class="flex flex-col items-center text-left">
-                            <div class="w-24 h-24 md:w-32 md:h-32 rounded-full border-[6px] border-primary/20 border-t-primary animate-spin mb-10 shadow-glow shrink-0"></div>
-                            <h3 class="text-2xl md:text-3xl font-black text-white italic tracking-widest uppercase text-left">SECURE LINKING...</h3>
-                            <p class="text-slate-500 font-bold text-xs md:text-sm mt-4 uppercase tracking-[0.3em] text-left">HAPI Messaging Gate Establishing</p>
-                        </div>
-                        <div v-if="telehealthStatus === 'active'" class="w-full space-y-6 animate-fade-in text-left">
-                            <div class="flex items-center gap-4">
-                                <div class="relative w-14 h-14 shrink-0">
-                                    <div class="absolute inset-0 bg-primary/20 rounded-2xl animate-ping"></div>
-                                    <div class="relative w-full h-full rounded-2xl hero-gradient p-1 shadow-xl border-2 border-white/20">
-                                        <img src="images/doctor.jpg" class="w-full h-full rounded-xl object-cover">
-                                    </div>
+                    <div class="p-8 md:p-12 flex flex-col space-y-6 min-h-[500px] text-left">
+                        <div class="flex items-center gap-4 shrink-0">
+                            <div class="relative w-14 h-14 shrink-0">
+                                <div class="relative w-full h-full rounded-2xl hero-gradient p-1 shadow-xl border-2 border-white/20">
+                                    <img src="images/doctor.jpg" class="w-full h-full rounded-xl object-cover">
                                 </div>
-                                <div>
-                                    <h3 class="text-xl font-black text-white tracking-tighter italic uppercase">Dr. Mei-Ling Lee</h3>
-                                    <p class="text-primary font-black uppercase tracking-[0.2em] text-[10px] mt-1">Attending Physician • SECURE CONNECTION</p>
-                                </div>
+                                <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-primary rounded-full border-2 border-slate-900"></div>
                             </div>
-                            <div id="chat-scroll" class="space-y-4 max-h-56 overflow-y-auto pr-1">
-                                <div v-for="(msg, i) in chatMessages" :key="i" :class="['flex gap-3 items-end', msg.from === 'patient' ? 'flex-row-reverse' : '']">
+                            <div>
+                                <h3 class="text-xl font-black text-white tracking-tighter italic uppercase">{{ doctorName }}</h3>
+                                <p class="text-primary font-black uppercase tracking-[0.2em] text-[10px] mt-1">主治醫師 · 隨時可留言</p>
+                            </div>
+                        </div>
+                        <div id="chat-scroll" class="flex-1 space-y-4 max-h-72 overflow-y-auto pr-1">
+                            <div v-if="chatMessages.length === 0" class="text-center text-xs font-bold text-slate-500 py-10">尚無對話紀錄，開始留言給{{ doctorName }}吧</div>
+                            <template v-for="(msg, i) in chatMessages" :key="i">
+                                <div v-if="msg.from === 'system'" class="text-center">
+                                    <span class="inline-block text-[10px] font-bold text-slate-400 bg-white/5 border border-white/10 rounded-full px-4 py-2">{{ msg.text }}</span>
+                                </div>
+                                <div v-else :class="['flex gap-3 items-end', msg.from === 'patient' ? 'flex-row-reverse' : '']">
                                     <div v-if="msg.from === 'doctor'" class="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 font-black text-[10px] shadow-lg">DR</div>
                                     <p :class="['text-sm leading-relaxed font-bold px-4 py-3 rounded-2xl max-w-[75%]', msg.from === 'doctor' ? 'text-slate-300 bg-white/5 border border-white/10 rounded-tl-sm' : 'text-white bg-primary rounded-tr-sm']">{{ msg.text }}</p>
                                 </div>
-                                <div v-if="sendingMessage" class="flex gap-3 items-end">
-                                    <div class="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 font-black text-[10px] shadow-lg">DR</div>
-                                    <div class="flex gap-1 px-4 py-3 bg-white/5 rounded-2xl border border-white/10 rounded-tl-sm">
+                            </template>
+                            <div v-if="awaitingReply" class="flex gap-3 items-end">
+                                <div class="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 font-black text-[10px] shadow-lg">DR</div>
+                                <div class="flex items-center gap-2 px-4 py-3 bg-white/5 rounded-2xl border border-white/10 rounded-tl-sm">
+                                    <div class="flex gap-1">
                                         <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0s"></div>
                                         <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0.15s"></div>
                                         <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0.3s"></div>
                                     </div>
+                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">等待醫師回覆中</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="p-4 md:p-6 bg-black/50 border-t border-white/5 flex gap-3 shrink-0 items-center text-left">
-                        <button @click="closeTelehealth" class="py-4 px-4 font-black text-slate-500 hover:text-danger transition-colors uppercase tracking-[0.2em] text-[10px] shrink-0">✕</button>
-                        <template v-if="telehealthStatus === 'active'">
-                            <input v-model="chatInput" @keyup.enter="sendResponse()" :disabled="sendingMessage" type="text" placeholder="輸入回覆訊息..." class="flex-1 bg-white/10 border border-white/15 rounded-2xl px-5 py-3 text-white text-sm placeholder-slate-500 outline-none focus:border-primary/60 transition-colors disabled:opacity-50" />
-                            <button @click="sendResponse()" :disabled="sendingMessage || !chatInput.trim()" class="bg-primary text-white font-black px-7 py-3 rounded-2xl shadow-xl shadow-primary/30 hover:scale-[1.03] active:scale-[0.97] transition-all text-xs uppercase tracking-widest disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed shrink-0">Send</button>
-                        </template>
-                        <template v-else>
-                            <div class="flex-1 bg-white/5 rounded-2xl px-5 py-3 text-slate-600 text-sm">連線建立中...</div>
-                        </template>
+                        <button @click="closeChat" aria-label="關閉對話" class="py-4 px-4 font-black text-slate-500 hover:text-danger transition-colors uppercase tracking-[0.2em] text-[10px] shrink-0">✕</button>
+                        <input v-model="chatInput" @keyup.enter="sendResponse()" type="text" placeholder="輸入訊息給醫師..." class="flex-1 bg-white/10 border border-white/15 rounded-2xl px-5 py-3 text-white text-sm placeholder-slate-500 outline-none focus:border-primary/60 transition-colors" />
+                        <button @click="sendResponse()" :disabled="!chatInput.trim()" class="bg-primary text-white font-black px-7 py-3 rounded-2xl shadow-xl shadow-primary/30 hover:scale-[1.03] active:scale-[0.97] transition-all text-xs uppercase tracking-widest disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed shrink-0">Send</button>
                     </div>
                 </div>
             </div>
@@ -502,7 +516,7 @@
 
         <!-- 4. Clinical Detail Modal -->
         <transition name="fade">
-            <div v-if="showDdiDetailModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 text-left">
+            <div v-if="showDdiDetailModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4 text-left">
                 <div class="absolute inset-0 bg-red-950/80 backdrop-blur-md" @click="showDdiDetailModal = false"></div>
                 <div class="bg-white rounded-[40px] md:rounded-[50px] w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in flex flex-col text-left text-left">
                     <div class="bg-danger p-8 md:p-12 text-white relative text-left shrink-0">
@@ -550,12 +564,12 @@
 
         <!-- 5. Medication Detail Modal -->
         <transition name="fade">
-            <div v-if="showMedDetailModal && selectedMed" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div v-if="showMedDetailModal && selectedMed" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showMedDetailModal = false"></div>
                 <div class="bg-white rounded-[40px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden animate-fade-in">
                     <!-- Header -->
                     <div :class="['p-10 relative', selectedMed.color === 'danger' ? 'bg-red-50' : 'bg-mint']">
-                        <button @click="showMedDetailModal = false" class="absolute top-6 right-6 p-2 rounded-full bg-white/60 hover:bg-white transition-colors">
+                        <button @click="showMedDetailModal = false" aria-label="關閉" class="absolute top-6 right-6 p-2 rounded-full bg-white/60 hover:bg-white transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                         <div class="flex items-center gap-5">
@@ -595,7 +609,7 @@
                         <!-- Risk Warning -->
                         <div v-if="selectedMed.status === '風險'" class="bg-red-50 border-l-4 border-danger rounded-2xl p-5 flex gap-4 items-start">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-danger shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                            <p class="text-sm font-bold text-danger leading-relaxed">此藥品與其他處方存在交互風險，請諮詢醫師</p>
+                            <p class="text-sm font-bold text-danger leading-relaxed">此藥品與其他處方存在交互風險，請諮詢{{ doctorName }}</p>
                         </div>
                     </div>
                     <!-- Footer -->
@@ -616,8 +630,11 @@
     </div>
 
     <!-- Data Injection -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
     <script src="js/mockData.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/chatStore.js"></script>
     <script>
         const { createApp, markRaw } = Vue;
 
@@ -633,9 +650,12 @@
 
         createApp({
             data() {
-                const user = JSON.parse(localStorage.getItem('demo_user')) || { name: '測試患者' };
-                const patientData = window.mockData.patient;
+                const user = requireRole('patient') || { name: '測試患者' };
+                const patientData = (window.mockData.patients && window.mockData.patients[user.username]) || window.mockData.patient;
+                const doctorUser = window.mockData.users.find(u => u.role === 'doctor');
                 return {
+                    _username: user.username || 'patient01',
+                    maintenanceMode: false,
                     profile: patientData.profile,
                     stats: patientData.stats,
                     medications: patientData.medications,
@@ -646,17 +666,18 @@
                     syncing: false,
                     chatMessages: [],
                     chatInput: '',
-                    sendingMessage: false,
+                    awaitingReply: false,
+                    unreadChatCount: 0,
+                    doctorName: doctorUser ? doctorUser.name : '主治醫師',
                     showNotifDropdown: false,
                     showAllMedsModal: false,
-                    showTelehealthModal: false,
+                    showChatModal: false,
                     showDdiDetailModal: false,
                     confirmingAwareness: false,
                     showMedDetailModal: false,
                     selectedMed: null,
                     showMobileMenu: false,
                     showToast: false,
-                    telehealthStatus: 'idle', // idle, connecting, active
                     toastTitle: '系統通知',
                     toastMessage: '同步成功',
                     notifications: [
@@ -677,8 +698,27 @@
                     return this.reminders.filter(r => r.completed).length;
                 }
             },
-            created() {
+            async created() {
                 this._charts = {};
+                await waitForAuthReady();
+                try {
+                    this.maintenanceMode = await DbService.getMaintenanceMode();
+                } catch (e) {}
+                if (this.maintenanceMode) return;
+                try {
+                    const data = await DbService.getPatientData(this._username);
+                    if (data) {
+                        this.profile = data.profile;
+                        this.stats = data.stats;
+                        this.medications = data.medications;
+                        this.ddiAlerts = data.ddiAlerts;
+                        this.aiInsights = data.aiInsights;
+                        this.reminders = data.reminders;
+                        if (data.assignedDoctorName) this.doctorName = data.assignedDoctorName;
+                    }
+                } catch (e) {
+                    console.error('Firestore load error:', e);
+                }
             },
             mounted() {
                 this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
@@ -686,10 +726,34 @@
                 window.addEventListener('resize', this._resizeHandler);
                 this._notifClickHandler = () => { this.showNotifDropdown = false; };
                 document.addEventListener('click', this._notifClickHandler);
+                this._escHandler = (e) => {
+                    if (e.key !== 'Escape') return;
+                    this.showInsightsModal = this.showAllMedsModal = this.showDdiDetailModal = this.showMedDetailModal = false;
+                    if (this.showChatModal) this.closeChat();
+                };
+                document.addEventListener('keydown', this._escHandler);
+                this._chatUnsub = window.chatStore.onChange((e) => {
+                    if (e.key !== 'medsafe_chat_' + this.profile.id) return;
+                    const msgs = window.chatStore.getMessages(this.profile.id);
+                    if (msgs.length <= this.chatMessages.length) return;
+                    const newOnes = msgs.slice(this.chatMessages.length).filter(m => m.from === 'doctor');
+                    if (!newOnes.length) return;
+                    newOnes.forEach(m => this.chatMessages.push({ from: 'doctor', text: m.text }));
+                    this.awaitingReply = false;
+                    if (this.showChatModal) {
+                        this.$nextTick(() => this.scrollChat());
+                    } else {
+                        this.unreadChatCount += newOnes.length;
+                        this.notifications.unshift({ title: `${this.doctorName}回覆`, content: newOnes[newOnes.length - 1].text, time: '剛剛', icon: Icons.AI, bg: 'bg-primary' });
+                        this.triggerToast(`${this.doctorName}回覆`, `您有一則來自${this.doctorName}的新訊息`);
+                    }
+                });
             },
             unmounted() {
                 window.removeEventListener('resize', this._resizeHandler);
                 document.removeEventListener('click', this._notifClickHandler);
+                document.removeEventListener('keydown', this._escHandler);
+                if (this._chatUnsub) this._chatUnsub();
                 this.destroyCharts();
             },
             methods: {
@@ -733,6 +797,15 @@
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
                         this.showInsightsModal = false;
                         this.triggerToast('雲端同步成功', `已將 ${this.medications.length} 筆用藥資料上傳至 FHIR 伺服器`);
+
+                        // 讀回剛寫入的 Patient 資源，驗證資料確實已存在於 FHIR 伺服器上（而非僅信任 POST 回應）
+                        try {
+                            const readBack = await fetch(`https://hapi.fhir.org/baseR4/Patient/${pid}`, { headers: { 'Accept': 'application/fhir+json' } });
+                            if (readBack.ok) {
+                                const patientResource = await readBack.json();
+                                setTimeout(() => this.triggerToast('雲端讀回驗證成功', `已確認 Patient/${patientResource.id} 存在於 FHIR 伺服器`), 3200);
+                            }
+                        } catch (e) { /* 讀回驗證失敗不影響主流程 */ }
                     } catch (e) {
                         this.triggerToast('同步失敗', '無法連線至 FHIR 伺服器，請稍後再試');
                     } finally {
@@ -768,43 +841,49 @@
                     this.selectedMed = med;
                     this.showMedDetailModal = true;
                 },
-                logout() {
-                    localStorage.removeItem('demo_user');
-                    window.location.href = 'login.html';
+                async toggleReminder(reminder) {
+                    reminder.completed = !reminder.completed;
+                    try { await DbService.updateReminders(this._username, this.reminders); } catch (e) { /* 同步失敗不影響本地操作 */ }
                 },
-                startTelehealth() {
-                    this.showTelehealthModal = true;
-                    this.telehealthStatus = 'connecting';
-                    this.chatMessages = [];
+                logout() { logout(); },
+                scrollChat() {
+                    const el = document.getElementById('chat-scroll'); if (el) el.scrollTop = el.scrollHeight;
+                },
+                openChat() {
+                    this.showChatModal = true;
+                    this.unreadChatCount = 0;
                     this.chatInput = '';
-                    setTimeout(() => {
-                        this.telehealthStatus = 'active';
-                        this.chatMessages.push({ from: 'doctor', text: `您好，${this.profile.name}。我收到系統的自動交互警報了。這兩款藥物併用可能會有出血風險，我現在立即在 FHIR Server 上幫您更新用藥指示，請先暫停服用 Aspirin，待我確認後再通知您。` });
-                        this.$nextTick(() => { const el = document.getElementById('chat-scroll'); if (el) el.scrollTop = el.scrollHeight; });
-                    }, 3000);
+                    const history = window.chatStore.getMessages(this.profile.id);
+                    if (history.length > 0) {
+                        this.chatMessages = history.map(m => ({ from: m.from, text: m.text }));
+                    } else {
+                        this.chatMessages = [];
+                        const note = this.ddiAlerts.length > 0
+                            ? `系統已將「${this.ddiAlerts[0].drugs.join(' + ')}」交互作用警示通知${this.doctorName}，您可以直接在此留言說明狀況。`
+                            : `這是您與${this.doctorName}的專屬留言板，訊息會即時同步，隨時都能留言。`;
+                        window.chatStore.addMessage(this.profile.id, 'system', note);
+                        this.chatMessages.push({ from: 'system', text: note });
+                    }
+                    this.$nextTick(() => this.scrollChat());
                 },
-                closeTelehealth() {
-                    this.showTelehealthModal = false;
-                    this.telehealthStatus = 'idle';
-                    this.chatMessages = [];
-                    this.chatInput = '';
+                closeChat() {
+                    this.showChatModal = false;
                 },
-                async sendResponse() {
+                sendResponse() {
                     const msg = this.chatInput.trim();
-                    if (!msg || this.sendingMessage) return;
+                    if (!msg) return;
+                    window.chatStore.addMessage(this.profile.id, 'patient', msg);
                     this.chatMessages.push({ from: 'patient', text: msg });
                     this.chatInput = '';
-                    this.$nextTick(() => { const el = document.getElementById('chat-scroll'); if (el) el.scrollTop = el.scrollHeight; });
-                    this.sendingMessage = true;
-                    await new Promise(r => setTimeout(r, 1500 + Math.random() * 1000));
-                    const replies = [
-                        '好的，收到您的回覆。請放心，我已在 FHIR Server 上標記此交互風險，您下次回診時我們再詳細討論用藥方案。',
-                        '謝謝您的說明。建議先停用 Aspirin，待我確認新的處方後會立即通知您，請保持觀察。',
-                        '了解，我已為您更新 MedicationStatement 的狀態。如有任何不適請立即聯絡急診，下週回診時再評估。'
-                    ];
-                    this.chatMessages.push({ from: 'doctor', text: replies[Math.floor(Math.random() * replies.length)] });
-                    this.sendingMessage = false;
-                    this.$nextTick(() => { const el = document.getElementById('chat-scroll'); if (el) el.scrollTop = el.scrollHeight; });
+                    this.$nextTick(() => this.scrollChat());
+                    this.awaitingReply = true;
+                    window.chatStore.notify('doctor', {
+                        title: '病患新訊息',
+                        content: `${this.profile.name}：${msg}`,
+                        patientId: this.profile.id,
+                        patientName: this.profile.name,
+                        critical: this.ddiAlerts.length > 0
+                    });
                 },
                 triggerToast(title, msg) {
                     this.toastTitle = title;

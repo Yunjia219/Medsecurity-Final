@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // MedSafe：前端改用 Firebase Authentication 登入（帳號 -> username@medsafe.local 的合成 email）。
+    // user_roles/{uid} 是唯一可信的身分索引，由 request.auth.uid 直接查詢，
+    // 其餘所有集合的存取權限都以此為準，而非單純檢查「有沒有登入」。
+    //
+    // 部署順序注意：第一次啟用本檔案前，必須先透過 seed.html（在舊的開放規則下）
+    // 建立好 Firebase Auth 帳號與對應的 user_roles 文件，否則會沒有任何人符合 isAdmin()，
+    // 造成無法再建立新帳號的雞生蛋問題。
+
+    function isAuthed() {
+      return request.auth != null;
+    }
+    function profile() {
+      return get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data;
+    }
+    function isActive() {
+      return isAuthed() && profile().status == 'active';
+    }
+    function hasRole(r) {
+      return isActive() && profile().role == r;
+    }
+    function isAdmin() { return hasRole('admin'); }
+    function isDoctor() { return hasRole('doctor'); }
+    function isInsurance() { return hasRole('insurance'); }
+    function isOwnUsername(username) {
+      return isActive() && profile().username == username;
+    }
+
+    // 自助註冊限定只能建立「patient」角色、狀態為 active 的自己身分，防止自我提權
+    function isSelfRegisteringPatient(uid) {
+      return isAuthed() && request.auth.uid == uid
+        && request.resource.data.role == 'patient'
+        && request.resource.data.status == 'active';
+    }
+
+    // 身分索引：只有本人能讀自己的 profile；新增只能是 admin，或使用者本人自助註冊為 patient；
+    // 修改/刪除（例如變更角色、停用帳號）只能由 admin
+    match /user_roles/{uid} {
+      allow read: if isAuthed() && request.auth.uid == uid;
+      allow create: if isAdmin() || isSelfRegisteringPatient(uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // 後台使用者列表（用 username 當 document id，供 admin.html 顯示/管理）
+    // 註：同一個 username 只要文件已存在，重複建立會被視為 update 而非 create，因此不會被自助註冊覆蓋
+    match /users/{username} {
+      allow read: if isAdmin() || isDoctor() || isOwnUsername(username);
+      allow create: if isAdmin()
+        || (isAuthed() && request.resource.data.uid == request.auth.uid
+            && request.resource.data.role == 'patient'
+            && request.resource.data.status == 'active');
+      allow update, delete: if isAdmin();
+    }
+
+    // 系統設定 / 維護模式：所有已登入且啟用中的角色都要能讀（用來判斷是否鎖站），只有 admin 能改
+    match /admin_data/{doc} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    match /doctor_data/{doc} {
+      allow read, write: if isAdmin() || isDoctor();
+    }
+
+    // 病患資料：admin/doctor 可讀寫，保險核保員只能讀（核保用途，不得修改病歷），病患本人可讀寫自己的文件
+    match /patient_data/{username} {
+      allow read: if isAdmin() || isDoctor() || isInsurance() || isOwnUsername(username);
+      allow write: if isAdmin() || isDoctor() || isOwnUsername(username);
+    }
+
+    match /insurance_data/{doc} {
+      allow read, write: if isAdmin() || isInsurance();
+    }
+
+    match /graph_data/{doc} {
+      allow read, write: if isAdmin() || isDoctor();
+    }
+
+    match /ddi_rules/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    match /care_cases/{doc} {
+      allow read, write: if isAdmin() || isInsurance();
+    }
+
+    match /insurance_claims/{doc} {
+      allow read, write: if isAdmin() || isInsurance();
+    }
+
+    match /insurance_policies/{doc} {
+      allow read, write: if isAdmin() || isInsurance();
+    }
+  }
+}

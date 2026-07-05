@@ -20,5 +20,11 @@ window.utils = {
   // 格式化數字 (千分位)
   formatNumber(num) {
     return num ? num.toLocaleString('zh-TW') : '0';
+  },
+
+  // 格式化金額 (統一使用 NT$ 顯示，全站共用避免 $ / NT$ 混用)
+  formatCurrency(num) {
+    const n = Number(num) || 0;
+    return `NT$ ${n.toLocaleString('zh-TW')}`;
   }
 };

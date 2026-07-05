@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>開發進度管理 Dashboard | MedSafe</title>
+<link rel="icon" type="image/png" href="images/LOGO.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: '#1A5276',
+          accent: '#2DD4BF',
+          sidebar: '#0F172A',
+          bgMain: '#F8FAFC',
+          success: '#10B981',
+          warning: '#F59E0B',
+          danger: '#EF4444',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Plus Jakarta Sans','Noto Sans TC',sans-serif; background:#F8FAFC; color:#212F3D; }
+  .bar-track { background:#E5E7EB; border-radius:9999px; height:10px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:9999px; }
+  .card { background:#fff; border-radius:20px; box-shadow:0 10px 30px -12px rgba(15,23,42,0.08); }
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="bg-sidebar text-white px-8 py-6 flex flex-wrap items-center justify-between gap-4">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center font-black">M</div>
+    <div>
+      <h1 class="text-lg font-black tracking-tight">MedSafe 開發進度管理 Dashboard</h1>
+      <p class="text-slate-400 text-xs">跨醫院多重用藥衝突與副作用網頁預警系統 — 純前端展示版</p>
+    </div>
+  </div>
+  <div class="text-right text-xs text-slate-400">
+    <div>盤點日期：2026-07-01</div>
+    <div>最近提交：2026-06-15 · e492a47</div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto p-6 md:p-8 space-y-8">
+
+  <!-- Overall KPI -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="card p-6">
+      <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">前端頁面完成度（平均）</p>
+      <p class="text-4xl font-black text-primary">89%</p>
+      <div class="bar-track mt-3"><div class="bar-fill bg-primary" style="width:89%"></div></div>
+      <p class="text-xs text-slate-400 mt-2">7 個頁面：4 個已 100% 完成，3 個仍有模擬邏輯待補強</p>
+    </div>
+    <div class="card p-6">
+      <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">FHIR 標準整合深度</p>
+      <p class="text-4xl font-black text-warning">35%</p>
+      <div class="bar-track mt-3"><div class="bar-fill bg-warning" style="width:35%"></div></div>
+      <p class="text-xs text-slate-400 mt-2">僅病患端有真實呼叫公用 HAPI FHIR 伺服器，其餘 3 端為假連線動畫</p>
+    </div>
+    <div class="card p-6">
+      <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">文件 / 學習歷程紀錄</p>
+      <p class="text-4xl font-black text-danger">76%</p>
+      <div class="bar-track mt-3"><div class="bar-fill bg-danger" style="width:76%"></div></div>
+      <p class="text-xs text-slate-400 mt-2">README / 設計規範完整，但 LEARNING_LOG.md 幾乎全是「待填入」</p>
+    </div>
+  </section>
+
+  <!-- Overall estimate -->
+  <section class="card p-6 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <p class="text-sm font-bold text-slate-500">整體專案完成度（三軸加權估算，非自動量測）</p>
+      <p class="text-3xl font-black text-primary mt-1">約 74%</p>
+    </div>
+    <p class="text-xs text-slate-400 max-w-md">加權：前端 UI/UX 60% · FHIR 真實整合深度 25% · 文件與學習歷程 15%。此為程式碼盤點後的質化估算，用於排定優先級，非精確測量值。</p>
+  </section>
+
+  <!-- Module breakdown -->
+  <section>
+    <h2 class="text-lg font-black mb-4">各端口 / 頁面完成度</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div class="card p-6">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-black">index.html · login.html <span class="text-slate-400 font-medium">(入口 / 登入)</span></h3>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">100% 完成</span>
+        </div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-success" style="width:100%"></div></div>
+        <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
+          <li>登入驗證、角色導頁、輪播 Hero、demo 帳號卡皆可運作</li>
+          <li>localStorage 模擬 session，登出流程完整</li>
+        </ul>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-black">patient.html <span class="text-slate-400 font-medium">(病患端)</span></h3>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">90% 完成</span>
+        </div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-success" style="width:90%"></div></div>
+        <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
+          <li>✅ 唯一有<strong>真實 FHIR 呼叫</strong>：POST Bundle（Patient + MedicationStatement）與 Flag 至 hapi.fhir.org/baseR4</li>
+          <li>✅ DDI 警示、用藥清單、提醒事項、AI 洞察卡完整</li>
+          <li>⚠ 遠距問診聊天為腳本化假回覆（setTimeout + 固定文字），非真實 AI/後端</li>
+        </ul>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-black">dashboard.html <span class="text-slate-400 font-medium">(醫師端)</span></h3>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-warning/10 text-warning">82% 完成</span>
+        </div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-warning" style="width:82%"></div></div>
+        <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
+          <li>✅ D3 藥物交互關係網狀圖、ECharts 統計圖、病患切換皆完整</li>
+          <li>⚠ 「開立處方同步至 HAPI FHIR」僅為 toast 假訊息，未實際送出 MedicationRequest</li>
+          <li>⚠ AI 交互檢查為 setTimeout 假延遲，非真實比對引擎</li>
+        </ul>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-black">admin.html <span class="text-slate-400 font-medium">(管理員端)</span></h3>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-warning/10 text-warning">78% 完成</span>
+        </div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-warning" style="width:78%"></div></div>
+        <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
+          <li>✅ 用戶管理（新增/停用/編輯）、DDI 規則庫搜尋、系統狀態卡完整（皆為記憶體內模擬資料，重新整理即重置）</li>
+          <li>⚠ 「測試 FHIR 連線」為固定假延遲＋假訊息，未真正呼叫 hapi.fhir.org</li>
+          <li>❌ 無資料持久化（無 localStorage/後端），變更不會保存</li>
+        </ul>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-black">insurance.html <span class="text-slate-400 font-medium">(保險端)</span></h3>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-warning/10 text-warning">72% 完成</span>
+        </div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-warning" style="width:72%"></div></div>
+        <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
+          <li>✅ 理賠追蹤、風險雷達圖、覆蓋缺口分析 UI 完整</li>
+          <li>❌ 完全無 FHIR 呼叫，全數為靜態 mockData，與其他三端相比整合度最低</li>
+        </ul>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-black">detail.html <span class="text-slate-400 font-medium">(藥品詳情頁)</span></h3>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">100% 完成</span>
+        </div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-success" style="width:100%"></div></div>
+        <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
+          <li>簡單、獨立、無已知缺口</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FHIR audit -->
+  <section class="card p-6 border-l-4 border-warning">
+    <h2 class="text-lg font-black mb-3">⚠ FHIR 標準一致性提醒</h2>
+    <ul class="text-sm text-slate-600 space-y-2 list-disc pl-5">
+      <li>README.md 宣稱核心 FHIR Resources 為 <code class="bg-slate-100 px-1 rounded">MedicationRequest、Bundle、Patient</code>，但實際程式碼中寫入的是 <code class="bg-slate-100 px-1 rounded">MedicationStatement</code> 與 <code class="bg-slate-100 px-1 rounded">Flag</code>（見 patient.html 約 707-757 行），並無任何一處建立 <code class="bg-slate-100 px-1 rounded">MedicationRequest</code>。若競賽評審依 README 核對 Resource 使用，建議二擇一：更新 README 說明實際用到的 Resource，或補上 MedicationRequest 的建立流程（例如醫師端「開立處方」改為真實 POST）。</li>
+      <li>四個端口中只有病患端會真的打公用 HAPI FHIR 測試伺服器（hapi.fhir.org/baseR4），醫師端、管理員端皆為假裝連線的 UI 效果。若要在簡報中呈現「跨角色 FHIR 整合」，這個落差可能被問到。</li>
+      <li>目前無任何後端／資料庫，所有寫入操作除了打公用 HAPI 伺服器外都不持久化，重新整理頁面即恢復成 mockData 初始狀態。</li>
+    </ul>
+  </section>
+
+  <!-- Docs checklist -->
+  <section>
+    <h2 class="text-lg font-black mb-4">文件與學習歷程</h2>
+    <div class="card p-6 divide-y divide-slate-100">
+      <div class="py-3 flex items-center justify-between">
+        <span class="text-sm font-bold">README.md</span>
+        <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">完成</span>
+      </div>
+      <div class="py-3 flex items-center justify-between">
+        <span class="text-sm font-bold">DESIGN_SYSTEM.md</span>
+        <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">完成</span>
+      </div>
+      <div class="py-3 flex items-center justify-between">
+        <span class="text-sm font-bold">設計規格書.txt</span>
+        <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">完成（非常詳細）</span>
+      </div>
+      <div class="py-3 flex items-center justify-between">
+        <span class="text-sm font-bold">LEARNING_LOG.md（隊伍資訊 / 教學影片紀錄 / AI 協作紀錄 / 導師會議 / 開發時程）</span>
+        <span class="text-xs font-black px-2 py-1 rounded-full bg-danger/10 text-danger">幾乎全為「待填入」</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Next steps -->
+  <section>
+    <h2 class="text-lg font-black mb-4">建議優先處理項目</h2>
+    <div class="card p-6">
+      <ol class="text-sm text-slate-600 space-y-3 list-decimal pl-5">
+        <li><strong>填寫 LEARNING_LOG.md</strong> — 隊伍資訊、AI 協作截圖、導師會議紀錄、每週時程，這是初賽文件要求評分的一部分，目前完全空白，風險最高。</li>
+        <li><strong>統一 FHIR Resource 使用</strong> — 決定要嘛更新 README 對齊實作（MedicationStatement/Flag），要嘛把醫師端「開立處方」改成真的送出 MedicationRequest。</li>
+        <li><strong>補齊醫師端／管理員端的真實 FHIR 呼叫</strong>，至少讓「測試連線」「開立處方同步」不是純假動畫，與病患端整合程度看齊。</li>
+        <li><strong>保險端加入至少一個真實 FHIR 讀取</strong>（例如查詢 Patient/Coverage），目前是四端中唯一完全無整合的頁面。</li>
+        <li>（可選）評估是否需要簡易後端/資料持久層，否則管理員端的所有操作在整理頁面後都會消失，展示時需注意。</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section>
+    <h2 class="text-lg font-black mb-4">開發時間軸（Git 提交紀錄）</h2>
+    <div class="card p-6">
+      <ol class="relative border-l-2 border-slate-100 pl-6 space-y-6">
+        <li>
+          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-slate-300"></div>
+          <p class="text-xs text-slate-400">2026-05-22</p>
+          <p class="text-sm font-bold">建立醫療設計系統與 ECharts 視覺化 (e27ddca)</p>
+        </li>
+        <li>
+          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-slate-300"></div>
+          <p class="text-xs text-slate-400">2026-05-25</p>
+          <p class="text-sm font-bold">四端角色頁面完成 Premium 改版 (5732521)</p>
+        </li>
+        <li>
+          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-slate-300"></div>
+          <p class="text-xs text-slate-400">2026-05-29</p>
+          <p class="text-sm font-bold">整併專案為純前端架構，移除獨立 backend/frontend 目錄 (24943e2)</p>
+        </li>
+        <li>
+          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-slate-300"></div>
+          <p class="text-xs text-slate-400">2026-06-13</p>
+          <p class="text-sm font-bold">完成 MedSafe-Chain 競賽專案 (be9e056)</p>
+        </li>
+        <li>
+          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-primary"></div>
+          <p class="text-xs text-slate-400">2026-06-15 · 最新</p>
+          <p class="text-sm font-bold">Rebranding 為 MedSafe，移除區塊鏈相關內容 (e492a47)</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <p class="text-center text-xs text-slate-400 py-4">此 Dashboard 為靜態盤點快照（2026-07-01），需重新盤點時可再次要求 Claude Code 更新。</p>
+</main>
+</body>
+</html>

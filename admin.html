@@ -9,6 +9,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <script>
@@ -80,7 +83,7 @@
                         <img src="images/LOGO.png" class="w-10 h-10 rounded-xl object-contain shrink-0" alt="MedSafe">
                         <span class="text-xl font-extrabold text-title tracking-tight truncate">MedSafe <span class="text-primary">管理端</span></span>
                     </div>
-                    <button @click="showMobileMenu = false" class="lg:hidden p-2 text-lightText hover:text-primary transition-colors rounded-xl">
+                    <button @click="showMobileMenu = false" aria-label="關閉選單" class="lg:hidden p-2 text-lightText hover:text-primary transition-colors rounded-xl">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
@@ -105,7 +108,7 @@
         <main class="flex-1 lg:ml-72 p-6 lg:p-8 space-y-8 min-w-0">
             <header class="glass rounded-2xl p-4 flex items-center justify-between shadow-premium sticky top-0 z-30">
                 <div class="flex items-center gap-4 flex-1">
-                    <button @click="showMobileMenu = true" class="lg:hidden p-2 text-lightText hover:text-primary bg-white rounded-xl shadow-sm border border-slate-100 transition-all shrink-0">
+                    <button @click="showMobileMenu = true" aria-label="開啟選單" class="lg:hidden p-2 text-lightText hover:text-primary bg-white rounded-xl shadow-sm border border-slate-100 transition-all shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <div class="relative w-full max-w-md hidden md:block text-left">
@@ -116,7 +119,7 @@
 
                 <div class="flex items-center gap-6">
                     <div class="relative">
-                        <button ref="notificationBtn" @click="toggleNotifications" class="relative p-2 text-lightText hover:text-primary transition-colors">
+                        <button ref="notificationBtn" @click="toggleNotifications" aria-label="通知" class="relative p-2 text-lightText hover:text-primary transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                             <span v-if="notifications.some(n => !n.read)" class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full border-2 border-white pulse-live"></span>
                         </button>
@@ -196,7 +199,7 @@
                                         <td class="px-8 py-5"><span :class="['px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest', rule.severityClass]">{{ rule.severity }}</span></td>
                                         <td class="px-8 py-5 text-xs font-bold text-slate-500">{{ rule.effect }}</td>
                                         <td class="px-8 py-5 text-right">
-                                            <button @click="deleteRule(rule.id)" class="p-2.5 rounded-xl bg-red-50 text-danger hover:bg-danger hover:text-white transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                                            <button @click="deleteRule(rule.id)" :aria-label="'刪除規則 #' + rule.id" class="p-2.5 rounded-xl bg-red-50 text-danger hover:bg-danger hover:text-white transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -257,8 +260,8 @@
                                         </td>
                                         <td class="px-8 py-5 text-right">
                                             <div class="flex justify-end gap-3 opacity-30 group-hover:opacity-100 transition-all">
-                                                <button @click="editUser(u)" class="p-2.5 rounded-xl bg-bgMain text-primary hover:bg-primary hover:text-white transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                                                <button @click="toggleUserStatus(u)" :class="['p-2.5 rounded-xl transition-all', u.status === 'active' ? 'bg-bgMain text-warning hover:bg-warning hover:text-white' : 'bg-red-50 text-danger hover:bg-danger hover:text-white']">
+                                                <button @click="editUser(u)" :aria-label="'編輯 ' + u.name" class="p-2.5 rounded-xl bg-bgMain text-primary hover:bg-primary hover:text-white transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                                <button @click="toggleUserStatus(u)" :aria-label="(u.status === 'active' ? '停用 ' : '啟用 ') + u.name" :class="['p-2.5 rounded-xl transition-all', u.status === 'active' ? 'bg-bgMain text-warning hover:bg-warning hover:text-white' : 'bg-red-50 text-danger hover:bg-danger hover:text-white']">
                                                     <svg v-if="u.status === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                                     <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
                                                 </button>
@@ -295,7 +298,7 @@
                             <div class="space-y-2"><label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Access Key</label><input v-model="systemSettings.fhirApiKey" type="password" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold text-title focus:border-primary/20 outline-none transition-all"></div>
                         </div>
                         <div class="pt-4 flex items-center justify-between bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100">
-                            <div class="flex items-center gap-3"><div :class="['w-3 h-3 rounded-full', isTestingConnection ? 'bg-warning animate-ping' : 'bg-success']"></div><span class="text-sm font-black text-slate-600 uppercase">狀態：連線正常 (42ms)</span></div>
+                            <div class="flex items-center gap-3"><div :class="['w-3 h-3 rounded-full', isTestingConnection ? 'bg-warning animate-ping' : (fhirConnectionOk === false ? 'bg-danger' : 'bg-success')]"></div><span class="text-sm font-black text-slate-600 uppercase">狀態：{{ fhirConnectionOk === false ? '連線失敗' : (fhirConnectionOk === true ? '連線正常' : '尚未測試') }}</span></div>
                             <button @click="testFhirConnection" :disabled="isTestingConnection" class="px-6 py-2.5 bg-white border-2 border-indigo-100 rounded-xl text-xs font-black text-primary hover:bg-primary hover:text-white transition-all">{{ isTestingConnection ? '測試中...' : '測試連線' }}</button>
                         </div>
                     </div>
@@ -325,7 +328,7 @@
                                 <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-danger shadow-sm shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
                                 <div><h4 class="text-base font-black text-danger uppercase italic tracking-tighter text-left">系統維護模式 (Global Maintenance)</h4><p class="text-xs font-bold text-slate-500 mt-1 text-left">啟用後全網 (醫師、患者端) 將顯示維護中介面，僅管理員可存取</p></div>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" v-model="systemSettings.isMaintenanceMode" class="sr-only peer"><div class="w-16 h-9 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-danger after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-7 after:w-7 after:transition-all shadow-inner border border-slate-300"></div></label>
+                            <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" v-model="systemSettings.isMaintenanceMode" @change="toggleMaintenanceMode" class="sr-only peer"><div class="w-16 h-9 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-danger after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-7 after:w-7 after:transition-all shadow-inner border border-slate-300"></div></label>
                         </div>
                     </div>
                 </div>
@@ -334,7 +337,7 @@
 
         <!-- ADD USER MODAL -->
         <transition name="fade">
-            <div v-if="showAddUserModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div v-if="showAddUserModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showAddUserModal = false"></div>
                 <div class="bg-white rounded-[40px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in text-left">
                     <div class="purple-gradient p-10 text-white relative">
@@ -342,6 +345,7 @@
                         <p class="opacity-70 text-[10px] font-black uppercase mt-1 tracking-widest relative z-10">Medical Auth System v2.0</p>
                     </div>
                     <div class="p-10 space-y-6">
+                        <div v-if="newUserError" class="bg-red-50 text-danger text-xs font-bold p-4 rounded-xl border border-red-100">{{ newUserError }}</div>
                         <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Full Name</label><input v-model="newUser.name" type="text" placeholder="用戶姓名..." class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
                         <div class="grid grid-cols-2 gap-6">
                             <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Role Type</label><select v-model="newUser.role" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"><option value="doctor">醫師</option><option value="patient">患者</option><option value="insurance">保險人員</option></select></div>
@@ -350,8 +354,34 @@
                         <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">System Email</label><input v-model="newUser.email" type="email" placeholder="email@medsafe.com" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
                     </div>
                     <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
-                        <button @click="showAddUserModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Cancel</button>
-                        <button @click="triggerToast('帳號已創建', '新用戶權限已同步至安全管理系統'); showAddUserModal = false;" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Create Account</button>
+                        <button @click="showAddUserModal = false; newUserError = ''" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Cancel</button>
+                        <button @click="addUser" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Create Account</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- ADD RULE MODAL -->
+        <transition name="fade">
+            <div v-if="showAddRuleModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showAddRuleModal = false; newRuleError = ''"></div>
+                <div class="bg-white rounded-[40px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in text-left">
+                    <div class="purple-gradient p-10 text-white relative">
+                        <h3 class="text-2xl font-black italic tracking-tighter uppercase relative z-10">New DDI Rule</h3>
+                        <p class="opacity-70 text-[10px] font-black uppercase mt-1 tracking-widest relative z-10">Drug-Drug Interaction Knowledge Base</p>
+                    </div>
+                    <div class="p-10 space-y-6">
+                        <div v-if="newRuleError" class="bg-red-50 text-danger text-xs font-bold p-4 rounded-xl border border-red-100">{{ newRuleError }}</div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Drug A</label><input v-model="newRule.drugA" type="text" placeholder="如 Warfarin" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                            <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Drug B</label><input v-model="newRule.drugB" type="text" placeholder="如 Aspirin" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                        </div>
+                        <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Severity</label><select v-model="newRule.severity" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"><option value="極高風險">極高風險</option><option value="高風險">高風險</option></select></div>
+                        <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Clinical Effect</label><textarea v-model="newRule.effect" rows="3" placeholder="說明交互作用與臨床風險..." class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></textarea></div>
+                    </div>
+                    <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
+                        <button @click="showAddRuleModal = false; newRuleError = ''" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Cancel</button>
+                        <button @click="addRule" class="flex-[2] purple-gradient text-white font-black rounded-3xl shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">Add Rule</button>
                     </div>
                 </div>
             </div>
@@ -359,7 +389,7 @@
 
         <!-- EDIT USER MODAL (NEW) -->
         <transition name="fade">
-            <div v-if="showEditUserModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div v-if="showEditUserModal" role="dialog" aria-modal="true" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showEditUserModal = false"></div>
                 <div class="bg-white rounded-[40px] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden border border-slate-100 animate-fade-in text-left">
                     <div class="purple-gradient p-10 text-white flex justify-between items-center">
@@ -376,6 +406,13 @@
                             <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Institution</label><input v-model="editingUser.hospital" type="text" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
                         </div>
                         <div><label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Primary Email</label><input v-model="editingUser.email" type="email" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all"></div>
+                        <div v-if="editingUser.role === 'patient'">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">指派醫師</label>
+                            <select v-model="editingUser.assignedDoctor" class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 font-bold focus:border-primary/20 outline-none transition-all">
+                                <option value="">未指派</option>
+                                <option v-for="d in doctorOptions" :key="d.id" :value="d.id">{{ d.name }}</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="p-8 bg-slate-50 flex gap-4 border-t border-slate-100">
                         <button @click="showEditUserModal = false" class="flex-1 py-4 font-black text-slate-400 uppercase text-[10px]">Discard</button>
@@ -395,13 +432,15 @@
     </div>
 
     <!-- Data Injection -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/db-service.js"></script>
     <script src="js/mockData.js"></script>
     <script src="js/auth.js"></script>
     <script>
         const { createApp, markRaw } = Vue;
         createApp({
             data() {
-                const user = getCurrentUser();
+                const user = requireRole('admin') || { name: '訪客管理員' };
                 const adminData = window.mockData.admin;
                 const Icons = {
                     Dashboard: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>` }),
@@ -429,14 +468,21 @@
                         { id: 1025, drugA: 'Metformin', drugB: 'Iodinated', severity: '高風險', severityClass: 'bg-orange-100 text-warning border-orange-200', effect: '可能誘發乳酸中毒，需停藥。' },
                     ],
                     mockUsers: [
-                        { id: 'U001', name: '李曉美', role: 'doctor', roleName: '醫師', email: 'mei@medsafe.com', hospital: '台大醫院', status: 'active', statusName: '正常' },
-                        { id: 'U002', name: '王大明', role: 'patient', roleName: '患者', email: 'ming@gmail.com', hospital: 'N/A', status: 'active', statusName: '正常' },
+                        { id: 'U001', name: '李小美', role: 'doctor', roleName: '醫師', email: 'mei@medsafe.com', hospital: '台大醫院', status: 'active', statusName: '正常' },
+                        { id: 'patient01', name: '王大明', role: 'patient', roleName: '患者', email: 'patient01@medsafe.com', hospital: 'N/A', status: 'active', statusName: '正常' },
                         { id: 'U003', name: '張主任', role: 'admin', roleName: '管理員', email: 'boss@medsafe.com', hospital: '馬偕醫院', status: 'active', statusName: '正常' },
+                        { id: 'P001', name: '張小泉', role: 'patient', roleName: '患者', email: 'P001@medsafe.com', hospital: 'N/A', status: 'active', statusName: '正常' },
+                        { id: 'P002', name: '李大維', role: 'patient', roleName: '患者', email: 'P002@medsafe.com', hospital: 'N/A', status: 'active', statusName: '正常' },
+                        { id: 'P003', name: '陳美花', role: 'patient', roleName: '患者', email: 'P003@medsafe.com', hospital: 'N/A', status: 'active', statusName: '正常' },
+                        { id: 'P004', name: '劉建國', role: 'patient', roleName: '患者', email: 'P004@medsafe.com', hospital: 'N/A', status: 'active', statusName: '正常' },
                     ],
                     ruleSearch: '', ruleSeverityFilter: 'all', userSearch: '', userRoleFilter: 'all',
                     showNotifications: false, showAddRuleModal: false, showAddUserModal: false, 
                     showEditUserModal: false, showToast: false,
                     toastTitle: '', newUser: { name: '', role: 'doctor', email: '', hospital: '' },
+                    newUserError: '',
+                    newRule: { drugA: '', drugB: '', severity: '高風險', effect: '' },
+                    newRuleError: '',
                     editingUser: {},
                     // 系統設置相關
                     systemSettings: {
@@ -449,6 +495,7 @@
                         sessionTimeout: 30
                     },
                     isTestingConnection: false,
+                    fhirConnectionOk: null,
                     notifications: [
                         { id: 1, title: '系統安全警告', content: '偵測到異常的 FHIR 資源存取。', time: '5 分鐘前', read: false },
                         { id: 2, title: '系統資料同步完成', content: '全院處方存證已與區域節點同步。', time: '12 分鐘前', read: false },
@@ -471,20 +518,68 @@
                     }
                     return us;
                 },
-                currentPage() { return 1; }, totalRules() { return 1245; }, pageSize() { return 5; }, totalPages() { return 249; }, paginationRange() { return [1,2,3,4,5]; }
+                doctorOptions() {
+                    return this.mockUsers.filter(u => u.role === 'doctor');
+                }
             },
-            created() {
+            async created() {
                 this._charts = {};
+                await waitForAuthReady();
+                try {
+                    const data = await DbService.getAdminData();
+                    if (data && data.stats) {
+                        const s = data.stats;
+                        this.kpis[0].value = s.totalDdiRules;
+                        this.kpis[1].value = s.aiAnalyticsCount;
+                        this.kpis[2].value = s.todayApiCalls;
+                        this.kpis[3].value = s.dataStorageAmount;
+                        this._aiTrendData = data.aiTrendData;
+                        this._medicationCategories = data.medicationCategories;
+                    }
+                    if (data && data.maintenanceMode !== undefined) {
+                        this.systemSettings.isMaintenanceMode = data.maintenanceMode;
+                    }
+                } catch (e) {
+                    console.error('Firestore admin data error:', e);
+                }
+                try {
+                    const rules = await DbService.getDdiRules();
+                    if (rules && rules.length > 0) this.mockRules = rules;
+                } catch (e) {
+                    console.error('Firestore DDI rules error:', e);
+                }
+                try {
+                    const roleNames = { doctor: '醫師', patient: '患者', insurance: '保險人員', admin: '管理員' };
+                    const users = await DbService.getAllUsers();
+                    if (users && users.length > 0) {
+                        this.mockUsers = users.map(u => ({
+                            id: u.username, uid: u.uid, name: u.name, role: u.role,
+                            roleName: roleNames[u.role] || u.role,
+                            email: u.username + '@medsafe.com',
+                            hospital: 'N/A',
+                            status: u.status || 'active',
+                            statusName: u.status === 'disabled' ? '停用' : '正常'
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Firestore users error:', e);
+                }
+                this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
             },
-            mounted() { 
-                this.initCharts();
+            mounted() {
                 window.addEventListener('click', this.handleOutsideClick);
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
+                this._escHandler = (e) => {
+                    if (e.key !== 'Escape') return;
+                    this.showAddRuleModal = this.showAddUserModal = this.showEditUserModal = this.showNotifications = false;
+                };
+                document.addEventListener('keydown', this._escHandler);
             },
             unmounted() {
                 window.removeEventListener('click', this.handleOutsideClick);
                 window.removeEventListener('resize', this._resizeHandler);
+                document.removeEventListener('keydown', this._escHandler);
                 this.destroyCharts();
             },
             methods: {
@@ -506,48 +601,156 @@
                     }
                 },
                 destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
-                logout() { localStorage.removeItem('demo_user'); window.location.href = 'login.html'; },
+                logout() { logout(); },
                 toggleNotifications() { this.showNotifications = !this.showNotifications; },
                 markAllAsRead() { this.notifications.forEach(n => n.read = true); },
-                deleteRule(id) { confirm('確定刪除規則 #' + id + '？') && this.triggerToast('已刪除', '規則已移出資料庫'); },
-                
-                // 用戶管理方法
-                editUser(user) {
-                    this.editingUser = JSON.parse(JSON.stringify(user));
-                    this.showEditUserModal = true;
-                },
-                saveUserEdit() {
-                    const idx = this.mockUsers.findIndex(u => u.id === this.editingUser.id);
-                    if (idx !== -1) {
-                        const roles = { doctor: '醫師', patient: '患者', insurance: '保險', admin: '管理員' };
-                        this.editingUser.roleName = roles[this.editingUser.role];
-                        this.mockUsers[idx] = this.editingUser;
-                        this.showEditUserModal = false;
-                        this.triggerToast('資料已更新', `用戶 ${this.editingUser.name} 的權限已修改`);
+                async deleteRule(id) {
+                    if (!confirm('確定刪除規則 #' + id + '？')) return;
+                    try {
+                        await DbService.deleteDdiRule(String(id));
+                        this.mockRules = this.mockRules.filter(r => r.id !== id && r.id !== String(id));
+                        this.triggerToast('已刪除', '規則已從資料庫移除');
+                    } catch (e) {
+                        this.triggerToast('刪除失敗', '請稍後再試');
                     }
                 },
-                toggleUserStatus(user) {
-                    user.status = user.status === 'active' ? 'disabled' : 'active';
-                    user.statusName = user.status === 'active' ? '正常' : '停用';
-                    this.triggerToast('狀態變更', `用戶 ${user.name} 帳號目前已${user.statusName}`);
+
+                // 用戶管理方法
+                async editUser(user) {
+                    this.editingUser = JSON.parse(JSON.stringify(user));
+                    if (user.role === 'patient') {
+                        try {
+                            const snap = await window.db.collection('patient_data').doc(user.id).get();
+                            this.editingUser.assignedDoctor = snap.exists ? (snap.data().assignedDoctor || '') : '';
+                        } catch (e) {
+                            this.editingUser.assignedDoctor = '';
+                        }
+                    }
+                    this.showEditUserModal = true;
+                },
+                async saveUserEdit() {
+                    const idx = this.mockUsers.findIndex(u => u.id === this.editingUser.id);
+                    if (idx === -1) return;
+                    if (this.editingUser.role === 'patient') {
+                        const doctor = this.doctorOptions.find(d => d.id === this.editingUser.assignedDoctor);
+                        try {
+                            await DbService.assignDoctorToPatient(this.editingUser.id, doctor ? doctor.id : '', doctor ? doctor.name : '');
+                        } catch (e) {
+                            this.triggerToast('指派失敗', '請確認 Firestore 規則允許寫入 patient_data');
+                            return;
+                        }
+                    }
+                    const roles = { doctor: '醫師', patient: '患者', insurance: '保險', admin: '管理員' };
+                    this.editingUser.roleName = roles[this.editingUser.role];
+                    this.mockUsers[idx] = this.editingUser;
+                    this.showEditUserModal = false;
+                    this.triggerToast('資料已更新', `用戶 ${this.editingUser.name} 的權限已修改`);
+                },
+                async toggleUserStatus(user) {
+                    const newStatus = user.status === 'active' ? 'disabled' : 'active';
+                    try {
+                        await window.db.collection('users').doc(user.id).update({ status: newStatus });
+                        if (user.uid) await window.db.collection('user_roles').doc(user.uid).update({ status: newStatus });
+                        user.status = newStatus;
+                        user.statusName = newStatus === 'active' ? '正常' : '停用';
+                        const label = newStatus === 'active' ? '已恢復正常' : '已停用，該帳號無法登入';
+                        this.triggerToast('狀態變更', `${user.name} ${label}`);
+                    } catch (e) {
+                        this.triggerToast('變更失敗', '請確認 Firestore 規則允許寫入 users');
+                    }
                 },
 
                 // 系統設置方法
-                testFhirConnection() {
+                async testFhirConnection() {
                     this.isTestingConnection = true;
-                    setTimeout(() => {
+                    const start = performance.now();
+                    try {
+                        const res = await fetch(this.systemSettings.fhirUrl.replace(/\/$/, '') + '/Patient?_count=1', {
+                            headers: { 'Accept': 'application/fhir+json' }
+                        });
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        const ms = Math.round(performance.now() - start);
+                        this.fhirConnectionOk = true;
+                        this.triggerToast('連線成功', `HAPI FHIR Server 響應正常 (延遲 ${ms}ms)`);
+                    } catch (e) {
+                        this.fhirConnectionOk = false;
+                        this.triggerToast('連線失敗', '無法連線至 FHIR 伺服器，請確認 Base URL 或網路狀態');
+                    } finally {
                         this.isTestingConnection = false;
-                        this.triggerToast('連線成功', 'HAPI FHIR Server 響應正常 (延遲 42ms)');
-                    }, 2000);
+                    }
                 },
                 saveSystemSettings() {
                     this.triggerToast('設置已儲存', '系統核心參數已更新並同步至所有節點');
                 },
+                async toggleMaintenanceMode() {
+                    const enabled = this.systemSettings.isMaintenanceMode;
+                    try {
+                        await DbService.setMaintenanceMode(enabled);
+                        this.triggerToast(
+                            enabled ? '維護模式已啟用' : '維護模式已解除',
+                            enabled ? '醫師、患者、保險端已鎖定，僅管理員可存取' : '全站已恢復正常存取'
+                        );
+                    } catch (e) {
+                        this.systemSettings.isMaintenanceMode = !enabled;
+                        this.triggerToast('設定失敗', '請確認 Firestore 規則允許寫入 admin_data');
+                    }
+                },
 
                 triggerToast(t, m) { this.toastTitle = t; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
-                goToPage(p) {},
+                async addRule() {
+                    if (!this.newRule.drugA.trim() || !this.newRule.drugB.trim() || !this.newRule.effect.trim()) {
+                        this.newRuleError = '藥品 A、藥品 B 與交互作用說明為必填欄位';
+                        return;
+                    }
+                    const severityClasses = {
+                        '極高風險': 'bg-red-100 text-danger border-red-200',
+                        '高風險': 'bg-orange-100 text-warning border-orange-200'
+                    };
+                    const rule = {
+                        drugA: this.newRule.drugA.trim(),
+                        drugB: this.newRule.drugB.trim(),
+                        severity: this.newRule.severity,
+                        severityClass: severityClasses[this.newRule.severity],
+                        effect: this.newRule.effect.trim()
+                    };
+                    try {
+                        const id = await DbService.addDdiRule(rule);
+                        this.mockRules.push({ id, ...rule });
+                        this.newRule = { drugA: '', drugB: '', severity: '高風險', effect: '' };
+                        this.newRuleError = '';
+                        this.showAddRuleModal = false;
+                        this.triggerToast('規則已新增', `規則已寫入 DDI 知識庫`);
+                    } catch (e) {
+                        this.newRuleError = '儲存失敗：' + (e.message || e);
+                    }
+                },
+                async addUser() {
+                    if (!this.newUser.name.trim() || !this.newUser.email.trim()) {
+                        this.newUserError = '姓名與電子郵件為必填欄位';
+                        return;
+                    }
+                    this.newUserError = '';
+                    const username = this.newUser.email.split('@')[0].toLowerCase();
+                    const roleNames = { doctor: '醫師', patient: '患者', insurance: '保險人員', admin: '管理員' };
+                    try {
+                        const defaultPassword = '123456';
+                        const uid = await DbService.createUser(username, defaultPassword, this.newUser.name, this.newUser.role);
+                        this.mockUsers.push({
+                            id: username, uid, name: this.newUser.name, role: this.newUser.role,
+                            roleName: roleNames[this.newUser.role] || this.newUser.role,
+                            email: this.newUser.email, hospital: this.newUser.hospital || 'N/A',
+                            status: 'active', statusName: '正常'
+                        });
+                        this.showAddUserModal = false;
+                        this.newUser = { name: '', role: 'doctor', email: '', hospital: '' };
+                        this.triggerToast('帳號已創建', `${username} 已寫入 Firestore，預設密碼 ${defaultPassword}`);
+                    } catch (e) {
+                        this.newUserError = '創建失敗：' + (e.message || e);
+                    }
+                },
                 initCharts() {
                     this.destroyCharts();
+                    const aiTrend = this._aiTrendData || [450, 590, 820, 710, 950, 1100, 1280];
                     const trendEl = document.getElementById('aiTrendChart');
                     if (trendEl) {
                         this._charts.trend = echarts.init(trendEl);
@@ -557,7 +760,7 @@
                             yAxis: { type: 'value' },
                             series: [{
                                 name: 'AI 分析趨勢',
-                                data: [450, 590, 820, 710, 950, 1100, 1280],
+                                data: aiTrend,
                                 type: 'line',
                                 smooth: true,
                                 itemStyle: { color: '#7B61FF' },
@@ -565,6 +768,10 @@
                             }]
                         });
                     }
+                    const palette = ['#7B61FF', '#8B5CF6', '#A78BFA', '#C4B5FD', '#DDD6FE'];
+                    const medCats = (this._medicationCategories || [
+                        { label: 'A', value: 40 }, { label: 'B', value: 30 }, { label: 'C', value: 20 }, { label: 'D', value: 10 }
+                    ]).map((c, i) => ({ value: c.value, name: c.label, itemStyle: { color: palette[i % palette.length] } }));
                     const catEl = document.getElementById('categoryChart');
                     if (catEl) {
                         this._charts.category = echarts.init(catEl);
@@ -574,12 +781,7 @@
                                 name: '藥物類別',
                                 type: 'pie',
                                 radius: ['60%', '80%'],
-                                data: [
-                                    { value: 40, name: 'A', itemStyle: { color: '#7B61FF' } },
-                                    { value: 30, name: 'B', itemStyle: { color: '#8B5CF6' } },
-                                    { value: 20, name: 'C', itemStyle: { color: '#A78BFA' } },
-                                    { value: 10, name: 'D', itemStyle: { color: '#C4B5FD' } }
-                                ]
+                                data: medCats
                             }]
                         });
                     }
