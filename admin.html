@@ -66,6 +66,17 @@
         .table-row-hover:hover { background-color: #F9FAFB; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+        /* 報表匯出 PDF：只印出 #report-print-area，其餘畫面（側欄、頁首、其他分頁）一律隱藏 */
+        @media print {
+            @page { size: A4; margin: 14mm; }
+            body * { visibility: hidden; }
+            #report-print-area, #report-print-area * { visibility: visible; }
+            #report-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+            #report-print-area [class*="shadow-"] { box-shadow: none !important; }
+            #report-print-area { color: #1E1B4B !important; }
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -274,6 +285,242 @@
                     </div>
                 </div>
 
+                <!-- 報表中心 (Report Center · PDF 匯出 MVP) -->
+                <div v-else-if="activeMenu === '報表中心'" class="animate-fade-in space-y-8 text-left pb-20">
+                    <div class="flex justify-between items-end mb-4 no-print">
+                        <div>
+                            <h2 class="text-3xl font-black text-title mb-2 italic uppercase">Report Center</h2>
+                            <p class="text-lightText font-bold">金流總覽與用藥安全政策依據，一鍵匯出 PDF 供管理層審閱</p>
+                        </div>
+                        <button @click="exportReportPdf" class="purple-gradient text-white px-10 py-4 rounded-3xl font-black shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 uppercase text-sm tracking-widest">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            匯出 PDF
+                        </button>
+                    </div>
+
+                    <div id="report-print-area" class="space-y-8">
+                        <div class="hidden print:block mb-8">
+                            <div class="flex items-center gap-3 mb-1">
+                                <div class="w-8 h-8 rounded-lg purple-gradient flex items-center justify-center text-white font-black text-sm">M</div>
+                                <h1 class="text-xl font-black text-title">MedSafe 管理報表</h1>
+                            </div>
+                            <p class="text-[11px] text-slate-400">報表期間：2026-01 ～ {{ reportMonth }}　產出日期：{{ new Date().toLocaleDateString('zh-TW') }}　產出人：{{ user.name }}</p>
+                        </div>
+
+                        <!-- KPI 卡 -->
+                        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                            <div class="bg-white p-6 rounded-3xl shadow-premium border border-white">
+                                <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">保費收入（模擬）</div>
+                                <div class="text-2xl font-black text-title">NT$ {{ reportTotals.premium.toLocaleString() }}</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-3xl shadow-premium border border-white">
+                                <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">理賠支出（模擬）</div>
+                                <div class="text-2xl font-black text-danger">NT$ {{ reportTotals.claims.toLocaleString() }}</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-3xl shadow-premium border border-white">
+                                <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">保費折扣總額（模擬）</div>
+                                <div class="text-2xl font-black text-warning">NT$ {{ reportTotals.discount.toLocaleString() }}</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-3xl shadow-premium border border-white">
+                                <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">淨現金流（模擬）</div>
+                                <div class="text-2xl font-black text-success">NT$ {{ reportTotals.net.toLocaleString() }}</div>
+                            </div>
+                        </section>
+
+                        <!-- 月度金流明細 -->
+                        <section class="bg-white rounded-[32px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-title flex items-center gap-2"><span class="w-1.5 h-5 bg-primary rounded-full"></span> 月度金流明細（模擬數據）</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                            <th class="px-8 py-5">月份</th>
+                                            <th class="px-8 py-5">保費收入</th>
+                                            <th class="px-8 py-5">理賠支出</th>
+                                            <th class="px-8 py-5">保費折扣</th>
+                                            <th class="px-8 py-5 text-right">淨現金流</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr v-for="row in cashFlowRows" :key="row.month">
+                                            <td class="px-8 py-4 font-mono text-xs font-bold text-primary">{{ row.month }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-title">NT$ {{ row.premium.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-danger">NT$ {{ row.claims.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-warning">NT$ {{ row.discount.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-sm font-black text-success text-right">NT$ {{ (row.premium - row.claims - row.discount).toLocaleString() }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- DDI 風險 x 理賠關聯：政策調整依據 -->
+                        <section class="bg-white rounded-[32px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-title flex items-center gap-2"><span class="w-1.5 h-5 bg-accent rounded-full"></span> 用藥安全風險 × 理賠關聯（政策調整依據）</h3>
+                                <p class="text-xs text-lightText mt-1">依 DDI 風險等級模擬平均理賠成本，作為保費與核保政策調整參考（模擬數據）</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                            <th class="px-8 py-5">風險等級</th>
+                                            <th class="px-8 py-5">保戶數</th>
+                                            <th class="px-8 py-5">平均理賠金額</th>
+                                            <th class="px-8 py-5">建議政策</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr v-for="row in ddiPolicyRows" :key="row.level">
+                                            <td class="px-8 py-4 font-black text-title text-sm">{{ row.level }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">{{ row.patients }} 人</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-title">NT$ {{ row.avgClaim.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-xs font-bold text-slate-500">{{ row.suggestion }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- 保險核心比率分析 -->
+                        <div class="pt-2">
+                            <h3 class="font-black text-title flex items-center gap-2 mb-4"><span class="w-1.5 h-5 bg-success rounded-full"></span> 保險核心比率分析</h3>
+                            <section class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div class="bg-white p-6 rounded-3xl shadow-premium border border-white">
+                                    <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">賠付率 Loss Ratio</div>
+                                    <div class="text-2xl font-black text-danger">{{ (insuranceRatios.lossRatio * 100).toFixed(1) }}%</div>
+                                    <p class="text-[10px] text-lightText mt-2">理賠支出 ÷ 保費收入</p>
+                                </div>
+                                <div class="bg-white p-6 rounded-3xl shadow-premium border border-white">
+                                    <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">費用率 Expense Ratio</div>
+                                    <div class="text-2xl font-black text-warning">{{ (insuranceRatios.expenseRatio * 100).toFixed(1) }}%</div>
+                                    <p class="text-[10px] text-lightText mt-2">營業費用 ÷ 保費收入</p>
+                                </div>
+                                <div :class="['p-6 rounded-3xl shadow-premium border', insuranceRatios.combinedRatio < 1 ? 'bg-white border-white' : 'bg-red-50 border-red-100']">
+                                    <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">綜合比率 Combined Ratio</div>
+                                    <div :class="['text-2xl font-black', insuranceRatios.combinedRatio < 1 ? 'text-title' : 'text-danger']">{{ (insuranceRatios.combinedRatio * 100).toFixed(1) }}%</div>
+                                    <p class="text-[10px] text-lightText mt-2">{{ insuranceRatios.combinedRatio < 1 ? '< 100%，承保利益為正' : '≥ 100%，承保面已虧損，需靠業外挹注' }}</p>
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- 正式損益表 -->
+                        <section class="bg-white rounded-[32px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-title flex items-center gap-2"><span class="w-1.5 h-5 bg-primary rounded-full"></span> 損益表（模擬情境，權責發生制）</h3>
+                                <p class="text-xs text-lightText mt-1">藥品庫存屬資產科目，未計入本表營業費用，詳見下方資產負債表</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse">
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr><td class="px-8 py-4 text-sm font-black text-title">營業收入（保費收入）</td><td class="px-8 py-4 text-sm font-bold text-title text-right">NT$ {{ incomeStatement.revenue.toLocaleString() }}</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：營業成本（理賠支出）</td><td class="px-8 py-4 text-sm font-bold text-danger text-right">NT$ ({{ incomeStatement.cogs.toLocaleString() }})</td></tr>
+                                        <tr class="bg-slate-50"><td class="px-8 py-4 text-sm font-black text-title">營業毛利 Gross Profit</td><td class="px-8 py-4 text-sm font-black text-title text-right">NT$ {{ incomeStatement.grossProfit.toLocaleString() }}</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：保費折扣</td><td class="px-8 py-4 text-sm font-bold text-warning text-right">NT$ ({{ incomeStatement.discount.toLocaleString() }})</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：雲端維運成本</td><td class="px-8 py-4 text-sm font-bold text-warning text-right">NT$ ({{ incomeStatement.cloudCost.toLocaleString() }})</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：AI 分析運算成本</td><td class="px-8 py-4 text-sm font-bold text-warning text-right">NT$ ({{ incomeStatement.aiCost.toLocaleString() }})</td></tr>
+                                        <tr class="bg-slate-50"><td class="px-8 py-4 text-sm font-black text-title">營業淨利 Operating Income (EBIT)</td><td class="px-8 py-4 text-sm font-black text-title text-right">NT$ {{ incomeStatement.operatingIncome.toLocaleString() }}</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：所得稅費用（模擬稅率 {{ (incomeStatement.taxRate*100).toFixed(0) }}%）</td><td class="px-8 py-4 text-sm font-bold text-danger text-right">NT$ ({{ incomeStatement.tax.toLocaleString() }})</td></tr>
+                                        <tr class="bg-primary/5"><td class="px-8 py-5 text-base font-black text-primary">稅後淨利 Net Income</td><td class="px-8 py-5 text-base font-black text-primary text-right">NT$ {{ incomeStatement.netIncome.toLocaleString() }}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- 資產負債表（簡化） -->
+                        <section class="bg-white rounded-[32px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-title flex items-center gap-2"><span class="w-1.5 h-5 bg-accent rounded-full"></span> 資產負債表（簡化，僅列示存貨科目）</h3>
+                                <p class="text-xs text-lightText mt-1">藥品庫存為「流動資產」，依現有藥品主檔 stock × price 加總，非模擬數字；已耗用部分才會轉列損益表成本</p>
+                            </div>
+                            <div class="p-8 flex flex-wrap items-center justify-between gap-4">
+                                <div>
+                                    <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">流動資產 — 藥品存貨 Inventory</div>
+                                    <div class="text-2xl font-black text-title">NT$ {{ medicationInventoryTotal.toLocaleString() }}</div>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                            <th class="px-8 py-5">藥品名稱</th>
+                                            <th class="px-8 py-5">分類</th>
+                                            <th class="px-8 py-5">庫存量</th>
+                                            <th class="px-8 py-5">單價</th>
+                                            <th class="px-8 py-5 text-right">存貨價值</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr v-for="m in medicationInventory" :key="m.id">
+                                            <td class="px-8 py-4 text-sm font-black text-title">{{ m.zhName }} <span class="text-slate-400 font-bold">{{ m.name }}</span></td>
+                                            <td class="px-8 py-4 text-xs font-bold text-slate-500">{{ m.category }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">{{ m.stock.toLocaleString() }} {{ m.unit }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">NT$ {{ m.price }}</td>
+                                            <td class="px-8 py-4 text-sm font-black text-title text-right">NT$ {{ m.totalValue.toLocaleString() }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- 雲端／AI 成本估算假設 -->
+                        <section class="bg-white rounded-[32px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-title flex items-center gap-2"><span class="w-1.5 h-5 bg-warning rounded-full"></span> 雲端維運與 AI 運算成本假設</h3>
+                                <p class="text-xs text-lightText mt-1">用量取自儀表板真實 KPI，單價為模擬假設，供成本結構參考</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                            <th class="px-8 py-5">項目</th>
+                                            <th class="px-8 py-5">用量</th>
+                                            <th class="px-8 py-5">假設單價</th>
+                                            <th class="px-8 py-5 text-right">估算成本</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr>
+                                            <td class="px-8 py-4 text-sm font-black text-title">雲端儲存</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">{{ cloudOpsCost.storageGB.toLocaleString() }} GB</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">NT$ {{ cloudOpsCost.storageRate }} / GB / 月</td>
+                                            <td class="px-8 py-4 text-sm font-black text-title text-right">NT$ {{ cloudOpsCost.storageCost.toLocaleString() }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-8 py-4 text-sm font-black text-title">API 請求</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">{{ cloudOpsCost.apiCallsMonthly.toLocaleString() }} 次 / 月</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">NT$ {{ cloudOpsCost.apiRate }} / 次</td>
+                                            <td class="px-8 py-4 text-sm font-black text-title text-right">NT$ {{ cloudOpsCost.apiCost.toLocaleString() }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-8 py-4 text-sm font-black text-title">AI 分析</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">{{ aiComputeCost.count.toLocaleString() }} 次</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">NT$ {{ aiComputeCost.rate }} / 次</td>
+                                            <td class="px-8 py-4 text-sm font-black text-title text-right">NT$ {{ aiComputeCost.total.toLocaleString() }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- 稅後淨利總結 -->
+                        <section class="purple-gradient rounded-[32px] p-8 text-white flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <div class="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">本期稅後淨利 Net Income（已扣除營業成本、費用與模擬所得稅）</div>
+                                <div class="text-3xl font-black">NT$ {{ incomeStatement.netIncome.toLocaleString() }}</div>
+                            </div>
+                            <div class="text-xs font-bold opacity-70 text-right">
+                                綜合比率 {{ (insuranceRatios.combinedRatio * 100).toFixed(1) }}%<br>
+                                藥品存貨資產 NT$ {{ medicationInventoryTotal.toLocaleString() }}（不影響本期損益）
+                            </div>
+                        </section>
+
+                        <p class="text-[10px] text-slate-400 text-center pt-2">本報表除「藥品庫存」（依現有主檔試算）與各項「用量／案件數」外，保費、理賠、折扣、雲端與 AI 單價、稅率皆為競賽展示模擬情境，非真實財務紀錄，僅供報表格式與分析邏輯示範。</p>
+                    </div>
+                </div>
+
                 <!-- 系統設置 (Fully Functional Card Flow) -->
                 <div v-else-if="activeMenu === '系統設置'" class="animate-fade-in space-y-8 text-left pb-20">
                     <div class="flex justify-between items-end mb-4">
@@ -446,7 +693,8 @@
                     Dashboard: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>` }),
                     Rules: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>` }),
                     Users: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>` }),
-                    Settings: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>` })
+                    Settings: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>` }),
+                    Report: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6M5 21h14a2 2 0 002-2V7l-5-5H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>` })
                 };
                 return {
                     user, activeMenu: '儀表板總覽',
@@ -455,6 +703,7 @@
                         { name: '儀表板總覽', label: '儀表板總覽', icon: Icons.Dashboard },
                         { name: 'DDI 交互規則', label: 'DDI 交互規則', icon: Icons.Rules },
                         { name: '用戶管理', label: '用戶管理', icon: Icons.Users },
+                        { name: '報表中心', label: '報表中心', icon: Icons.Report },
                         { name: '系統設置', label: '系統設置', icon: Icons.Settings },
                     ],
                     kpis: [
@@ -499,6 +748,23 @@
                     notifications: [
                         { id: 1, title: '系統安全警告', content: '偵測到異常的 FHIR 資源存取。', time: '5 分鐘前', read: false },
                         { id: 2, title: '系統資料同步完成', content: '全院處方存證已與區域節點同步。', time: '12 分鐘前', read: false },
+                    ],
+                    // 報表中心：競賽展示用模擬金流數據（保費收入／理賠支出／保費折扣皆非真實 Firestore 紀錄）
+                    reportMonth: '2026-07',
+                    cashFlowRows: [
+                        { month: '2026-01', premium: 6200000, claims: 1850000, discount: 320000 },
+                        { month: '2026-02', premium: 6350000, claims: 1620000, discount: 335000 },
+                        { month: '2026-03', premium: 6480000, claims: 2100000, discount: 340000 },
+                        { month: '2026-04', premium: 6600000, claims: 1780000, discount: 355000 },
+                        { month: '2026-05', premium: 6750000, claims: 1950000, discount: 368000 },
+                        { month: '2026-06', premium: 6900000, claims: 1720000, discount: 382000 },
+                        { month: '2026-07', premium: 7050000, claims: 2040000, discount: 398000 },
+                    ],
+                    ddiPolicyRows: [
+                        { level: '極高風險', patients: 120, avgClaim: 18500, suggestion: '建議加收 15% 風險溢價，並要求季度回診覆核' },
+                        { level: '高風險', patients: 85, avgClaim: 9200, suggestion: '建議搭售 AI 用藥提醒服務，換取部分保費折扣' },
+                        { level: '中風險', patients: 45, avgClaim: 4100, suggestion: '維持現行費率，持續觀察' },
+                        { level: '低風險', patients: 10, avgClaim: 800, suggestion: '可提供續保優惠方案，鼓勵長期投保' },
                     ]
                 }
             },
@@ -520,6 +786,58 @@
                 },
                 doctorOptions() {
                     return this.mockUsers.filter(u => u.role === 'doctor');
+                },
+                reportTotals() {
+                    const rows = this.cashFlowRows;
+                    const premium = rows.reduce((s, r) => s + r.premium, 0);
+                    const claims = rows.reduce((s, r) => s + r.claims, 0);
+                    const discount = rows.reduce((s, r) => s + r.discount, 0);
+                    return { premium, claims, discount, net: premium - claims - discount };
+                },
+                // 藥品庫存成本：直接讀現有藥品主檔 stock × price 加總，非模擬數字
+                medicationInventory() {
+                    return (window.mockData.allMedications || []).map(m => ({ ...m, totalValue: m.stock * m.price }));
+                },
+                medicationInventoryTotal() {
+                    return this.medicationInventory.reduce((s, m) => s + m.totalValue, 0);
+                },
+                // 雲端維運成本：用量（儲存量／API 請求數）為真實 KPI 數字，單價為模擬假設
+                cloudOpsCost() {
+                    const storageRate = 3;   // 模擬：NT$/GB/月
+                    const apiRate = 0.02;    // 模擬：NT$/次
+                    const storageGB = Math.round(parseFloat(this.kpis[3].value) * 1024);
+                    const apiCallsMonthly = Math.round(Number(this.kpis[2].value) * 30);
+                    const storageCost = Math.round(storageGB * storageRate);
+                    const apiCost = Math.round(apiCallsMonthly * apiRate);
+                    return { storageGB, storageRate, apiRate, apiCallsMonthly, storageCost, apiCost, total: storageCost + apiCost };
+                },
+                // AI 分析運算成本：次數為真實 KPI 數字，單價為「若串接真實 AI API」的模擬假設
+                aiComputeCost() {
+                    const rate = 1.5; // 模擬：每次 AI 分析成本 (NT$)
+                    const count = Number(this.kpis[1].value);
+                    return { rate, count, total: Math.round(rate * count) };
+                },
+                // 正式損益表格式：藥品庫存屬資產科目，不計入營業費用（見資產負債表區塊）
+                incomeStatement() {
+                    const revenue = this.reportTotals.premium;
+                    const cogs = this.reportTotals.claims;
+                    const grossProfit = revenue - cogs;
+                    const discount = this.reportTotals.discount;
+                    const cloudCost = this.cloudOpsCost.total;
+                    const aiCost = this.aiComputeCost.total;
+                    const opex = discount + cloudCost + aiCost;
+                    const operatingIncome = grossProfit - opex;
+                    const taxRate = 0.20; // 模擬：假設所得稅率 20%
+                    const tax = operatingIncome > 0 ? Math.round(operatingIncome * taxRate) : 0;
+                    const netIncome = operatingIncome - tax;
+                    return { revenue, cogs, grossProfit, discount, cloudCost, aiCost, opex, operatingIncome, taxRate, tax, netIncome };
+                },
+                // 保險業核心比率：賠付率／費用率／綜合比率
+                insuranceRatios() {
+                    const premium = this.reportTotals.premium || 1;
+                    const lossRatio = this.reportTotals.claims / premium;
+                    const expenseRatio = this.incomeStatement.opex / premium;
+                    return { lossRatio, expenseRatio, combinedRatio: lossRatio + expenseRatio };
                 }
             },
             async created() {
@@ -541,6 +859,15 @@
                     }
                 } catch (e) {
                     console.error('Firestore admin data error:', e);
+                }
+                try {
+                    const savedSettings = await DbService.getSystemSettings();
+                    if (savedSettings) {
+                        const { fhirUrl, aiSensitivity, autoBlock, syncInterval, sessionTimeout } = savedSettings;
+                        Object.assign(this.systemSettings, { fhirUrl, aiSensitivity, autoBlock, syncInterval, sessionTimeout });
+                    }
+                } catch (e) {
+                    console.error('Firestore system settings error:', e);
                 }
                 try {
                     const rules = await DbService.getDdiRules();
@@ -679,8 +1006,17 @@
                         this.isTestingConnection = false;
                     }
                 },
-                saveSystemSettings() {
-                    this.triggerToast('設置已儲存', '系統核心參數已更新並同步至所有節點');
+                async saveSystemSettings() {
+                    const { fhirUrl, aiSensitivity, autoBlock, syncInterval, sessionTimeout } = this.systemSettings;
+                    try {
+                        await DbService.saveSystemSettings({ fhirUrl, aiSensitivity, autoBlock, syncInterval, sessionTimeout });
+                        this.triggerToast('設置已儲存', '系統核心參數已寫入 Firestore，重新整理後仍會保留');
+                    } catch (e) {
+                        this.triggerToast('儲存失敗', '請確認 Firestore 規則允許寫入 admin_data');
+                    }
+                },
+                exportReportPdf() {
+                    window.print();
                 },
                 async toggleMaintenanceMode() {
                     const enabled = this.systemSettings.isMaintenanceMode;

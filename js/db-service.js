@@ -57,6 +57,17 @@ window.DbService = {
     await window.db.collection('admin_data').doc('main').set({ maintenanceMode: enabled }, { merge: true });
   },
 
+  // 系統設置卡（FHIR URL、AI 敏感度門檻等），與 maintenanceMode 分開存但同一份文件，
+  // 避免每次重整頁面後管理員的設定又被 mockData 預設值蓋掉
+  async getSystemSettings() {
+    const snap = await window.db.collection('admin_data').doc('main').get();
+    return snap.exists ? (snap.data().systemSettings || null) : null;
+  },
+
+  async saveSystemSettings(settings) {
+    await window.db.collection('admin_data').doc('main').set({ systemSettings: settings }, { merge: true });
+  },
+
   // --- Doctor ---
   async getDoctorData() {
     const snap = await window.db.collection('doctor_data').doc('main').get();

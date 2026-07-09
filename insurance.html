@@ -49,6 +49,17 @@
         ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+        /* 報表匯出 PDF：只印出 #report-print-area，其餘畫面（側欄、頁首、其他分頁）一律隱藏 */
+        @media print {
+            @page { size: A4; margin: 14mm; }
+            body * { visibility: hidden; }
+            #report-print-area, #report-print-area * { visibility: visible; }
+            #report-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+            #report-print-area [class*="shadow-"] { box-shadow: none !important; }
+            #report-print-area { color: #292E4C !important; }
+        }
     </style>
 </head>
 <body class="overflow-x-hidden text-left">
@@ -379,6 +390,231 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 報表中心 (Report Center · PDF 匯出 MVP) -->
+                <div v-else-if="activeMenu === 'Report'" key="report" class="space-y-8 animate-fade-in text-left">
+                    <div class="flex justify-between items-end mb-4 no-print">
+                        <div class="text-left">
+                            <h2 class="text-2xl md:text-4xl font-black text-navy mb-2 italic uppercase">Report Center</h2>
+                            <p class="text-lightText font-bold text-xs md:text-sm">保費、理賠與核保政策依據總覽，一鍵匯出 PDF</p>
+                        </div>
+                        <button @click="exportReportPdf" class="px-6 py-3 bg-navy text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-turquoise transition-all shadow-sm flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            匯出 PDF
+                        </button>
+                    </div>
+
+                    <div id="report-print-area" class="space-y-8">
+                        <div class="hidden print:block mb-8">
+                            <div class="flex items-center gap-3 mb-1">
+                                <div class="w-8 h-8 rounded-lg turquoise-gradient flex items-center justify-center text-white font-black text-sm">M</div>
+                                <h1 class="text-xl font-black text-navy">MedSafe 保險端報表</h1>
+                            </div>
+                            <p class="text-[11px] text-slate-400">報表期間：2026-01 ～ {{ reportMonth }}　產出日期：{{ new Date().toLocaleDateString('zh-TW') }}　產出人：{{ user.name }}</p>
+                        </div>
+
+                        <!-- KPI 卡 -->
+                        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                            <div class="bg-white p-6 rounded-[24px] shadow-premium border border-white">
+                                <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">保費收入（模擬）</div>
+                                <div class="text-2xl font-black text-navy">NT$ {{ reportTotals.premium.toLocaleString() }}</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-[24px] shadow-premium border border-white">
+                                <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">理賠支出（模擬）</div>
+                                <div class="text-2xl font-black text-red-500">NT$ {{ reportTotals.claims.toLocaleString() }}</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-[24px] shadow-premium border border-white">
+                                <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">保費折扣總額（模擬）</div>
+                                <div class="text-2xl font-black text-golden">NT$ {{ reportTotals.discount.toLocaleString() }}</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-[24px] shadow-premium border border-white">
+                                <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">淨現金流（模擬）</div>
+                                <div class="text-2xl font-black text-turquoise">NT$ {{ reportTotals.net.toLocaleString() }}</div>
+                            </div>
+                        </section>
+
+                        <!-- 月度金流明細 -->
+                        <section class="bg-white rounded-[32px] md:rounded-[40px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-navy flex items-center gap-2"><span class="w-1.5 h-5 bg-turquoise rounded-full"></span> 月度金流明細（模擬數據）</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse min-w-[600px]">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                            <th class="px-8 py-5">月份</th>
+                                            <th class="px-8 py-5">保費收入</th>
+                                            <th class="px-8 py-5">理賠支出</th>
+                                            <th class="px-8 py-5">保費折扣</th>
+                                            <th class="px-8 py-5 text-right">淨現金流</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr v-for="row in cashFlowRows" :key="row.month">
+                                            <td class="px-8 py-4 font-mono text-xs font-bold text-navy">{{ row.month }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-navy">NT$ {{ row.premium.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-red-500">NT$ {{ row.claims.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-golden">NT$ {{ row.discount.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-sm font-black text-turquoise text-right">NT$ {{ (row.premium - row.claims - row.discount).toLocaleString() }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- 保險核心比率分析 -->
+                        <div class="pt-2">
+                            <h3 class="font-black text-navy flex items-center gap-2 mb-4"><span class="w-1.5 h-5 bg-turquoise rounded-full"></span> 保險核心比率分析</h3>
+                            <section class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div class="bg-white p-6 rounded-[24px] shadow-premium border border-white">
+                                    <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">賠付率 Loss Ratio</div>
+                                    <div class="text-2xl font-black text-red-500">{{ (insuranceRatios.lossRatio * 100).toFixed(1) }}%</div>
+                                    <p class="text-[10px] text-lightText mt-2">理賠支出 ÷ 保費收入</p>
+                                </div>
+                                <div class="bg-white p-6 rounded-[24px] shadow-premium border border-white">
+                                    <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">費用率 Expense Ratio</div>
+                                    <div class="text-2xl font-black text-golden">{{ (insuranceRatios.expenseRatio * 100).toFixed(1) }}%</div>
+                                    <p class="text-[10px] text-lightText mt-2">營業費用 ÷ 保費收入</p>
+                                </div>
+                                <div :class="['p-6 rounded-[24px] shadow-premium border', insuranceRatios.combinedRatio < 1 ? 'bg-white border-white' : 'bg-red-50 border-red-100']">
+                                    <div class="text-[10px] font-black text-lightText uppercase tracking-widest mb-2">綜合比率 Combined Ratio</div>
+                                    <div :class="['text-2xl font-black', insuranceRatios.combinedRatio < 1 ? 'text-navy' : 'text-red-500']">{{ (insuranceRatios.combinedRatio * 100).toFixed(1) }}%</div>
+                                    <p class="text-[10px] text-lightText mt-2">{{ insuranceRatios.combinedRatio < 1 ? '< 100%，承保利益為正' : '≥ 100%，承保面已虧損，需靠業外挹注' }}</p>
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- 正式損益表 -->
+                        <section class="bg-white rounded-[32px] md:rounded-[40px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-navy flex items-center gap-2"><span class="w-1.5 h-5 bg-navy rounded-full"></span> 損益表（模擬情境，權責發生制）</h3>
+                                <p class="text-xs text-lightText mt-1">個案關懷／理賠審核人力成本計入營業費用；案件數為真實紀錄，人力單價為模擬假設</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse min-w-[600px]">
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr><td class="px-8 py-4 text-sm font-black text-navy">營業收入（保費收入）</td><td class="px-8 py-4 text-sm font-bold text-navy text-right">NT$ {{ incomeStatement.revenue.toLocaleString() }}</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：營業成本（理賠支出）</td><td class="px-8 py-4 text-sm font-bold text-red-500 text-right">NT$ ({{ incomeStatement.cogs.toLocaleString() }})</td></tr>
+                                        <tr class="bg-slate-50"><td class="px-8 py-4 text-sm font-black text-navy">營業毛利 Gross Profit</td><td class="px-8 py-4 text-sm font-black text-navy text-right">NT$ {{ incomeStatement.grossProfit.toLocaleString() }}</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：保費折扣</td><td class="px-8 py-4 text-sm font-bold text-golden text-right">NT$ ({{ incomeStatement.discount.toLocaleString() }})</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：個案關懷／理賠審核人力成本</td><td class="px-8 py-4 text-sm font-bold text-golden text-right">NT$ ({{ incomeStatement.labor.toLocaleString() }})</td></tr>
+                                        <tr class="bg-slate-50"><td class="px-8 py-4 text-sm font-black text-navy">營業淨利 Operating Income (EBIT)</td><td class="px-8 py-4 text-sm font-black text-navy text-right">NT$ {{ incomeStatement.operatingIncome.toLocaleString() }}</td></tr>
+                                        <tr><td class="px-8 py-4 text-sm font-bold text-slate-500 pl-12">減：所得稅費用（模擬稅率 {{ (incomeStatement.taxRate*100).toFixed(0) }}%）</td><td class="px-8 py-4 text-sm font-bold text-red-500 text-right">NT$ ({{ incomeStatement.tax.toLocaleString() }})</td></tr>
+                                        <tr class="bg-turquoise/10"><td class="px-8 py-5 text-base font-black text-navy">稅後淨利 Net Income</td><td class="px-8 py-5 text-base font-black text-navy text-right">NT$ {{ incomeStatement.netIncome.toLocaleString() }}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- 保險特有準備金（簡化精算假設） -->
+                        <section class="bg-white rounded-[32px] md:rounded-[40px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-navy flex items-center gap-2"><span class="w-1.5 h-5 bg-danger rounded-full"></span> 保險特有準備金（簡化精算假設）</h3>
+                                <p class="text-xs text-lightText mt-1">採業界常用之簡化估算法：未滿期保費準備採「50% 法」，賠款準備金（IBNR）採「已付賠款一定比例」估列</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse min-w-[600px]">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                            <th class="px-8 py-5">準備金項目</th>
+                                            <th class="px-8 py-5">計算基礎</th>
+                                            <th class="px-8 py-5">估算假設</th>
+                                            <th class="px-8 py-5 text-right">提存金額</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr>
+                                            <td class="px-8 py-4 text-sm font-black text-navy">未滿期保費準備<br><span class="text-[10px] font-bold text-slate-400">Unearned Premium Reserve</span></td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">年化保費 NT$ {{ policyReserves.annualizedPremium.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">50% 法（假設保單均勻分佈全年）</td>
+                                            <td class="px-8 py-4 text-sm font-black text-navy text-right">NT$ {{ policyReserves.upr.toLocaleString() }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-8 py-4 text-sm font-black text-navy">賠款準備金（IBNR）<br><span class="text-[10px] font-bold text-slate-400">已發生未申報理賠</span></td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">已付賠款 NT$ {{ reportTotals.claims.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">已付賠款 × {{ (policyReserves.ibnrRate*100).toFixed(0) }}%</td>
+                                            <td class="px-8 py-4 text-sm font-black text-navy text-right">NT$ {{ policyReserves.ibnr.toLocaleString() }}</td>
+                                        </tr>
+                                        <tr class="bg-slate-50">
+                                            <td class="px-8 py-4 text-sm font-black text-navy" colspan="3">準備金提存合計</td>
+                                            <td class="px-8 py-4 text-sm font-black text-navy text-right">NT$ {{ policyReserves.total.toLocaleString() }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- DDI 風險 x 理賠關聯：核保政策依據 -->
+                        <section class="bg-white rounded-[32px] md:rounded-[40px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50">
+                                <h3 class="font-black text-navy flex items-center gap-2"><span class="w-1.5 h-5 bg-danger rounded-full"></span> 用藥安全風險 × 理賠關聯（核保政策依據）</h3>
+                                <p class="text-xs text-lightText mt-1">依 DDI 風險等級模擬平均理賠成本，作為保費費率與核保條件調整參考（模擬數據）</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse min-w-[600px]">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                            <th class="px-8 py-5">風險等級</th>
+                                            <th class="px-8 py-5">保戶數</th>
+                                            <th class="px-8 py-5">平均理賠金額</th>
+                                            <th class="px-8 py-5">建議核保政策</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr v-for="row in ddiPolicyRows" :key="row.level">
+                                            <td class="px-8 py-4 font-black text-navy text-sm">{{ row.level }}</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">{{ row.patients }} 人</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-navy">NT$ {{ row.avgClaim.toLocaleString() }}</td>
+                                            <td class="px-8 py-4 text-xs font-bold text-slate-500">{{ row.suggestion }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- 個案關懷／理賠審核人力成本 -->
+                        <section class="bg-white rounded-[32px] md:rounded-[40px] shadow-premium border border-white overflow-hidden">
+                            <div class="p-8 border-b border-gray-50 flex flex-wrap items-center justify-between gap-4">
+                                <div>
+                                    <h3 class="font-black text-navy flex items-center gap-2"><span class="w-1.5 h-5 bg-golden rounded-full"></span> 個案關懷／理賠審核人力成本</h3>
+                                    <p class="text-xs text-lightText mt-1">案件數取自實際個案關懷與理賠清單，每件平均成本為模擬假設</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[10px] font-black text-lightText uppercase tracking-widest">估算總成本</div>
+                                    <div class="text-2xl font-black text-navy">NT$ {{ laborCost.total.toLocaleString() }}</div>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse min-w-[600px]">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 bg-white">
+                                            <th class="px-8 py-5">項目</th>
+                                            <th class="px-8 py-5">案件數（真實）</th>
+                                            <th class="px-8 py-5">假設平均成本</th>
+                                            <th class="px-8 py-5 text-right">估算成本</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        <tr>
+                                            <td class="px-8 py-4 text-sm font-black text-navy">個案關懷介入</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">{{ laborCost.careCaseCount }} 件</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">NT$ {{ laborCost.careCaseRate }} / 件</td>
+                                            <td class="px-8 py-4 text-sm font-black text-navy text-right">NT$ {{ laborCost.careCaseCost.toLocaleString() }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-8 py-4 text-sm font-black text-navy">理賠案件審核</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">{{ laborCost.claimCount }} 件</td>
+                                            <td class="px-8 py-4 text-sm font-bold text-slate-600">NT$ {{ laborCost.claimReviewRate }} / 件</td>
+                                            <td class="px-8 py-4 text-sm font-black text-navy text-right">NT$ {{ laborCost.claimReviewCost.toLocaleString() }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <p class="text-[10px] text-slate-400 text-center pt-2">本報表除「案件數」取自實際紀錄外，保費、理賠、折扣、人力單價、稅率與準備金提存比例皆為競賽展示模擬情境，非真實財務／精算紀錄，僅供報表格式與分析邏輯示範。</p>
+                    </div>
+                </div>
             </transition>
         </main>
 
@@ -400,6 +636,21 @@
                         <div class="grid grid-cols-1 gap-6 text-left">
                             <div class="space-y-2"><h4 class="text-[10px] font-black text-lightText uppercase tracking-widest">風險誘因與診斷</h4><div class="p-5 md:p-6 bg-red-50 text-danger text-sm font-bold rounded-2xl border border-red-100 italic">" {{ selectedRiskPatient.reason }} "</div></div>
                             <div class="space-y-2"><h4 class="text-[10px] font-black text-lightText uppercase tracking-widest">核保精算建議</h4><div class="p-5 md:p-6 bg-navy text-turquoise text-sm font-bold rounded-2xl italic leading-relaxed text-white">{{ selectedRiskPatient.recommendation }}</div></div>
+                            <div class="space-y-2">
+                                <h4 class="text-[10px] font-black text-lightText uppercase tracking-widest">FHIR Patient 資源查核</h4>
+                                <div class="p-5 md:p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-3">
+                                    <p class="text-[11px] font-bold text-slate-500 leading-relaxed">向公用 HAPI FHIR 測試伺服器（hapi.fhir.org/baseR4）即時查詢是否有同名 Patient 資源，用於驗證跨院資料交換介接是否暢通。</p>
+                                    <div class="flex items-center justify-between gap-4">
+                                        <div class="flex items-center gap-2">
+                                            <div :class="['w-2.5 h-2.5 rounded-full', fhirCheckStatus === 'checking' ? 'bg-golden animate-ping' : (fhirCheckStatus === 'error' ? 'bg-danger' : (fhirCheckStatus === 'done' ? 'bg-turquoise' : 'bg-slate-300'))]"></div>
+                                            <span class="text-xs font-black text-navy uppercase">
+                                                {{ fhirCheckStatus === 'checking' ? '查詢中...' : (fhirCheckStatus === 'done' ? `Bundle 命中 ${fhirCheckResult.total} 筆（${fhirCheckResult.checkedAt}）` : (fhirCheckStatus === 'error' ? '查詢失敗' : '尚未查核')) }}
+                                            </span>
+                                        </div>
+                                        <button @click="verifyFhirRecord" :disabled="fhirCheckStatus === 'checking'" class="px-5 py-2.5 bg-white border-2 border-navy/10 rounded-xl text-[10px] font-black text-navy hover:bg-navy hover:text-white transition-all disabled:opacity-50">{{ fhirCheckStatus === 'checking' ? '查詢中...' : '查核 FHIR 紀錄' }}</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="p-8 md:p-10 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-4 shrink-0">
@@ -481,6 +732,7 @@
             AI: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>` }),
             Customers: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>` }),
             CareCase: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 10-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>` }),
+            Report: markRaw({ template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6M5 21h14a2 2 0 002-2V7l-5-5H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>` }),
         };
         createApp({
             data() {
@@ -491,6 +743,8 @@
                     showMobileMenu: false,
                     maintenanceMode: false,
                     activatingCare: false,
+                    fhirCheckStatus: 'idle',
+                    fhirCheckResult: null,
                     menuItems: [
                         { name: 'Dashboard', label: '總覽儀表板', icon: Icons.Dashboard },
                         { name: 'Policy', label: '保單大數據', icon: Icons.Policy },
@@ -499,6 +753,7 @@
                         { name: 'Risk', label: '動態風險評估', icon: Icons.Risk },
                         { name: 'AI', label: 'AI 核保建議', icon: Icons.AI },
                         { name: 'Customers', label: '保戶目錄', icon: Icons.Customers },
+                        { name: 'Report', label: '報表中心', icon: Icons.Report },
                     ],
                     kpis: [
                         { label: 'Active Policies', value: insData.stats.activePolicies.toLocaleString(), icon: Icons.Policy, trend: 12.5, bg: 'turquoise-gradient', color: 'bg-turquoise', progress: 85 },
@@ -536,7 +791,24 @@
                         'P-004': { name: '張健', id: 'P-004', score: 92, alert: 'NORMAL', reason: '偶有輕微交互作用警示，但已及時處理', recommendation: '建議發送健康小叮嚀，維持現有費率' },
                         'P-005': { name: '劉美玲', id: 'P-005', score: 90, alert: 'NORMAL', reason: '用藥頻次較多，需持續追蹤 DDI 趨勢', recommendation: '建議導入口口服藥物自動提示系統' },
                         'P-006': { name: '林志豪', id: 'P-006', score: 88, alert: 'NORMAL', reason: '跨院領藥頻率增加，需注意重複用藥', recommendation: '建議進行電話訪視，確認用藥現況' }
-                    }
+                    },
+                    // 報表中心：競賽展示用模擬金流數據（保費收入／理賠支出／保費折扣皆非真實 Firestore 紀錄）
+                    reportMonth: '2026-07',
+                    cashFlowRows: [
+                        { month: '2026-01', premium: 6200000, claims: 1850000, discount: 320000 },
+                        { month: '2026-02', premium: 6350000, claims: 1620000, discount: 335000 },
+                        { month: '2026-03', premium: 6480000, claims: 2100000, discount: 340000 },
+                        { month: '2026-04', premium: 6600000, claims: 1780000, discount: 355000 },
+                        { month: '2026-05', premium: 6750000, claims: 1950000, discount: 368000 },
+                        { month: '2026-06', premium: 6900000, claims: 1720000, discount: 382000 },
+                        { month: '2026-07', premium: 7050000, claims: 2040000, discount: 398000 },
+                    ],
+                    ddiPolicyRows: [
+                        { level: '極高風險', patients: 120, avgClaim: 18500, suggestion: '建議加收 15% 風險溢價，並要求季度回診覆核' },
+                        { level: '高風險', patients: 85, avgClaim: 9200, suggestion: '建議搭售 AI 用藥提醒服務，換取部分保費折扣' },
+                        { level: '中風險', patients: 45, avgClaim: 4100, suggestion: '維持現行費率，持續觀察' },
+                        { level: '低風險', patients: 10, avgClaim: 800, suggestion: '可提供續保優惠方案，鼓勵長期投保' },
+                    ]
                 }
             },
             computed: {
@@ -545,6 +817,53 @@
                     if (this.customerSort === 'score') list.sort((a,b) => b.score - a.score);
                     if (this.customerSort === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
                     return list;
+                },
+                reportTotals() {
+                    const rows = this.cashFlowRows;
+                    const premium = rows.reduce((s, r) => s + r.premium, 0);
+                    const claims = rows.reduce((s, r) => s + r.claims, 0);
+                    const discount = rows.reduce((s, r) => s + r.discount, 0);
+                    return { premium, claims, discount, net: premium - claims - discount };
+                },
+                // 個案關懷／理賠審核人力成本：案件數為真實資料（Firestore care_cases + 理賠追蹤清單），單價為模擬假設
+                laborCost() {
+                    const careCaseRate = 800;   // 模擬：每件個案關懷（電訪/家訪等）平均介入成本
+                    const claimReviewRate = 450; // 模擬：每件理賠案件平均審核人力成本
+                    const careCaseCount = this.careCases.length;
+                    const claimCount = this.claims.length + this.submittedClaims.length;
+                    const careCaseCost = careCaseRate * careCaseCount;
+                    const claimReviewCost = claimReviewRate * claimCount;
+                    return { careCaseRate, claimReviewRate, careCaseCount, claimCount, careCaseCost, claimReviewCost, total: careCaseCost + claimReviewCost };
+                },
+                // 正式損益表格式（權責發生制）
+                incomeStatement() {
+                    const revenue = this.reportTotals.premium;
+                    const cogs = this.reportTotals.claims;
+                    const grossProfit = revenue - cogs;
+                    const discount = this.reportTotals.discount;
+                    const labor = this.laborCost.total;
+                    const opex = discount + labor;
+                    const operatingIncome = grossProfit - opex;
+                    const taxRate = 0.20; // 模擬：假設所得稅率 20%
+                    const tax = operatingIncome > 0 ? Math.round(operatingIncome * taxRate) : 0;
+                    const netIncome = operatingIncome - tax;
+                    return { revenue, cogs, grossProfit, discount, labor, opex, operatingIncome, taxRate, tax, netIncome };
+                },
+                // 保險業核心比率：賠付率／費用率／綜合比率
+                insuranceRatios() {
+                    const premium = this.reportTotals.premium || 1;
+                    const lossRatio = this.reportTotals.claims / premium;
+                    const expenseRatio = this.incomeStatement.opex / premium;
+                    return { lossRatio, expenseRatio, combinedRatio: lossRatio + expenseRatio };
+                },
+                // 保險特有準備金（簡化精算假設）：50% 未滿期保費準備法、20% 已付賠款提列 IBNR
+                policyReserves() {
+                    const lastPremium = this.cashFlowRows[this.cashFlowRows.length - 1].premium;
+                    const annualizedPremium = lastPremium * 12;
+                    const upr = Math.round(annualizedPremium * 0.5);
+                    const ibnrRate = 0.20;
+                    const ibnr = Math.round(this.reportTotals.claims * ibnrRate);
+                    return { annualizedPremium, uprRate: 0.5, upr, ibnrRate, ibnr, total: upr + ibnr };
                 }
             },
             async created() {
@@ -628,7 +947,33 @@
                     }
                 },
                 destroyCharts() { if (this._charts) { Object.values(this._charts).forEach(c => { if (c) c.dispose(); }); this._charts = {}; } },
-                viewRiskDetail(id) { this.selectedRiskPatient = this.riskDetails[id]; this.showRiskDetailModal = true; },
+                exportReportPdf() {
+                    window.print();
+                },
+                viewRiskDetail(id) {
+                    this.selectedRiskPatient = this.riskDetails[id];
+                    this.fhirCheckStatus = 'idle';
+                    this.fhirCheckResult = null;
+                    this.showRiskDetailModal = true;
+                },
+                async verifyFhirRecord() {
+                    this.fhirCheckStatus = 'checking';
+                    try {
+                        const name = encodeURIComponent(this.selectedRiskPatient.name || '');
+                        const res = await fetch(`https://hapi.fhir.org/baseR4/Patient?name=${name}&_count=5`, {
+                            headers: { 'Accept': 'application/fhir+json' }
+                        });
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        const bundle = await res.json();
+                        this.fhirCheckResult = {
+                            total: bundle.total ?? (bundle.entry ? bundle.entry.length : 0),
+                            checkedAt: new Date().toLocaleTimeString('zh-TW')
+                        };
+                        this.fhirCheckStatus = 'done';
+                    } catch (e) {
+                        this.fhirCheckStatus = 'error';
+                    }
+                },
                 triggerToast(t) { this.toastTitle = t; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },
                 async activateCareCase() {
                     if (this.activatingCare) return;

@@ -42,8 +42,8 @@
     </div>
   </div>
   <div class="text-right text-xs text-slate-400">
-    <div>盤點日期：2026-07-01</div>
-    <div>最近提交：2026-06-15 · e492a47</div>
+    <div>盤點日期：2026-07-08</div>
+    <div>最近提交：2026-07-05 · 0577b5f</div>
   </div>
 </header>
 
@@ -59,9 +59,9 @@
     </div>
     <div class="card p-6">
       <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">FHIR 標準整合深度</p>
-      <p class="text-4xl font-black text-warning">35%</p>
-      <div class="bar-track mt-3"><div class="bar-fill bg-warning" style="width:35%"></div></div>
-      <p class="text-xs text-slate-400 mt-2">僅病患端有真實呼叫公用 HAPI FHIR 伺服器，其餘 3 端為假連線動畫</p>
+      <p class="text-4xl font-black text-primary">70%</p>
+      <div class="bar-track mt-3"><div class="bar-fill bg-primary" style="width:70%"></div></div>
+      <p class="text-xs text-slate-400 mt-2">病患端 / 醫師端 / 保險端皆有真實呼叫公用 HAPI FHIR 伺服器；管理端「測試連線」也是真實 fetch，僅 AI 交互檢查仍為模擬延遲</p>
     </div>
     <div class="card p-6">
       <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">文件 / 學習歷程紀錄</p>
@@ -75,7 +75,7 @@
   <section class="card p-6 flex flex-wrap items-center justify-between gap-4">
     <div>
       <p class="text-sm font-bold text-slate-500">整體專案完成度（三軸加權估算，非自動量測）</p>
-      <p class="text-3xl font-black text-primary mt-1">約 74%</p>
+      <p class="text-3xl font-black text-primary mt-1">約 84%</p>
     </div>
     <p class="text-xs text-slate-400 max-w-md">加權：前端 UI/UX 60% · FHIR 真實整合深度 25% · 文件與學習歷程 15%。此為程式碼盤點後的質化估算，用於排定優先級，非精確測量值。</p>
   </section>
@@ -113,38 +113,39 @@
       <div class="card p-6">
         <div class="flex justify-between items-start mb-2">
           <h3 class="font-black">dashboard.html <span class="text-slate-400 font-medium">(醫師端)</span></h3>
-          <span class="text-xs font-black px-2 py-1 rounded-full bg-warning/10 text-warning">82% 完成</span>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">90% 完成</span>
         </div>
-        <div class="bar-track mb-3"><div class="bar-fill bg-warning" style="width:82%"></div></div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-success" style="width:90%"></div></div>
         <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
           <li>✅ D3 藥物交互關係網狀圖、ECharts 統計圖、病患切換皆完整</li>
-          <li>⚠ 「開立處方同步至 HAPI FHIR」僅為 toast 假訊息，未實際送出 MedicationRequest</li>
-          <li>⚠ AI 交互檢查為 setTimeout 假延遲，非真實比對引擎</li>
+          <li>✅ 「開立雲端處方」為<strong>真實 POST</strong>，送出 MedicationRequest 至 hapi.fhir.org/baseR4，失敗會提示「本地已保留」</li>
+          <li>⚠ AI 交互檢查仍為 setTimeout 假延遲，比對邏輯是查表而非真實推論引擎</li>
         </ul>
       </div>
 
       <div class="card p-6">
         <div class="flex justify-between items-start mb-2">
           <h3 class="font-black">admin.html <span class="text-slate-400 font-medium">(管理員端)</span></h3>
-          <span class="text-xs font-black px-2 py-1 rounded-full bg-warning/10 text-warning">78% 完成</span>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">92% 完成</span>
         </div>
-        <div class="bar-track mb-3"><div class="bar-fill bg-warning" style="width:78%"></div></div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-success" style="width:92%"></div></div>
         <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
-          <li>✅ 用戶管理（新增/停用/編輯）、DDI 規則庫搜尋、系統狀態卡完整（皆為記憶體內模擬資料，重新整理即重置）</li>
-          <li>⚠ 「測試 FHIR 連線」為固定假延遲＋假訊息，未真正呼叫 hapi.fhir.org</li>
-          <li>❌ 無資料持久化（無 localStorage/後端），變更不會保存</li>
+          <li>✅ 用戶管理（新增/停用/編輯）、DDI 規則庫搜尋，皆已寫入 Firestore（users / user_roles / ddi_rules）</li>
+          <li>✅ 「測試 FHIR 連線」為<strong>真實 fetch</strong>，GET {fhirUrl}/Patient?_count=1 並量測延遲</li>
+          <li>✅ 系統設置卡（2026-07-08 修正）已改為寫入 admin_data/main 的 systemSettings 欄位並於重新載入時還原，不再只是 toast 假訊息</li>
         </ul>
       </div>
 
       <div class="card p-6">
         <div class="flex justify-between items-start mb-2">
           <h3 class="font-black">insurance.html <span class="text-slate-400 font-medium">(保險端)</span></h3>
-          <span class="text-xs font-black px-2 py-1 rounded-full bg-warning/10 text-warning">72% 完成</span>
+          <span class="text-xs font-black px-2 py-1 rounded-full bg-success/10 text-success">85% 完成</span>
         </div>
-        <div class="bar-track mb-3"><div class="bar-fill bg-warning" style="width:72%"></div></div>
+        <div class="bar-track mb-3"><div class="bar-fill bg-success" style="width:85%"></div></div>
         <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
-          <li>✅ 理賠追蹤、風險雷達圖、覆蓋缺口分析 UI 完整</li>
-          <li>❌ 完全無 FHIR 呼叫，全數為靜態 mockData，與其他三端相比整合度最低</li>
+          <li>✅ 保單 / 理賠 / 個案關懷已寫入 Firestore（insurance_policies、insurance_claims、care_cases），保戶目錄讀真實 patient_data</li>
+          <li>✅（2026-07-08 修正）風險詳情 Modal 新增「查核 FHIR 紀錄」，向 hapi.fhir.org/baseR4 即時 GET Patient 資源，四端全數有真實 FHIR 呼叫</li>
+          <li>⚠ 理賠 / 保單金額試算仍是前端規則，未接真實核保引擎</li>
         </ul>
       </div>
 
@@ -163,12 +164,12 @@
   </section>
 
   <!-- FHIR audit -->
-  <section class="card p-6 border-l-4 border-warning">
-    <h2 class="text-lg font-black mb-3">⚠ FHIR 標準一致性提醒</h2>
+  <section class="card p-6 border-l-4 border-success">
+    <h2 class="text-lg font-black mb-3">✅ FHIR 標準一致性（2026-07-08 更新）</h2>
     <ul class="text-sm text-slate-600 space-y-2 list-disc pl-5">
-      <li>README.md 宣稱核心 FHIR Resources 為 <code class="bg-slate-100 px-1 rounded">MedicationRequest、Bundle、Patient</code>，但實際程式碼中寫入的是 <code class="bg-slate-100 px-1 rounded">MedicationStatement</code> 與 <code class="bg-slate-100 px-1 rounded">Flag</code>（見 patient.html 約 707-757 行），並無任何一處建立 <code class="bg-slate-100 px-1 rounded">MedicationRequest</code>。若競賽評審依 README 核對 Resource 使用，建議二擇一：更新 README 說明實際用到的 Resource，或補上 MedicationRequest 的建立流程（例如醫師端「開立處方」改為真實 POST）。</li>
-      <li>四個端口中只有病患端會真的打公用 HAPI FHIR 測試伺服器（hapi.fhir.org/baseR4），醫師端、管理員端皆為假裝連線的 UI 效果。若要在簡報中呈現「跨角色 FHIR 整合」，這個落差可能被問到。</li>
-      <li>目前無任何後端／資料庫，所有寫入操作除了打公用 HAPI 伺服器外都不持久化，重新整理頁面即恢復成 mockData 初始狀態。</li>
+      <li>四端現況：病患端 POST <code class="bg-slate-100 px-1 rounded">MedicationStatement</code> + <code class="bg-slate-100 px-1 rounded">Flag</code>、醫師端 POST <code class="bg-slate-100 px-1 rounded">MedicationRequest</code>、管理端 GET <code class="bg-slate-100 px-1 rounded">Patient</code>（連線測試）、保險端 GET <code class="bg-slate-100 px-1 rounded">Patient</code>（風險詳情內查核），皆為對 hapi.fhir.org/baseR4 的真實 fetch，不再是假動畫。</li>
+      <li>README.md 宣稱核心 Resource 為 <code class="bg-slate-100 px-1 rounded">MedicationRequest、Bundle、Patient</code>：其中 <code class="bg-slate-100 px-1 rounded">MedicationRequest</code>（醫師端）與 <code class="bg-slate-100 px-1 rounded">Patient</code>（管理端／保險端查詢）已對應到實作；<code class="bg-slate-100 px-1 rounded">Bundle</code> 尚未見獨立建立，病患端仍是 MedicationStatement/Flag，簡報前建議統一口徑或在 README 補充說明各端實際用到的 Resource 對照表。</li>
+      <li>資料持久化已大幅改善：使用者、DDI 規則、病患資料、理賠、保單、個案關懷、系統設置皆寫入 Firestore；仍屬前端展示等級（無伺服器端驗證/交易），AI 交互檢查與處方稽核時間軸仍是模擬延遲與假資料。</li>
     </ul>
   </section>
 
@@ -201,10 +202,9 @@
     <div class="card p-6">
       <ol class="text-sm text-slate-600 space-y-3 list-decimal pl-5">
         <li><strong>填寫 LEARNING_LOG.md</strong> — 隊伍資訊、AI 協作截圖、導師會議紀錄、每週時程，這是初賽文件要求評分的一部分，目前完全空白，風險最高。</li>
-        <li><strong>統一 FHIR Resource 使用</strong> — 決定要嘛更新 README 對齊實作（MedicationStatement/Flag），要嘛把醫師端「開立處方」改成真的送出 MedicationRequest。</li>
-        <li><strong>補齊醫師端／管理員端的真實 FHIR 呼叫</strong>，至少讓「測試連線」「開立處方同步」不是純假動畫，與病患端整合程度看齊。</li>
-        <li><strong>保險端加入至少一個真實 FHIR 讀取</strong>（例如查詢 Patient/Coverage），目前是四端中唯一完全無整合的頁面。</li>
-        <li>（可選）評估是否需要簡易後端/資料持久層，否則管理員端的所有操作在整理頁面後都會消失，展示時需注意。</li>
+        <li><strong>統一 README 與實作的 FHIR Resource 對照</strong> — MedicationRequest／Patient 已補齊，僅需在 README 或簡報中說明病患端仍使用 MedicationStatement/Flag 的理由（跨院既有用藥紀錄 vs. 醫師新開立處方，語意上本就不同）。</li>
+        <li><strong>（可選）AI 交互檢查改為真實比對邏輯</strong> — 目前醫師端「AI 安全檢測」仍是 2 秒 setTimeout，可視時間改為直接比對 ddi_rules 而不需假延遲。</li>
+        <li>（可選）評估是否導入簡易後端做伺服器端驗證，目前所有 Firestore 寫入僅靠前端安全規則把關，適合展示但非正式醫療系統等級。</li>
       </ol>
     </div>
   </section>
@@ -235,15 +235,25 @@
           <p class="text-sm font-bold">完成 MedSafe-Chain 競賽專案 (be9e056)</p>
         </li>
         <li>
-          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-primary"></div>
-          <p class="text-xs text-slate-400">2026-06-15 · 最新</p>
+          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-slate-300"></div>
+          <p class="text-xs text-slate-400">2026-06-15</p>
           <p class="text-sm font-bold">Rebranding 為 MedSafe，移除區塊鏈相關內容 (e492a47)</p>
+        </li>
+        <li>
+          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-slate-300"></div>
+          <p class="text-xs text-slate-400">2026-07-05</p>
+          <p class="text-sm font-bold">加入 Firebase 整合，四端改讀寫 Firestore (0577b5f)</p>
+        </li>
+        <li>
+          <div class="absolute -left-[7px] w-3 h-3 rounded-full bg-primary"></div>
+          <p class="text-xs text-slate-400">2026-07-08 · 最新</p>
+          <p class="text-sm font-bold">修補管理端系統設置未持久化，並為保險端補上真實 FHIR Patient 查核（本次盤點）</p>
         </li>
       </ol>
     </div>
   </section>
 
-  <p class="text-center text-xs text-slate-400 py-4">此 Dashboard 為靜態盤點快照（2026-07-01），需重新盤點時可再次要求 Claude Code 更新。</p>
+  <p class="text-center text-xs text-slate-400 py-4">此 Dashboard 為靜態盤點快照（2026-07-08），需重新盤點時可再次要求 Claude Code 更新。</p>
 </main>
 </body>
 </html>
