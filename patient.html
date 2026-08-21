@@ -134,16 +134,19 @@
                                 </div>
                                 <div class="max-h-72 overflow-y-auto">
                                     <div v-if="notifications.length === 0" class="px-6 py-8 text-center text-sm font-bold text-lightText">沒有新通知</div>
-                                    <div v-for="(n, i) in notifications" :key="i" class="flex gap-4 items-start px-6 py-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                                    <button v-for="(n, i) in notifications" :key="i" @click="handleNotifClick(n)" :class="['w-full text-left flex gap-4 items-start px-6 py-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0', n.action === 'chat' ? 'cursor-pointer' : 'cursor-default']">
                                         <div :class="['w-9 h-9 rounded-xl flex items-center justify-center shrink-0', n.bg]">
                                             <component :is="n.icon" class="h-4 w-4 text-white"></component>
                                         </div>
                                         <div class="flex-1 min-w-0">
-                                            <div class="font-black text-title text-xs truncate">{{ n.title }}</div>
+                                            <div class="font-black text-title text-xs truncate flex items-center gap-2">
+                                                {{ n.title }}
+                                                <span v-if="n.action === 'chat'" class="w-1.5 h-1.5 rounded-full bg-danger shrink-0"></span>
+                                            </div>
                                             <div class="text-[10px] text-content font-bold leading-relaxed mt-0.5">{{ n.content }}</div>
                                             <div class="text-[9px] text-lightText font-bold uppercase tracking-widest mt-1">{{ n.time }}</div>
                                         </div>
-                                    </div>
+                                    </button>
                                 </div>
                             </div>
                         </transition>
@@ -635,6 +638,7 @@
     <script src="js/mockData.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/chatStore.js"></script>
+    <script src="js/notify.js"></script>
     <script>
         const { createApp, markRaw } = Vue;
 
@@ -721,6 +725,10 @@
                 }
             },
             mounted() {
+                window.medNotify.init();
+                // 重新整理後仍要看得到未讀（未讀狀態存在 chatStore，不是只存在記憶體）
+                this.unreadChatCount = window.chatStore.getUnreadCount('patient', this.profile.id);
+                window.medNotify.setUnread(this.unreadChatCount);
                 this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 50); });
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
@@ -741,11 +749,15 @@
                     newOnes.forEach(m => this.chatMessages.push({ from: 'doctor', text: m.text }));
                     this.awaitingReply = false;
                     if (this.showChatModal) {
+                        window.chatStore.markChatRead('patient', this.profile.id);
                         this.$nextTick(() => this.scrollChat());
                     } else {
+                        const latest = newOnes[newOnes.length - 1].text;
                         this.unreadChatCount += newOnes.length;
-                        this.notifications.unshift({ title: `${this.doctorName}回覆`, content: newOnes[newOnes.length - 1].text, time: '剛剛', icon: Icons.AI, bg: 'bg-primary' });
+                        window.medNotify.setUnread(this.unreadChatCount);
+                        this.notifications.unshift({ title: `${this.doctorName}回覆`, content: latest, time: '剛剛', icon: Icons.AI, bg: 'bg-primary', action: 'chat' });
                         this.triggerToast(`${this.doctorName}回覆`, `您有一則來自${this.doctorName}的新訊息`);
+                        window.medNotify.ping(`${this.doctorName}回覆`, latest, () => this.openChat());
                     }
                 });
             },
@@ -852,6 +864,10 @@
                 openChat() {
                     this.showChatModal = true;
                     this.unreadChatCount = 0;
+                    this.showNotifDropdown = false;
+                    window.chatStore.markChatRead('patient', this.profile.id);
+                    window.medNotify.setUnread(0);
+                    window.medNotify.requestPermission();
                     this.chatInput = '';
                     const history = window.chatStore.getMessages(this.profile.id);
                     if (history.length > 0) {
@@ -868,6 +884,12 @@
                 },
                 closeChat() {
                     this.showChatModal = false;
+                    window.chatStore.markChatRead('patient', this.profile.id);
+                },
+                // 點擊「醫師回覆」類通知直接開啟對話視窗，其餘通知僅關閉下拉
+                handleNotifClick(n) {
+                    this.showNotifDropdown = false;
+                    if (n.action === 'chat') this.openChat();
                 },
                 sendResponse() {
                     const msg = this.chatInput.trim();

@@ -159,6 +159,36 @@
                             <div class="w-2 h-2 bg-success rounded-full pulse-live"></div>
                             <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">HAPI FHIR Server Online</span>
                         </div>
+                        <!-- 訊息中心：跨病患的未讀訊息一覽 -->
+                        <div class="relative" @click.stop>
+                            <button @click="toggleMsgDropdown" aria-label="訊息中心" class="relative p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-primary transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8-1.06 0-2.077-.16-3.02-.457L3 21l1.457-4.98A7.96 7.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                <span v-if="totalUnreadMessages > 0" class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-danger rounded-full border-2 border-white flex items-center justify-center text-[8px] font-black text-white leading-none px-1 pulse-live">{{ totalUnreadMessages > 99 ? '99+' : totalUnreadMessages }}</span>
+                            </button>
+                            <transition name="fade">
+                                <div v-if="showMsgDropdown" role="dialog" aria-modal="true" class="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-3xl shadow-2xl border border-slate-100 z-50 overflow-hidden">
+                                    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                                        <span class="font-black text-slate-800 text-sm">訊息中心</span>
+                                        <button v-if="totalUnreadMessages > 0" @click="markAllMessagesRead" class="text-[10px] font-black text-primary hover:underline uppercase tracking-widest">全部已讀</button>
+                                    </div>
+                                    <div class="max-h-80 overflow-y-auto">
+                                        <div v-if="conversations.length === 0" class="px-6 py-8 text-center text-sm font-bold text-slate-300">尚無病患訊息</div>
+                                        <button v-for="c in conversations" :key="c.patientId" @click="openConversation(c)"
+                                                class="w-full text-left px-6 py-4 hover:bg-slate-50 border-b border-slate-50 last:border-0 flex gap-3 items-center">
+                                            <div class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 font-black text-xs">{{ c.patientName.slice(0, 1) }}</div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <span :class="['text-xs truncate', c.unread > 0 ? 'font-black text-slate-800' : 'font-bold text-slate-500']">{{ c.patientName }}</span>
+                                                    <span class="text-[9px] font-black text-slate-300 uppercase shrink-0">{{ c.time }}</span>
+                                                </div>
+                                                <div :class="['text-[11px] mt-0.5 truncate', c.unread > 0 ? 'font-bold text-slate-600' : 'font-bold text-slate-400']">{{ c.preview }}</div>
+                                            </div>
+                                            <span v-if="c.unread > 0" class="min-w-[18px] h-[18px] bg-danger rounded-full flex items-center justify-center text-[9px] font-black text-white px-1 shrink-0">{{ c.unread }}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </transition>
+                        </div>
                         <div class="relative" @click.stop>
                             <button @click="toggleNotifDropdown" aria-label="通知" class="relative p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-primary transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -470,6 +500,7 @@
     <script src="js/mockData.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/chatStore.js"></script>
+    <script src="js/notify.js"></script>
     <script>
         const { createApp, markRaw } = Vue;
         const Icons = {
@@ -494,6 +525,8 @@
                     extraPrescriptions: {},
                     showNotifDropdown: false,
                     doctorNotifications: [],
+                    showMsgDropdown: false,
+                    conversations: [],
                     showChatModal: false,
                     chatMessages: [],
                     chatInput: '',
@@ -506,6 +539,9 @@
                 }
             },
             computed: {
+                totalUnreadMessages() {
+                    return this.conversations.reduce((sum, c) => sum + c.unread, 0);
+                },
                 currentMeds() {
                     if (!this.selectedPatient) return [];
                     const data = window.mockData.graphData;
@@ -567,32 +603,51 @@
                             const fp = this.recentPatients[0]; this.selectedPatient = fp;
                             this.initD3Container(); this.loadScenario(this.scenarioFor(fp));
                         }
+                        // 病患清單載入後重新整理訊息中心，讓對話串顯示真實姓名
+                        this.loadConversations();
                     }, 50);
                 });
             },
             mounted() {
                 this._resizeHandler = () => { if (this._charts) Object.values(this._charts).forEach(c => c && c.resize()); };
                 window.addEventListener('resize', this._resizeHandler);
+                window.medNotify.init();
                 this.loadDoctorNotifications();
+                this.loadConversations();
                 this._chatUnsub = window.chatStore.onChange((e) => {
+                    if (!e.key) return;
                     if (e.key === 'medsafe_notif_doctor') this.loadDoctorNotifications();
-                    if (this.selectedPatient && e.key === 'medsafe_chat_' + this.selectedPatient.id) {
-                        const msgs = window.chatStore.getMessages(this.selectedPatient.id);
-                        if (msgs.length > this.chatMessages.length) {
-                            msgs.slice(this.chatMessages.length).forEach(m => this.chatMessages.push({ from: m.from, text: m.text }));
-                            if (this.showChatModal) this.$nextTick(() => this.scrollDoctorChat());
+                    if (e.key.indexOf('medsafe_chat_') !== 0) return;
+                    const patientId = e.key.slice('medsafe_chat_'.length);
+                    const msgs = window.chatStore.getMessages(patientId);
+                    const isOpenConversation = this.showChatModal && this.selectedPatient && this.selectedPatient.id === patientId;
+                    if (this.selectedPatient && this.selectedPatient.id === patientId && msgs.length > this.chatMessages.length) {
+                        msgs.slice(this.chatMessages.length).forEach(m => this.chatMessages.push({ from: m.from, text: m.text }));
+                        if (this.showChatModal) {
+                            window.chatStore.markChatRead('doctor', patientId);
+                            this.$nextTick(() => this.scrollDoctorChat());
                         }
                     }
+                    const last = msgs[msgs.length - 1];
+                    if (last && last.from === 'patient' && !isOpenConversation) {
+                        const name = this.patientNameOf(patientId);
+                        this.triggerToast('病患新訊息', name + '：' + last.text);
+                        window.medNotify.ping('病患新訊息', name + '：' + last.text, () => this.openChatForPatient(patientId));
+                    }
+                    this.loadConversations();
                 });
+                this._closeDropdownHandler = () => { this.showMsgDropdown = false; this.showNotifDropdown = false; };
+                document.addEventListener('click', this._closeDropdownHandler);
                 this._escHandler = (e) => {
                     if (e.key !== 'Escape') return;
-                    this.showPrescriptionModal = this.showChatModal = this.showFullScreenGraph = this.showNotifDropdown = false;
+                    this.showPrescriptionModal = this.showChatModal = this.showFullScreenGraph = this.showNotifDropdown = this.showMsgDropdown = false;
                 };
                 document.addEventListener('keydown', this._escHandler);
             },
             unmounted() {
                 window.removeEventListener('resize', this._resizeHandler);
                 document.removeEventListener('keydown', this._escHandler);
+                document.removeEventListener('click', this._closeDropdownHandler);
                 if (this._chatUnsub) this._chatUnsub();
                 this.destroyCharts();
             },
@@ -676,16 +731,62 @@
                 loadDoctorNotifications() {
                     this.doctorNotifications = window.chatStore.getNotifications('doctor');
                 },
+                patientNameOf(patientId) {
+                    const p = (this.recentPatients || []).find(x => x.id === patientId);
+                    return p ? p.name : patientId;
+                },
+                formatChatTime(ts) {
+                    const diff = Date.now() - ts;
+                    if (diff < 60000) return '剛剛';
+                    if (diff < 3600000) return Math.floor(diff / 60000) + ' 分前';
+                    if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小時前';
+                    const d = new Date(ts);
+                    return (d.getMonth() + 1) + '/' + d.getDate();
+                },
+                // 重新整理訊息中心清單，同時把未讀總數同步到分頁標題
+                loadConversations() {
+                    this.conversations = window.chatStore.listConversations().map(c => ({
+                        patientId: c.patientId,
+                        patientName: this.patientNameOf(c.patientId),
+                        preview: c.last.from === 'doctor' ? '你：' + c.last.text : c.last.text,
+                        time: this.formatChatTime(c.last.ts),
+                        unread: window.chatStore.getUnreadCount('doctor', c.patientId)
+                    }));
+                    window.medNotify.setUnread(this.totalUnreadMessages);
+                },
+                toggleMsgDropdown() {
+                    this.showMsgDropdown = !this.showMsgDropdown;
+                    this.showNotifDropdown = false;
+                    if (this.showMsgDropdown) {
+                        this.loadConversations();
+                        window.medNotify.requestPermission();
+                    }
+                },
+                markAllMessagesRead() {
+                    this.conversations.forEach(c => window.chatStore.markChatRead('doctor', c.patientId));
+                    this.loadConversations();
+                    this.triggerToast('已全部已讀', '所有病患訊息已標記為已讀');
+                },
+                openConversation(c) {
+                    this.showMsgDropdown = false;
+                    this.openChatForPatient(c.patientId, c.patientName);
+                },
                 toggleNotifDropdown() {
                     this.showNotifDropdown = !this.showNotifDropdown;
+                    this.showMsgDropdown = false;
                     if (this.showNotifDropdown) { window.chatStore.markAllRead('doctor'); this.loadDoctorNotifications(); }
                 },
                 openChatFromNotification(n) {
-                    const patient = this.recentPatients.find(p => p.id === n.patientId) || { id: n.patientId, name: n.patientName, status: '警告', lastCheck: '-' };
-                    this.selectedPatient = patient;
                     window.chatStore.markRead('doctor', n.id);
                     this.showNotifDropdown = false;
                     this.loadDoctorNotifications();
+                    this.openChatForPatient(n.patientId, n.patientName);
+                },
+                // 切換到指定病患並開啟對話視窗（訊息中心與通知中心共用）
+                openChatForPatient(patientId, patientName) {
+                    const patient = this.recentPatients.find(p => p.id === patientId)
+                        || { id: patientId, name: patientName || patientId, status: '警告', lastCheck: '-' };
+                    this.selectedPatient = patient;
                     this.$nextTick(() => {
                         const el = document.getElementById('patient-station'); if (el) el.scrollIntoView({ behavior: 'smooth' });
                         this.initD3Container(); this.loadScenario(this.scenarioFor(patient));
@@ -696,6 +797,9 @@
                     if (!this.selectedPatient) return;
                     this.chatMessages = window.chatStore.getMessages(this.selectedPatient.id).map(m => ({ from: m.from, text: m.text }));
                     this.showChatModal = true;
+                    window.chatStore.markChatRead('doctor', this.selectedPatient.id);
+                    this.loadConversations();
+                    window.medNotify.requestPermission();
                     this.$nextTick(() => this.scrollDoctorChat());
                 },
                 scrollDoctorChat() { const el = document.getElementById('doctor-chat-scroll'); if (el) el.scrollTop = el.scrollHeight; },
@@ -705,6 +809,8 @@
                     window.chatStore.addMessage(this.selectedPatient.id, 'doctor', msg);
                     this.chatMessages.push({ from: 'doctor', text: msg });
                     this.chatInput = '';
+                    window.chatStore.markChatRead('doctor', this.selectedPatient.id);
+                    this.loadConversations();
                     this.$nextTick(() => this.scrollDoctorChat());
                 },
                 triggerToast(t, m) { this.toastTitle = t; this.toastMessage = m; this.showToast = true; setTimeout(() => this.showToast = false, 3000); },

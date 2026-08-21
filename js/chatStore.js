@@ -18,6 +18,38 @@ window.chatStore = {
     localStorage.removeItem(this._msgKey(patientId));
   },
 
+  // --- 未讀訊息追蹤 ---
+  // 以「最後讀取時間戳」為基準，重新整理頁面後未讀數仍然正確
+  _seenKey(role, patientId) { return 'medsafe_seen_' + role + '_' + patientId; },
+  getSeen(role, patientId) {
+    return Number(localStorage.getItem(this._seenKey(role, patientId)) || 0);
+  },
+  markChatRead(role, patientId) {
+    const list = this.getMessages(patientId);
+    const last = list.length ? list[list.length - 1].ts : Date.now();
+    localStorage.setItem(this._seenKey(role, patientId), String(Math.max(last, this.getSeen(role, patientId))));
+  },
+  // 未讀 = 對方送出且時間晚於最後讀取時間的訊息（系統提示不計入）
+  getUnreadCount(role, patientId) {
+    const seen = this.getSeen(role, patientId);
+    return this.getMessages(patientId).filter(m => m.from !== role && m.from !== 'system' && m.ts > seen).length;
+  },
+
+  // 掃出所有已存在的對話串，供醫師端訊息中心列出
+  listConversations() {
+    const prefix = 'medsafe_chat_';
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || key.indexOf(prefix) !== 0) continue;
+      const patientId = key.slice(prefix.length);
+      const messages = this.getMessages(patientId);
+      if (!messages.length) continue;
+      out.push({ patientId, messages, last: messages[messages.length - 1] });
+    }
+    return out.sort((a, b) => b.last.ts - a.last.ts);
+  },
+
   getNotifications(role) {
     return JSON.parse(localStorage.getItem(this._notifKey(role)) || '[]');
   },
